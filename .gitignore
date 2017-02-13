@@ -1,0 +1,5 @@
+obj/
+cli_gdb_server.log
+jlink.log
+cscope.*
+.*.swp
