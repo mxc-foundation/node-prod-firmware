@@ -1,6 +1,7 @@
-PROJ=		first
+PROJ=		minimal
 OBJDIR?=	obj
-SDKDIR?=	$(HOME)/src/mx/DA1468x_SDK_BTLE_v_1.0.6.968
+SDKVER?=	1.0.6.968
+SDKDIR?=	../DA1468x_SDK_BTLE_v_$(SDKVER)
 #PROD_ID?=	DA14681-00
 
 #SRCS=	main.c $(SDKDIR)/sdk/bsp/startup/config.c
@@ -56,7 +57,7 @@ CFLAGS+=	-I$(SDKDIR)/sdk/bsp/include -I$(SDKDIR)/sdk/bsp/config \
 		-I$(SDKDIR)/sdk/bsp/free_rtos/include \
 		-I$(SDKDIR)/sdk/middleware/console/include
 CFLAGS+=	-includecustom-config.h
-LDFLAGS=	-Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
+LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
 		--specs=nano.specs --specs=nosys.specs \
 		-Tldscripts/mem.ld -Tldscripts/sections.ld
 
@@ -105,7 +106,8 @@ flash: all
 clean:
 	-rm -r $(OBJDIR) $(CLEANFILES)
 
-TOOLCHAINDIR?=	$(HOME)/src/mx/gcc-arm-none-eabi-5_4-2016q3-20160926
+TOOLCHAINVER?=	5_4-2016q3-20160926
+TOOLCHAINDIR?=	../gcc-arm-none-eabi-$(TOOLCHAINVER)
 LIBCDIR?=	$(TOOLCHAINDIR)/src/newlib/newlib
 
 scope:
