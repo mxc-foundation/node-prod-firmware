@@ -1,7 +1,7 @@
 PROJ=		first
 OBJDIR?=	obj
 SDKDIR?=	$(HOME)/src/mx/DA1468x_SDK_BTLE_v_1.0.6.968
-PROD_ID?=	DA14681-00
+#PROD_ID?=	DA14681-00
 
 #SRCS=	main.c $(SDKDIR)/sdk/bsp/startup/config.c
 OBJS+=	$(OBJDIR)/main.o \
@@ -63,7 +63,7 @@ LDFLAGS=	-Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
 all: $(OBJDIR)/$(PROJ).bin
 	arm-none-eabi-size -B $(OBJDIR)/$(PROJ).elf
 
-.PHONY: all flash clean
+.PHONY: all flash clean scope
 
 .SUFFIXES: .bin .elf
 
