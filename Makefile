@@ -94,6 +94,8 @@ $(OBJDIR)/$(PROJ).elf: $(OBJS)
 flash: all
 	$(SDKDIR)/utilities/scripts/qspi/program_qspi_jtag.sh \
 		$(OBJDIR)/$(PROJ).bin
+	sleep 1
+	$(SDKDIR)/utilities/scripts/qspi/reboot_device.sh
 
 #	/opt/SEGGER/JLink/JLinkGDBServer -if swd -device Cortex-M0 -endian little -speed 8000 -port 2331 -swoport 2332 -telnetport 2333 -vd -ir -localhostonly 1 -log jlink.log -s &
 #	$(SDKDIR)/binaries/cli_programmer --prod-id $(PROD_ID) \
