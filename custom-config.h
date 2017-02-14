@@ -101,6 +101,10 @@
 /* Include bsp default values */
 #include "bsp_defaults.h"
 
+/* LMIC */
+#define CFG_eu868 1
+#define CFG_sx1276_radio
+
 #endif /* CUSTOM_CONFIG_QSPI_H_ */
 
 /**

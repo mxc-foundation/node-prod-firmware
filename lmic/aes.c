@@ -257,8 +257,8 @@ u4_t os_aes (u1_t mode, xref2u1_t buf, u2_t len) {
         }
 
         while( (signed char)len > 0 ) {
-            u4_t a0, a1, a2, a3;
-            u4_t t0, t1, t2, t3;
+            u4_t a0 = 0, a1 = 0, a2 = 0, a3 = 0;
+            u4_t t0, t1 = 0, t2, t3;
             u4_t *ki, *ke;
 
             // load input block

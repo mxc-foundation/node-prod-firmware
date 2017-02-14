@@ -7,6 +7,10 @@ SDKDIR?=	../DA1468x_SDK_BTLE_v_$(SDKVER)
 #SRCS=	main.c $(SDKDIR)/sdk/bsp/startup/config.c
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/os-hooks.o
+
+OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/lmic.o \
+	$(OBJDIR)/lmic/oslmic.o $(OBJDIR)/lmic/radio.o
+
 OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/startup/startup_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/system_ARMCM0.o \
