@@ -28,6 +28,9 @@
 #ifndef _hal_hpp_
 #define _hal_hpp_
 
+#include <sdk_defs.h>
+#include <hw_spi.h>
+
 /*
  * initialize hardware (IO, SPI, TIMER, IRQ).
  */

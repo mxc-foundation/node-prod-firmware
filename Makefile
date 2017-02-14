@@ -25,6 +25,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_hard_fault.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_otpc.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_qspi.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_spi.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_timer1.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_uart.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_usb_charger.o \
