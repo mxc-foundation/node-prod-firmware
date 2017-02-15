@@ -4,7 +4,9 @@ SDKVER?=	1.0.6.968
 SDKDIR?=	../DA1468x_SDK_BTLE_v_$(SDKVER)
 #PROD_ID?=	DA14681-00
 
-#SRCS=	main.c $(SDKDIR)/sdk/bsp/startup/config.c
+ELFTARGET=	$(OBJDIR)/$(PROJ).elf
+TARGET=		$(OBJDIR)/$(PROJ).bin
+
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/os-hooks.o
 
@@ -45,6 +47,8 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/free_rtos/portable/MemMang/heap_4.o \
 	$(OBJDIR)/sdk/bsp/free_rtos/portable/GCC/ARM_CM0/port.o
 
+DEPS=		$(OBJS:.o=.d)
+
 CC=		arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb
 #CFLAGS+=	-Wall -Wextra -Werror
 CFLAGS+=	-std=gnu11 -Wall -Werror
@@ -66,10 +70,10 @@ LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
 		--specs=nano.specs --specs=nosys.specs \
 		-Tldscripts/mem.ld -Tldscripts/sections.ld
 
-all: $(OBJDIR)/$(PROJ).bin
-	arm-none-eabi-size -B $(OBJDIR)/$(PROJ).elf
+all: $(TARGET)
+	arm-none-eabi-size -B $(ELFTARGET)
 
-.PHONY: all flash clean scope
+.PHONY: all flash install clean scope
 
 .SUFFIXES: .bin .elf
 
@@ -84,28 +88,27 @@ all: $(OBJDIR)/$(PROJ).bin
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p `dirname $@`
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -MMD -MP -MF"$(@:%.o=%.d)" -o $@ $<
 
 $(OBJDIR)/%.o: $(SDKDIR)/%.c
 	mkdir -p `dirname $@`
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -MMD -MP -MF"$(@:%.o=%.d)" -o $@ $<
 
 $(OBJDIR)/%.o: $(SDKDIR)/%.S
 	mkdir -p `dirname $@`
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBJDIR)/$(PROJ).elf: $(OBJS)
+$(ELFTARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
-flash: all
-	$(SDKDIR)/utilities/scripts/qspi/program_qspi_jtag.sh \
-		$(OBJDIR)/$(PROJ).bin
+flash install: all
+	$(SDKDIR)/utilities/scripts/qspi/program_qspi_jtag.sh $(TARGET)
 	sleep 1
 	$(SDKDIR)/utilities/scripts/qspi/reboot_device.sh
 
 #	/opt/SEGGER/JLink/JLinkGDBServer -if swd -device Cortex-M0 -endian little -speed 8000 -port 2331 -swoport 2332 -telnetport 2333 -vd -ir -localhostonly 1 -log jlink.log -s &
 #	$(SDKDIR)/binaries/cli_programmer --prod-id $(PROD_ID) \
-#		gdbserver write_qspi 0 $(OBJDIR)/$(PROJ).bin
+#		gdbserver write_qspi 0 $(TARGET)
 #	sleep 1
 
 clean:
@@ -117,3 +120,5 @@ LIBCDIR?=	$(TOOLCHAINDIR)/src/newlib/newlib
 
 scope:
 	find . $(SDKDIR)/sdk $(LIBCDIR) -name '*.[chyl]' -print | cscope -bqki-
+
+-include $(DEPS)
