@@ -31,6 +31,25 @@
 #include <sdk_defs.h>
 #include <hw_spi.h>
 
+#define HAL_LORA_SPI_NO	2
+
+#define HAL_LORA_SPI_CLK_PORT	3
+#define HAL_LORA_SPI_CLK_PIN	6
+#define HAL_LORA_SPI_DI_PORT	3
+#define HAL_LORA_SPI_DI_PIN	4
+#define HAL_LORA_SPI_DO_PORT	3
+#define HAL_LORA_SPI_DO_PIN	3
+#define HAL_LORA_SPI_CS_PORT	3
+#define HAL_LORA_SPI_CS_PIN	2
+#define HAL_LORA_RX_PORT	3
+#define HAL_LORA_RX_PIN	0
+#define HAL_LORA_TX_PORT	3
+#define HAL_LORA_TX_PIN	1
+
+#define __DEFINE_HAL_LORA_SPI_INT(x)	HW_SPI ## x
+#define __DEFINE_HAL_LORA_SPI(x)	__DEFINE_HAL_LORA_SPI_INT(x)
+#define HAL_LORA_SPI			__DEFINE_HAL_LORA_SPI(HAL_LORA_SPI_NO)
+
 /*
  * initialize hardware (IO, SPI, TIMER, IRQ).
  */
