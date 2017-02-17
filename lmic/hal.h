@@ -61,25 +61,25 @@ void hal_init (void);
  * drive radio NSS pin (0=low, 1=high).
  */
 //void hal_pin_nss (u1_t val);
-#define hal_pin_nss(hi)		do { \
-		if (hi) \
-			hw_spi_set_cs_high(HW_SPI2); \
-		else \
-			hw_spi_set_cs_low(HW_SPI2); \
+#define hal_pin_nss(hi)		do {			\
+		if (hi)					\
+			hw_spi_set_cs_high(HW_SPI2);	\
+		else					\
+			hw_spi_set_cs_low(HW_SPI2);	\
 	} while (0)
 
 /*
  * drive radio RX/TX pins (0=rx, 1=tx).
  */
 //void hal_pin_rxtx (u1_t val);
-#define hal_pin_rxtx(tx)	do { \
-	if (tx) { \
+#define hal_pin_rxtx(tx)	do {			\
+	if (tx) {					\
 		hw_gpio_set_inactive(HAL_LORA_RX_PORT, HAL_LORA_RX_PIN); \
 		hw_gpio_set_active(  HAL_LORA_TX_PORT, HAL_LORA_TX_PIN); \
-	} else { \
+	} else {					\
 		hw_gpio_set_inactive(HAL_LORA_TX_PORT, HAL_LORA_TX_PIN); \
 		hw_gpio_set_active(  HAL_LORA_RX_PORT, HAL_LORA_RX_PIN); \
-	} \
+	}						\
 } while (0)
 
 /*
@@ -112,7 +112,7 @@ u1_t hal_spi (u1_t outval);
  * put system and CPU in low-power mode, sleep until interrupt.
  */
 //void hal_sleep (void);
-#define hal_sleep()	OS_DELAY(1) // XXX
+#define hal_sleep()	__WFI()
 
 /*
  * return 32-bit system time in ticks.
@@ -130,8 +130,7 @@ void hal_waitUntil (u4_t time);
  *   - return 1 if target time is close
  *   - otherwise rewind timer for target time or full period and return 0
  */
-//u1_t hal_checkTimer (u4_t targettime);
-#define hal_checkTimer(time)	((u1_t)((s4_t)(time - hal_ticks()) < 0))
+u1_t hal_checkTimer (u4_t targettime);
 
 /*
  * perform fatal failure action.

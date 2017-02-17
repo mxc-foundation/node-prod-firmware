@@ -42,10 +42,12 @@ static void
 say_hi(osjob_t *job)
 {
 	static int	n;
-	char		buf[64];
+	char		buf[128];
 
-	snprintf(buf, sizeof(buf), "Hello #%u @ %u (%lu)\r\n",
-	    n++, os_getTimeSecs(), os_getTime());
+	snprintf(buf, sizeof(buf),
+	    "Hello #%u @ %u (%lu), TIMER1 trigger %lu\r\n",
+	    n++, os_getTimeSecs(), os_getTime(),
+	    hw_timer1_get_trigger());
 	print(buf);
 	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
 }

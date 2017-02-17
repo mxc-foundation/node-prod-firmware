@@ -28,6 +28,19 @@ hal_failed()
 	hw_cpm_reboot_system();
 }
 
+u1_t
+hal_checkTimer(u4_t targettime)
+{
+	u4_t	dt = targettime - hal_ticks();
+
+	if ((s4_t)dt < 5) {
+		return 1;
+	} else {
+		// XXX Up to 1/512s delay
+		return 0;
+	}
+}
+
 void
 hal_waitUntil(u4_t time)
 {
