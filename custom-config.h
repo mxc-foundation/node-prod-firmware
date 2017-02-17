@@ -75,6 +75,8 @@
 
 #define dg_configCACHEABLE_QSPI_AREA_LEN        NVMS_PARAM_PART_start
 
+#define dg_configUSE_HW_TRNG			1
+
 
 /*************************************************************************************************\
  * FreeRTOS specific config

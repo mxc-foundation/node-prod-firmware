@@ -27,6 +27,8 @@
 
 #include "lmic.h"
 
+#include <hw_trng.h>
+
 // RUNTIME STATE
 static struct {
     osjob_t* scheduledjobs;
@@ -38,10 +40,6 @@ void os_init () {
     hal_init();
     radio_init();
     LMIC_init();
-}
-
-ostime_t os_getTime () {
-    return hal_ticks();
 }
 
 // unlink job from queue, return if removed
@@ -119,4 +117,25 @@ void os_runloop () {
             j->func(j);
         }
     }
+}
+
+static u4_t
+os_getRndU4()
+{
+	uint32_t	n;
+
+	hw_trng_get_numbers(&n, 1);
+	return n;
+}
+
+u1_t
+os_getRndU1()
+{
+	return os_getRndU4();
+}
+
+u2_t
+os_getRndU2()
+{
+	return os_getRndU4();
 }

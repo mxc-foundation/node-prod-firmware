@@ -30,8 +30,10 @@
 
 #include <sdk_defs.h>
 #include <hw_spi.h>
+#include <sys_rtc.h>
+#include <osal.h>
 
-#define HAL_LORA_SPI_NO	2
+#define HAL_LORA_SPI_NO		2
 
 #define HAL_LORA_SPI_CLK_PORT	3
 #define HAL_LORA_SPI_CLK_PIN	6
@@ -42,9 +44,9 @@
 #define HAL_LORA_SPI_CS_PORT	3
 #define HAL_LORA_SPI_CS_PIN	2
 #define HAL_LORA_RX_PORT	3
-#define HAL_LORA_RX_PIN	0
+#define HAL_LORA_RX_PIN		0
 #define HAL_LORA_TX_PORT	3
-#define HAL_LORA_TX_PIN	1
+#define HAL_LORA_TX_PIN		1
 
 #define __DEFINE_HAL_LORA_SPI_INT(x)	HW_SPI ## x
 #define __DEFINE_HAL_LORA_SPI(x)	__DEFINE_HAL_LORA_SPI_INT(x)
@@ -58,12 +60,27 @@ void hal_init (void);
 /*
  * drive radio NSS pin (0=low, 1=high).
  */
-void hal_pin_nss (u1_t val);
+//void hal_pin_nss (u1_t val);
+#define hal_pin_nss(hi)		do { \
+		if (hi) \
+			hw_spi_set_cs_high(HW_SPI2); \
+		else \
+			hw_spi_set_cs_low(HW_SPI2); \
+	} while (0)
 
 /*
  * drive radio RX/TX pins (0=rx, 1=tx).
  */
-void hal_pin_rxtx (u1_t val);
+//void hal_pin_rxtx (u1_t val);
+#define hal_pin_rxtx(tx)	do { \
+	if (tx) { \
+		hw_gpio_set_inactive(HAL_LORA_RX_PORT, HAL_LORA_RX_PIN); \
+		hw_gpio_set_active(  HAL_LORA_TX_PORT, HAL_LORA_TX_PIN); \
+	} else { \
+		hw_gpio_set_inactive(HAL_LORA_TX_PORT, HAL_LORA_TX_PIN); \
+		hw_gpio_set_active(  HAL_LORA_RX_PORT, HAL_LORA_RX_PIN); \
+	} \
+} while (0)
 
 /*
  * control radio RST pin (0=low, 1=high, 2=floating)
@@ -82,22 +99,26 @@ u1_t hal_spi (u1_t outval);
  *   - might be invoked nested 
  *   - will be followed by matching call to hal_enableIRQs()
  */
-void hal_disableIRQs (void);
+//void hal_disableIRQs (void);
+#define hal_disableIRQs GLOBAL_INT_DISABLE
 
 /*
  * enable CPU interrupts.
  */
-void hal_enableIRQs (void);
+//void hal_enableIRQs (void);
+#define hal_enableIRQs GLOBAL_INT_RESTORE
 
 /*
  * put system and CPU in low-power mode, sleep until interrupt.
  */
-void hal_sleep (void);
+//void hal_sleep (void);
+#define hal_sleep()	OS_DELAY(1) // XXX
 
 /*
  * return 32-bit system time in ticks.
  */
-u4_t hal_ticks (void);
+//u4_t hal_ticks (void);
+#define hal_ticks()	((u4_t)rtc_get())
 
 /*
  * busy-wait until specified timestamp (in ticks) is reached.
@@ -109,7 +130,8 @@ void hal_waitUntil (u4_t time);
  *   - return 1 if target time is close
  *   - otherwise rewind timer for target time or full period and return 0
  */
-u1_t hal_checkTimer (u4_t targettime);
+//u1_t hal_checkTimer (u4_t targettime);
+#define hal_checkTimer(time)	((u1_t)((s4_t)(time - hal_ticks()) < 0))
 
 /*
  * perform fatal failure action.

@@ -726,6 +726,7 @@ void radio_init () {
     hal_enableIRQs();
 }
 
+#if 0
 // return next random byte derived from seed buffer
 // (buf[0] holds index of next byte to be returned)
 u1_t radio_rand1 () {
@@ -739,10 +740,12 @@ u1_t radio_rand1 () {
     randbuf[0] = i;
     return v;
 }
+#endif
 
 u1_t radio_rssi () {
+    u1_t r;
     hal_disableIRQs();
-    u1_t r = readReg(LORARegRssiValue);
+    r = readReg(LORARegRssiValue);
     hal_enableIRQs();
     return r;
 }

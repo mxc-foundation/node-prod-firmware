@@ -1,17 +1,18 @@
 #include <stdio.h>
 
 #include <console.h>
-#include <hw_gpio.h>
-#include <hw_led.h>
-//#include <hw_spi.h>
+#include <hw_timer1.h>
+#include <hw_trng.h>
 #include <platform_devices.h>
 #include <sys_power_mgr.h>
+#include <sys_rtc.h>
 #include <sys_watchdog.h>
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
 
 #define MORE_TASKS
+#define hello
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
 //#define HAL_LORA_SPI HW_SPI2
@@ -26,6 +27,28 @@
 #define HAL_LORA_GPIO_FUNC_SPI_DO	HW_GPIO_FUNC_SPI2_DO
 #else
 #error "Invalid HAL_LORA_SPI_NO definition"
+#endif
+
+static uart_device	console_uart;
+
+void
+print(char *s)
+{
+	ad_uart_write(console_uart, s, strlen(s));
+}
+
+#ifdef hello
+static void
+say_hi(osjob_t *job)
+{
+	static int	n;
+	char		buf[64];
+
+	snprintf(buf, sizeof(buf), "Hello #%u @ %u (%lu)\r\n",
+	    n++, os_getTimeSecs(), os_getTime());
+	print(buf);
+	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
+}
 #endif
 
 static void
@@ -46,6 +69,7 @@ spi_init(void)
 		0,
 	};
 
+	hw_trng_enable(NULL);
 	hw_gpio_set_pin_function(HAL_LORA_SPI_CLK_PORT, HAL_LORA_SPI_CLK_PIN,
 	    HW_GPIO_MODE_OUTPUT, HAL_LORA_GPIO_FUNC_SPI_CLK);
 	hw_gpio_set_pin_function(HAL_LORA_SPI_DI_PORT,  HAL_LORA_SPI_DI_PIN,
@@ -75,14 +99,21 @@ periph_setup(void)
 static void
 main_task_func(void *param)
 {
-	char		buf[32];
-	uart_device	dev;
+	char		buf[64];
 	int		n;
+	uint32_t	ticks, prescaled = 0, fine = 0;
 	uint8_t		addr = 0, byte = 0;
 	HW_SPI_FIFO	old_mode;
+#ifdef hello
+	osjob_t		job;
+#endif
 
-	dev = ad_uart_open(SERIAL1);
-	ad_uart_write(dev, "hello\r\n", 7);
+	console_uart = ad_uart_open(SERIAL1);
+#ifdef hello
+	say_hi(&job);
+	os_runloop();
+#endif
+	ad_uart_write(console_uart, "hello\r\n", 7);
 	for (;;) {
 		/*
 		old_mode = hw_spi_change_fifo_mode(HAL_LORA_SPI,
@@ -98,8 +129,18 @@ main_task_func(void *param)
 		hw_spi_change_fifo_mode(HAL_LORA_SPI, old_mode);
 #endif
 		n = snprintf(buf, sizeof(buf), "%02x: %02x\r\n", addr, byte);
-		ad_uart_write(dev, buf, n);
-		//LMIC_reset();
+		ad_uart_write(console_uart, buf, n);
+		//ticks = hal_ticks() / configTOCK_RATE_HZ;
+		ticks = os_getTime();
+		//HW_TIMER1_GET_INSTANT(prescaled, fine);
+		n = snprintf(buf, sizeof(buf), "ticks: %u (%lu) [%lu, %lu]\r\n",
+		    os_getTimeSecs(), ticks, prescaled, fine);
+		ad_uart_write(console_uart, buf, n);
+		hal_waitUntil(ticks + 1000);
+		n = snprintf(buf, sizeof(buf), "ticks: %u (%lu) [%lu, %lu]\r\n",
+		    os_getTimeSecs(), os_getTime(), prescaled, fine);
+		ad_uart_write(console_uart, buf, n);
+		LMIC_reset();
 		addr = (addr + 1) & 0x7f;
 	}
 }

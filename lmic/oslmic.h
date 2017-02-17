@@ -88,7 +88,8 @@ extern u4_t AESKEY[];
 #define FUNC_ADDR(func) (&(func))
 
 u1_t radio_rand1 (void);
-#define os_getRndU1() radio_rand1()
+//#define os_getRndU1() radio_rand1()
+u1_t os_getRndU1(void);
 
 #define DEFINE_LMIC  struct lmic_t LMIC
 #define DECLARE_LMIC extern struct lmic_t LMIC
@@ -115,6 +116,9 @@ void os_runloop (void);
 #endif
 
 typedef s4_t  ostime_t;
+
+#define os_getTime()		((ostime_t)hal_ticks())
+#define os_getTimeSecs()	((uint)os_getTime() / OSTICKS_PER_SEC)
 
 #if !HAS_ostick_conv
 #define us2osticks(us)   ((ostime_t)( ((s8_t)(us) * OSTICKS_PER_SEC) / 1000000))
@@ -199,9 +203,10 @@ void os_wlsbf2 (xref2u1_t buf, u2_t value);
 #endif
 
 //! Get random number (default impl for u2_t).
-#ifndef os_getRndU2
-#define os_getRndU2() ((u2_t)((os_getRndU1()<<8)|os_getRndU1()))
-#endif
+//#ifndef os_getRndU2
+//#define os_getRndU2() ((u2_t)((os_getRndU1()<<8)|os_getRndU1()))
+//#endif
+u2_t os_getRndU2(void);
 #ifndef os_crc16
 u2_t os_crc16 (xref2u1_t d, uint len);
 #endif

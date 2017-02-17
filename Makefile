@@ -10,7 +10,7 @@ TARGET=		$(OBJDIR)/$(PROJ).bin
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/os-hooks.o
 
-OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/lmic.o \
+OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \
 	$(OBJDIR)/lmic/oslmic.o $(OBJDIR)/lmic/radio.o
 
 OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
@@ -29,6 +29,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_qspi.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_spi.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_timer1.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_trng.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_uart.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_usb_charger.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_watchdog.o \
