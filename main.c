@@ -11,8 +11,9 @@
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
 
-#define MORE_TASKS
-#define hello
+//#define MORE_TASKS
+//#define hello
+#define join
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
 //#define HAL_LORA_SPI HW_SPI2
@@ -29,12 +30,14 @@
 #error "Invalid HAL_LORA_SPI_NO definition"
 #endif
 
-static uart_device	console_uart;
+//static uart_device	console_uart;
 
-void
-print(char *s)
+int
+_write(int fd, char *ptr, int len)
 {
-	ad_uart_write(console_uart, s, strlen(s));
+	(void)fd;
+	hw_uart_write_buffer(HW_UART1, ptr, len);
+	return len;
 }
 
 #ifdef hello
@@ -42,13 +45,10 @@ static void
 say_hi(osjob_t *job)
 {
 	static int	n;
-	char		buf[128];
 
-	snprintf(buf, sizeof(buf),
-	    "Hello #%u @ %u (%lu), TIMER1 trigger %lu\r\n",
+	printf("Hello #%u @ %u (%lu), TIMER1 trigger %lu\r\n",
 	    n++, os_getTimeSecs(), os_getTime(),
 	    hw_timer1_get_trigger());
-	print(buf);
 	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
 }
 #endif
@@ -101,21 +101,39 @@ periph_setup(void)
 static void
 main_task_func(void *param)
 {
-	char		buf[64];
-	int		n;
 	uint32_t	ticks, prescaled = 0, fine = 0;
 	uint8_t		addr = 0, byte = 0;
 	HW_SPI_FIFO	old_mode;
+	uart_config	uart_cfg = {
+		HW_UART_BAUDRATE_115200,
+		HW_UART_DATABITS_8,
+		HW_UART_PARITY_NONE,
+		HW_UART_STOPBITS_1,
+		0,
+		0,
+		1,
+		HW_DMA_CHANNEL_1,
+		HW_DMA_CHANNEL_0,
+	};
 #ifdef hello
 	osjob_t		job;
 #endif
+#ifdef join
+	extern int	join_main(void);
+#endif
 
-	console_uart = ad_uart_open(SERIAL1);
+	//console_uart = ad_uart_open(SERIAL1);
+	//hw_uart_init_ex(HW_UART1, &uart_cfg);
+	hw_uart_init(HW_UART1, &uart_cfg);
+	printf("init\r\n");
+#ifdef join
+	join_main();
+#endif
 #ifdef hello
 	say_hi(&job);
 	os_runloop();
 #endif
-	ad_uart_write(console_uart, "hello\r\n", 7);
+	printf("hello\r\n");
 	for (;;) {
 		/*
 		old_mode = hw_spi_change_fifo_mode(HAL_LORA_SPI,
@@ -130,23 +148,21 @@ main_task_func(void *param)
 		hal_pin_nss(1);
 		hw_spi_change_fifo_mode(HAL_LORA_SPI, old_mode);
 #endif
-		n = snprintf(buf, sizeof(buf), "%02x: %02x\r\n", addr, byte);
-		ad_uart_write(console_uart, buf, n);
+		printf("%02x: %02x\r\n", addr, byte);
 		//ticks = hal_ticks() / configTOCK_RATE_HZ;
 		ticks = os_getTime();
 		//HW_TIMER1_GET_INSTANT(prescaled, fine);
-		n = snprintf(buf, sizeof(buf), "ticks: %u (%lu) [%lu, %lu]\r\n",
+		printf("ticks: %u (%lu) [%lu, %lu]\r\n",
 		    os_getTimeSecs(), ticks, prescaled, fine);
-		ad_uart_write(console_uart, buf, n);
 		hal_waitUntil(ticks + 1000);
-		n = snprintf(buf, sizeof(buf), "ticks: %u (%lu) [%lu, %lu]\r\n",
+		printf("ticks: %u (%lu) [%lu, %lu]\r\n",
 		    os_getTimeSecs(), os_getTime(), prescaled, fine);
-		ad_uart_write(console_uart, buf, n);
 		LMIC_reset();
 		addr = (addr + 1) & 0x7f;
 	}
 }
 
+#ifdef MORE_TASKS
 static void
 spi_task_func(void *param)
 {
@@ -168,6 +184,7 @@ spi_task_func(void *param)
 		hw_spi_change_fifo_mode(HAL_LORA_SPI, old_mode);
 	}
 }
+#endif
 
 static OS_TASK xHandle;
 
@@ -182,12 +199,13 @@ system_init(void *param)
 #endif
 
 	cm_sys_clk_init(sysclk_XTAL16M);
-	cm_apb_set_clock_divider(apb_div1);
-	cm_ahb_set_clock_divider(ahb_div1);
+	hw_cpm_set_pclk_div(apb_div1);
+	//cm_apb_set_clock_divider(apb_div1);
+	//cm_ahb_set_clock_divider(ahb_div1);
 	cm_lp_clk_init();
 	sys_watchdog_init();
 	pm_system_init(periph_setup);
-	ad_uart_init();
+	//ad_uart_init();
 #ifdef MORE_TASKS
 	OS_TASK_CREATE("main", main_task_func, NULL, 1000,
 	    OS_TASK_PRIORITY_NORMAL, task_h);
@@ -200,12 +218,47 @@ system_init(void *param)
 #endif
 }
 
+/* static */ void
+cm_clk_init_low_level_x(void)
+{
+	uint32_t	reg;
+
+	NVIC_ClearPendingIRQ(XTAL16RDY_IRQn);
+	NVIC_EnableIRQ(XTAL16RDY_IRQn);
+	//hw_cpm_set_divn(false);
+	reg = CRG_TOP->CLK_CTRL_REG;
+	REG_SET_FIELD(CRG_TOP, CLK_CTRL_REG, DIVN_XTAL32M_MODE, reg, 0);
+	REG_SET_FIELD(CRG_TOP, CLK_CTRL_REG, XTAL32M_MODE, reg, 0);
+	CRG_TOP->CLK_CTRL_REG = reg;
+	CRG_TOP->DIVN_SYNC_REG = 0;
+	// hw_cpm_enable_rc32k
+	REG_SET_BIT(CRG_TOP, CLK_32K_REG, RC32K_ENABLE);
+	// hw_cpm_lp_set_rc32k
+	ASSERT_WARNING(REG_GETF(CRG_TOP, CLK_32K_REG, RC32K_ENABLE) == 1);
+	REG_SETF(CRG_TOP, CLK_CTRL_REG, CLK32K_SOURCE, LP_CLK_IS_RC32K);
+	// hw_cpm_set_xtal16m_settling_time(dg_configXTAL16_SETTLE_TIME_RC32K);
+	CRG_TOP->XTALRDY_CTRL_REG = dg_configXTAL16_SETTLE_TIME_RC32K;
+	// hw_cpm_enable_xtal16m
+	REG_CLR_BIT(CRG_TOP, CLK_CTRL_REG, XTAL16M_DISABLE);
+	GPIO->P20_MODE_REG = 0x26;
+	GPIO->P21_MODE_REG = 0x26;
+	reg = CRG_TOP->CLK_32K_REG;
+	REG_SET_FIELD(CRG_TOP, CLK_32K_REG, XTAL32K_CUR, reg, 5);
+	REG_SET_FIELD(CRG_TOP, CLK_32K_REG, XTAL32K_RBIAS, reg, 3);
+	REG_SET_FIELD(CRG_TOP, CLK_32K_REG, XTAL32K_DISABLE_AMPREG, reg, 0);
+	CRG_TOP->CLK_32K_REG = reg;
+	REG_SET_BIT(CRG_TOP, CLK_32K_REG, XTAL32K_ENABLE);
+	cm_check_xtal_startup();
+	CRG_TOP->SLEEP_TIMER_REG = 3000;
+}
+
 int
 main()
 {
-	OS_TASK		task_h;
+	//OS_TASK		task_h;
 
-	cm_clk_init_low_level();
+	cm_clk_init_low_level_x();
+	//system_init(0);
 	OS_TASK_CREATE("init", system_init, 0,
 	    configMINIMAL_STACK_SIZE * OS_STACK_WORD_SIZE,
 	    OS_TASK_PRIORITY_HIGHEST, xHandle);
@@ -218,13 +271,16 @@ main()
 	cm_apb_set_clock_divider(apb_div1);
 	cm_ahb_set_clock_divider(ahb_div1);
 	cm_lp_clk_init();
-	sys_watchdog_init();
+	//sys_watchdog_init();
 	pm_system_init(periph_setup);
 	ad_uart_init();
 
 	//resource_init();
+	/*
 	OS_TASK_CREATE("main", main_task_func, NULL, 1000,
 	    OS_TASK_PRIORITY_NORMAL, task_h);
+	*/
+	main_task_func(0);
 	vTaskStartScheduler();
 	//console_init(SERIAL1, 256);
 

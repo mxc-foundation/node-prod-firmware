@@ -8,6 +8,7 @@ ELFTARGET=	$(OBJDIR)/$(PROJ).elf
 TARGET=		$(OBJDIR)/$(PROJ).bin
 
 OBJS+=	$(OBJDIR)/main.o \
+	$(OBJDIR)/join.o \
 	$(OBJDIR)/os-hooks.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \
@@ -58,7 +59,8 @@ CFLAGS+=	-Ddg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A \
 		-Ddg_configBLACK_ORCA_IC_STEP=BLACK_ORCA_IC_STEP_D \
 		-DCONFIG_AT45DB011D=1 -DCONFIG_24LC256=1 -DCONFIG_FM75=1 \
 		-DRELEASE_BUILD
-CFLAGS+=	-I$(SDKDIR)/sdk/bsp/include -I$(SDKDIR)/sdk/bsp/config \
+CFLAGS+=	-Ilmic \
+		-I$(SDKDIR)/sdk/bsp/include -I$(SDKDIR)/sdk/bsp/config \
 		-I$(SDKDIR)/sdk/bsp/peripherals/include \
 		-I$(SDKDIR)/sdk/bsp/memory/include \
 		-I$(SDKDIR)/sdk/bsp/adapters/include \

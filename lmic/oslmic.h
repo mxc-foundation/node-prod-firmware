@@ -232,6 +232,6 @@ extern xref2u1_t AESaux;
 u4_t os_aes (u1_t mode, xref2u1_t buf, u2_t len);
 #endif
 
-
+void print(char *);
 
 #endif // _oslmic_h_
