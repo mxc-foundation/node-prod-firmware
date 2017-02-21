@@ -113,12 +113,13 @@ u1_t hal_spi (u1_t outval);
  */
 //void hal_sleep (void);
 #define hal_sleep()	__WFI()
+//#define hal_sleep()	__NOP()
 
 /*
  * return 32-bit system time in ticks.
  */
-//u4_t hal_ticks (void);
-#define hal_ticks()	((u4_t)rtc_get())
+u4_t hal_ticks (void);
+//#define hal_ticks()	((u4_t)rtc_get())
 
 /*
  * busy-wait until specified timestamp (in ticks) is reached.

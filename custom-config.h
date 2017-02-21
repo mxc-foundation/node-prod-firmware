@@ -27,6 +27,8 @@
 #ifndef CUSTOM_CONFIG_QSPI_H_
 #define CUSTOM_CONFIG_QSPI_H_
 
+#define dg_configDISABLE_BACKGROUND_FLASH_OPS	1
+
 #include "bsp_definitions.h"
 
 #define __HEAP_SIZE  0x0100
@@ -81,8 +83,9 @@
 /*************************************************************************************************\
  * FreeRTOS specific config
  */
-#define OS_FREERTOS                              /* Define this to use FreeRTOS */
-#define configTOTAL_HEAP_SIZE                    14000   /* This is the FreeRTOS Total Heap Size */
+//#define OS_FREERTOS                              /* Define this to use FreeRTOS */
+//#define configTOTAL_HEAP_SIZE                    14000   /* This is the FreeRTOS Total Heap Size */
+#define OS_BAREMETAL
 
 /*************************************************************************************************\
  * Peripheral specific config
@@ -93,6 +96,7 @@
 #define dg_configUSE_HW_RF                      (0)
 #define dg_configUSE_HW_SPI                     (1)
 #define dg_configUSE_HW_TIMER0                  (1)
+#define dg_configUSE_HW_TIMER1                  (1)
 #define dg_configUSE_HW_TIMER2                  (1)
 
 #define dg_configI2C_ADAPTER                    (1)

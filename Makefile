@@ -9,7 +9,8 @@ TARGET=		$(OBJDIR)/$(PROJ).bin
 
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/join.o \
-	$(OBJDIR)/os-hooks.o
+	$(OBJDIR)/os-hooks.o \
+	$(OBJDIR)/rtc.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \
 	$(OBJDIR)/lmic/oslmic.o $(OBJDIR)/lmic/radio.o
@@ -18,7 +19,6 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/startup/startup_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/system_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/vector_table.o \
-	$(OBJDIR)/sdk/bsp/adapters/src/ad_uart.o \
 	$(OBJDIR)/sdk/bsp/memory/src/qspi_automode.o \
 	$(OBJDIR)/sdk/bsp/osal/resmgmt.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_cpm.o \
@@ -36,30 +36,18 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_watchdog.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_wkup.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/sys_tcs.o \
-	$(OBJDIR)/sdk/bsp/system/sys_man/sys_charger.o \
-	$(OBJDIR)/sdk/bsp/system/sys_man/sys_clock_mgr.o \
-	$(OBJDIR)/sdk/bsp/system/sys_man/sys_power_mgr.o \
-	$(OBJDIR)/sdk/bsp/system/sys_man/sys_rtc.o \
-	$(OBJDIR)/sdk/bsp/system/sys_man/sys_watchdog.o \
-	$(OBJDIR)/sdk/bsp/free_rtos/event_groups.o \
-	$(OBJDIR)/sdk/bsp/free_rtos/list.o \
-	$(OBJDIR)/sdk/bsp/free_rtos/tasks.o \
-	$(OBJDIR)/sdk/bsp/free_rtos/timers.o \
-	$(OBJDIR)/sdk/bsp/free_rtos/queue.o \
-	$(OBJDIR)/sdk/bsp/free_rtos/portable/MemMang/heap_4.o \
-	$(OBJDIR)/sdk/bsp/free_rtos/portable/GCC/ARM_CM0/port.o
 
 DEPS=		$(OBJS:.o=.d)
 
 CC=		arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb
 #CFLAGS+=	-Wall -Wextra -Werror
 CFLAGS+=	-std=gnu11 -Wall -Werror
-CFLAGS+=	-Os -fsigned-char -ffunction-sections -fdata-sections
+CFLAGS+=	-g -Os -fsigned-char -ffunction-sections -fdata-sections
 CFLAGS+=	-Ddg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A \
 		-Ddg_configBLACK_ORCA_IC_STEP=BLACK_ORCA_IC_STEP_D \
 		-DCONFIG_AT45DB011D=1 -DCONFIG_24LC256=1 -DCONFIG_FM75=1 \
 		-DRELEASE_BUILD
-CFLAGS+=	-Ilmic \
+CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/bsp/include -I$(SDKDIR)/sdk/bsp/config \
 		-I$(SDKDIR)/sdk/bsp/peripherals/include \
 		-I$(SDKDIR)/sdk/bsp/memory/include \
@@ -86,8 +74,6 @@ all: $(TARGET)
 #%.o: $(OBJDIR)/%.c
 #.c.o:
 #	arm-none-eabi-gcc -c $<
-
-#sdk/bsp/startup/config.o: $(SDKDIR)/sdk/bsp/startup/config.c
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p `dirname $@`

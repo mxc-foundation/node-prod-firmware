@@ -1,7 +1,13 @@
+#include <unistd.h> // XXX
 #include "oslmic.h"
 #include "hal.h"
+#include "rtc.h"
 
 #include <hw_cpm.h>
+#include <hw_timer1.h>
+#include <hw_watchdog.h>
+
+#define WDG_RESET()	hw_watchdog_set_pos_val(dg_configWDOG_RESET_VALUE)
 
 void
 hal_init()
@@ -28,15 +34,37 @@ hal_failed()
 	hw_cpm_reboot_system();
 }
 
+u4_t
+hal_ticks()
+{
+#if 0
+	uint32_t	prescaled, fine;
+
+	HW_TIMER1_GET_INSTANT(prescaled, fine);
+	return fine;
+#endif
+	return rtc_get();
+}
+
 u1_t
 hal_checkTimer(u4_t targettime)
 {
 	u4_t	dt = targettime - hal_ticks();
+	u4_t	ticks, value, dummy;
 
+	WDG_RESET();
+	ticks = hal_ticks();
+	dt = targettime - ticks;
 	if ((s4_t)dt < 5) {
+		write(1, ",", 1); // XXX
 		return 1;
 	} else {
-		// XXX Up to 1/512s delay
+		write(1, ".", 1); // XXX
+		if (dt >= 0x20000)
+			dt = 0x20000;
+		value = (dt + ticks) / (1 + dg_configTim1Prescaler);
+		HW_TIMER1_SET_TRIGGER(value, dummy);
+		(void)dummy;
 		return 0;
 	}
 }
