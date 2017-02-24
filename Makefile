@@ -9,7 +9,6 @@ TARGET=		$(OBJDIR)/$(PROJ).bin
 
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/join.o \
-	$(OBJDIR)/os-hooks.o \
 	$(OBJDIR)/rtc.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \

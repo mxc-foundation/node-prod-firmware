@@ -30,8 +30,8 @@
 
 #include <sdk_defs.h>
 #include <hw_spi.h>
-#include <sys_rtc.h>
 #include <osal.h>
+#include "rtc.h"
 
 #define HAL_LORA_SPI_NO		2
 
@@ -47,6 +47,12 @@
 #define HAL_LORA_RX_PIN		0
 #define HAL_LORA_TX_PORT	3
 #define HAL_LORA_TX_PIN		1
+#define HAL_LORA_DIO0_PORT	4
+#define HAL_LORA_DIO0_PIN	7
+#define HAL_LORA_DIO1_PORT	4
+#define HAL_LORA_DIO1_PIN	6
+#define HAL_LORA_DIO2_PORT	4
+#define HAL_LORA_DIO2_PIN	5
 
 #define __DEFINE_HAL_LORA_SPI_INT(x)	HW_SPI ## x
 #define __DEFINE_HAL_LORA_SPI(x)	__DEFINE_HAL_LORA_SPI_INT(x)
@@ -113,13 +119,12 @@ u1_t hal_spi (u1_t outval);
  */
 //void hal_sleep (void);
 #define hal_sleep()	__WFI()
-//#define hal_sleep()	__NOP()
 
 /*
  * return 32-bit system time in ticks.
  */
-u4_t hal_ticks (void);
-//#define hal_ticks()	((u4_t)rtc_get())
+//u4_t hal_ticks (void);
+#define hal_ticks()	((u4_t)rtc_get())
 
 /*
  * busy-wait until specified timestamp (in ticks) is reached.

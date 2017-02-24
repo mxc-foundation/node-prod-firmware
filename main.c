@@ -8,13 +8,14 @@
 #include <hw_trng.h>
 #include <hw_uart.h>
 #include <hw_watchdog.h>
+#include <hw_wkup.h>
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
 #include "rtc.h"
 
-#define hello
-//#define join
+//#define hello
+#define join
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
 
@@ -30,6 +31,11 @@
 #error "Invalid HAL_LORA_SPI_NO definition"
 #endif
 
+PRIVILEGED_DATA sys_clk_t	cm_sysclk;
+PRIVILEGED_DATA ahb_div_t	cm_ahbclk;
+
+static uint32_t	cnt; // XXX
+
 int
 _write(int fd, char *ptr, int len)
 {
@@ -42,11 +48,16 @@ _write(int fd, char *ptr, int len)
 static void
 say_hi(osjob_t *job)
 {
-	static int	n;
+	//static int	n;
 
+	os_setTimedCallback(job, os_getTime() + sec2osticks(5), say_hi);
+	printf("%ld\r\n", cnt);
+#if 0
 	printf("Hello #%u @ %u (%#010lx), TIMER1 trigger %#010lx\r\n",
 	    n++, os_getTimeSecs(), os_getTime(), hw_timer1_get_trigger());
-	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
+	if (n == 5)
+		hal_failed();
+#endif
 }
 #endif
 
@@ -85,6 +96,46 @@ spi_init(void)
 }
 
 static void
+wkup_intr_cb(void)
+{
+	uint8_t	dio = -1;
+
+	cnt++;
+	if (hw_gpio_get_pin_status(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN))
+		dio = 0;
+	else if (hw_gpio_get_pin_status(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN))
+		dio = 1;
+	else if (hw_gpio_get_pin_status(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN))
+		dio = 2;
+	else
+		goto fail;
+	radio_irq_handler(dio);
+	printf("wkup %d\r\n", dio);
+fail:
+	hw_wkup_reset_interrupt();
+}
+
+static void
+wkup_init(void)
+{
+	hw_wkup_init(NULL);
+	hw_wkup_set_counter_threshold(1);
+	hw_gpio_set_pin_function(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	hw_wkup_configure_pin(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN, true,
+	    HW_WKUP_PIN_STATE_HIGH);
+	hw_wkup_configure_pin(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN, true,
+	    HW_WKUP_PIN_STATE_HIGH);
+	hw_wkup_configure_pin(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN, true,
+	    HW_WKUP_PIN_STATE_HIGH);
+	hw_wkup_register_interrupt(wkup_intr_cb, 1);
+}
+
+static void
 periph_setup(void)
 {
 	uart_config	uart_cfg = {
@@ -106,14 +157,13 @@ periph_setup(void)
 	hw_uart_init(HW_UART1, &uart_cfg);
 	spi_init();
 	rtc_init();
+	wkup_init();
 }
 
 static void
 main_task_func(void *param)
 {
-	//uint32_t	ticks, prescaled = 0, fine = 0;
 	uint8_t		addr = 0, byte = 0;
-	//HW_SPI_FIFO	old_mode;
 #ifdef hello
 	osjob_t		job;
 #endif
@@ -121,52 +171,59 @@ main_task_func(void *param)
 	extern int	join_main(void);
 #endif
 
-	//console_uart = ad_uart_open(SERIAL1);
-	//hw_uart_init_ex(HW_UART1, &uart_cfg);
-	//hw_uart_init(HW_UART1, &uart_cfg);
-	printf("init\r\n");
+	os_init();
+#ifdef hello
+	say_hi(&job);
+#ifndef join
+	os_runloop();
+#endif
+#endif
 #ifdef join
 	join_main();
 #endif
-#ifdef hello
-	say_hi(&job);
-	os_runloop();
-#endif
 	printf("hello\r\n");
 	for (;;) {
-		/*
-		old_mode = hw_spi_change_fifo_mode(HAL_LORA_SPI,
-		    HW_SPI_FIFO_TX_ONLY);
-		*/
+		hal_pin_nss(0);
+		hal_spi(addr);
+		byte = hal_spi(0);
+		hal_pin_nss(1);
 		printf("%02x: %02x\r\n", addr, byte);
 		addr = (addr + 1) & 0x7f;
 	}
 }
 
-PRIVILEGED_DATA sys_clk_t cm_sysclk;
-PRIVILEGED_DATA ahb_div_t cm_ahbclk;
-
 int
 main()
 {
-	//OS_TASK		task_h;
-	uint32_t	dummy;
-
 	periph_setup();
-        hw_timer1_lp_clk_init();
-        //HW_TIMER1_SET_TRIGGER(16 - 1, dummy); // Set initial reload value
-	(void)dummy;
-	printf("bare metal\r\n");
-        hw_timer1_int_enable();                         // Enable interrupt
-        hw_timer1_enable();                             // Start running
-
-#ifdef CONFIG_RETARGET
-	extern void retarget_init(void);
-#endif
+	printf("*** BARE METAL ***\r\n");
 
 	main_task_func(0);
 
 	for (;;)
 		;
 	return 0;
+}
+
+void debug_event (int ev) {
+	static const char* evnames[] = {
+		[EV_SCAN_TIMEOUT]   = "SCAN_TIMEOUT",
+		[EV_BEACON_FOUND]   = "BEACON_FOUND",
+		[EV_BEACON_MISSED]  = "BEACON_MISSED",
+		[EV_BEACON_TRACKED] = "BEACON_TRACKED",
+		[EV_JOINING]        = "JOINING",
+		[EV_JOINED]         = "JOINED",
+		[EV_RFU1]           = "RFU1",
+		[EV_JOIN_FAILED]    = "JOIN_FAILED",
+		[EV_REJOIN_FAILED]  = "REJOIN_FAILED",
+		[EV_TXCOMPLETE]     = "TXCOMPLETE",
+		[EV_LOST_TSYNC]     = "LOST_TSYNC",
+		[EV_RESET]          = "RESET",
+		[EV_RXCOMPLETE]     = "RXCOMPLETE",
+		[EV_LINK_DEAD]      = "LINK_DEAD",
+		[EV_LINK_ALIVE]     = "LINK_ALIVE",
+		[EV_SCAN_FOUND]     = "SCAN_FOUND",
+		[EV_TXSTART]        = "EV_TXSTART",
+	};
+	printf("%s\r\n", (ev < sizeof(evnames)/sizeof(evnames[0])) ? evnames[ev] : "EV_UNKNOWN" );
 }
