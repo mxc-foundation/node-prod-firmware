@@ -49,6 +49,9 @@
 #define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
 #define dg_configEMULATE_OTP_COPY               (0)
 
+#define dg_configIMAGE_FLASH_OFFSET		0x20000
+#define dg_configSUOTA_SUPPORT			1
+
 #define dg_configUSER_CAN_USE_TIMER1            (0)
 
 #define dg_configMEM_RETENTION_MODE             (0x1F)
@@ -103,6 +106,9 @@
 #define dg_configSPI_ADAPTER                    (1)
 #define dg_configUART_ADAPTER                   (1)
 #define dg_configRF_ADAPTER                     (0)
+
+#define SUOTA_CERSION	SUOTA_VERSION_1_2
+#define SUOTA_PSM	0x81
 
 /* Include bsp default values */
 #include "bsp_defaults.h"
