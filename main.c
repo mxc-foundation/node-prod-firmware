@@ -31,10 +31,8 @@
 #error "Invalid HAL_LORA_SPI_NO definition"
 #endif
 
-PRIVILEGED_DATA sys_clk_t	cm_sysclk;
-PRIVILEGED_DATA ahb_div_t	cm_ahbclk;
-
-static uint32_t	cnt; // XXX
+PRIVILEGED_DATA sys_clk_t	cm_sysclk = sysclk_XTAL16M;
+PRIVILEGED_DATA ahb_div_t	cm_ahbclk = ahb_div1;
 
 int
 _write(int fd, char *ptr, int len)
@@ -51,7 +49,6 @@ say_hi(osjob_t *job)
 	//static int	n;
 
 	os_setTimedCallback(job, os_getTime() + sec2osticks(5), say_hi);
-	printf("%ld\r\n", cnt);
 #if 0
 	printf("Hello #%u @ %u (%#010lx), TIMER1 trigger %#010lx\r\n",
 	    n++, os_getTimeSecs(), os_getTime(), hw_timer1_get_trigger());
@@ -100,7 +97,6 @@ wkup_intr_cb(void)
 {
 	uint8_t	dio = -1;
 
-	cnt++;
 	if (hw_gpio_get_pin_status(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN))
 		dio = 0;
 	else if (hw_gpio_get_pin_status(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN))
@@ -110,7 +106,6 @@ wkup_intr_cb(void)
 	else
 		goto fail;
 	radio_irq_handler(dio);
-	printf("wkup %d\r\n", dio);
 fail:
 	hw_wkup_reset_interrupt();
 }
