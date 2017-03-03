@@ -107,7 +107,7 @@
 #define dg_configUART_ADAPTER                   (1)
 #define dg_configRF_ADAPTER                     (0)
 
-#define SUOTA_CERSION	SUOTA_VERSION_1_2
+#define SUOTA_VERSION	SUOTA_VERSION_1_2
 #define SUOTA_PSM	0x81
 
 /* Include bsp default values */
