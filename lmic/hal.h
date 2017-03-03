@@ -31,7 +31,11 @@
 #include <sdk_defs.h>
 #include <hw_spi.h>
 #include <osal.h>
+#ifdef OS_FREERTOS
+#include <sys_rtc.h>
+#else
 #include "rtc.h"
+#endif
 
 #define HAL_LORA_SPI_NO		2
 
@@ -106,19 +110,22 @@ u1_t hal_spi (u1_t outval);
  *   - will be followed by matching call to hal_enableIRQs()
  */
 //void hal_disableIRQs (void);
-#define hal_disableIRQs GLOBAL_INT_DISABLE
+//#define hal_disableIRQs GLOBAL_INT_DISABLE
+#define hal_disableIRQs taskENTER_CRITICAL
 
 /*
  * enable CPU interrupts.
  */
 //void hal_enableIRQs (void);
-#define hal_enableIRQs GLOBAL_INT_RESTORE
+//#define hal_enableIRQs GLOBAL_INT_RESTORE
+#define hal_enableIRQs taskEXIT_CRITICAL
 
 /*
  * put system and CPU in low-power mode, sleep until interrupt.
  */
-//void hal_sleep (void);
-#define hal_sleep()	__WFI()
+void hal_sleep (void);
+//#define hal_sleep()	__WFI()
+//#define hal_sleep()	__NOP()
 
 /*
  * return 32-bit system time in ticks.

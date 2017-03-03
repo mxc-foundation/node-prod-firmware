@@ -8,8 +8,7 @@ ELFTARGET=	$(OBJDIR)/$(PROJ).elf
 TARGET=		$(OBJDIR)/$(PROJ).bin
 
 OBJS+=	$(OBJDIR)/main.o \
-	$(OBJDIR)/join.o \
-	$(OBJDIR)/rtc.o
+	$(OBJDIR)/join.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \
 	$(OBJDIR)/lmic/oslmic.o $(OBJDIR)/lmic/radio.o
@@ -18,6 +17,13 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/startup/startup_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/system_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/vector_table.o \
+	$(OBJDIR)/sdk/bsp/free_rtos/event_groups.o \
+	$(OBJDIR)/sdk/bsp/free_rtos/list.o \
+	$(OBJDIR)/sdk/bsp/free_rtos/portable/GCC/ARM_CM0/port.o \
+	$(OBJDIR)/sdk/bsp/free_rtos/portable/MemMang/heap_4.o \
+	$(OBJDIR)/sdk/bsp/free_rtos/queue.o \
+	$(OBJDIR)/sdk/bsp/free_rtos/tasks.o \
+	$(OBJDIR)/sdk/bsp/free_rtos/timers.o \
 	$(OBJDIR)/sdk/bsp/memory/src/qspi_automode.o \
 	$(OBJDIR)/sdk/bsp/osal/resmgmt.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_cpm.o \
@@ -35,6 +41,10 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_watchdog.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_wkup.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/sys_tcs.o \
+	$(OBJDIR)/sdk/bsp/system/sys_man/sys_charger.o \
+	$(OBJDIR)/sdk/bsp/system/sys_man/sys_clock_mgr.o \
+	$(OBJDIR)/sdk/bsp/system/sys_man/sys_power_mgr.o \
+	$(OBJDIR)/sdk/bsp/system/sys_man/sys_rtc.o
 
 DEPS=		$(OBJS:.o=.d)
 

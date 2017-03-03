@@ -12,9 +12,11 @@
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
+#ifdef OS_BAREMETAL
 #include "rtc.h"
+#endif
 
-//#define hello
+#define hello
 #define join
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
@@ -31,8 +33,28 @@
 #error "Invalid HAL_LORA_SPI_NO definition"
 #endif
 
+#ifndef OS_FREERTOS
 PRIVILEGED_DATA sys_clk_t	cm_sysclk = sysclk_XTAL16M;
 PRIVILEGED_DATA ahb_div_t	cm_ahbclk = ahb_div1;
+#endif
+
+#ifdef OS_FREERTOS
+static OS_TASK xHandle;
+
+void
+vApplicationMallocFailedHook(void)
+{
+	printf("malloc\r\n");
+	hal_failed();
+}
+
+void
+vApplicationStackOverflowHook(void)
+{
+	printf("stack\r\n");
+	hal_failed();
+}
+#endif
 
 int
 _write(int fd, char *ptr, int len)
@@ -46,12 +68,12 @@ _write(int fd, char *ptr, int len)
 static void
 say_hi(osjob_t *job)
 {
-	//static int	n;
+	static int	n;
 
 	os_setTimedCallback(job, os_getTime() + sec2osticks(5), say_hi);
-#if 0
 	printf("Hello #%u @ %u (%#010lx), TIMER1 trigger %#010lx\r\n",
 	    n++, os_getTimeSecs(), os_getTime(), hw_timer1_get_trigger());
+#if 0
 	if (n == 5)
 		hal_failed();
 #endif
@@ -130,6 +152,22 @@ wkup_init(void)
 	hw_wkup_register_interrupt(wkup_intr_cb, 1);
 }
 
+#if 0
+static void
+sensor_init(void)
+{
+#define SENSOR_PORT	0
+#define SENSOR_PIN	7
+	hw_gpio_set_pin_function(SENSOR_PORT, SENSOR_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_ADC);
+}
+
+static int
+sensor_get(void)
+{
+}
+#endif
+
 static void
 periph_setup(void)
 {
@@ -151,7 +189,9 @@ periph_setup(void)
 	    HW_GPIO_FUNC_UART_RX);
 	hw_uart_init(HW_UART1, &uart_cfg);
 	spi_init();
+#ifdef OS_BAREMETAL
 	rtc_init();
+#endif
 	wkup_init();
 }
 
@@ -166,6 +206,17 @@ main_task_func(void *param)
 	extern int	join_main(void);
 #endif
 
+	cm_sys_clk_init(sysclk_XTAL16M);
+	cm_apb_set_clock_divider(apb_div1);
+	cm_ahb_set_clock_divider(ahb_div1);
+	cm_lp_clk_init();
+	//sys_watchdog_init();
+#if dg_configUSE_WDOG
+	// Register the Idle task first.
+	idle_task_wdog_id = sys_watchdog_register(false);
+	ASSERT_WARNING(idle_task_wdog_id != -1);
+	sys_watchdog_configure_idle_id(idle_task_wdog_id);
+#endif
 	os_init();
 #ifdef hello
 	say_hi(&job);
@@ -190,11 +241,18 @@ main_task_func(void *param)
 int
 main()
 {
+#ifdef OS_FREERTOS
+	cm_clk_init_low_level();
+#endif
 	periph_setup();
 	printf("*** BARE METAL ***\r\n");
 
-	main_task_func(0);
+	OS_TASK_CREATE("sysinit", main_task_func, (void *)0,
+	    512 * OS_STACK_WORD_SIZE,
+	    OS_TASK_PRIORITY_HIGHEST, xHandle);
+	//main_task_func(0);
 
+	vTaskStartScheduler();
 	for (;;)
 		;
 	return 0;
