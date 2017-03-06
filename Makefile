@@ -101,6 +101,9 @@ $(ELFTARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
 flash install: all
+	$(SDKDIR)/utilities/scripts/suota/v11/initial_flash.sh --nobootloader $(TARGET)
+
+firstflash: all
 	$(SDKDIR)/utilities/scripts/suota/v11/initial_flash.sh $(TARGET)
 
 #	/opt/SEGGER/JLink/JLinkGDBServer -if swd -device Cortex-M0 -endian little -speed 8000 -port 2331 -swoport 2332 -telnetport 2333 -vd -ir -localhostonly 1 -log jlink.log -s &
