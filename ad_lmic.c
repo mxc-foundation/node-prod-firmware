@@ -10,7 +10,7 @@
 static TimerHandle_t	lora_timer;
 static QueueHandle_t	lora_queue;
 
-#define debug //XXX
+//#define debug
 
 #ifdef debug
 #define SET_HIGH(pin, port)	hw_gpio_set_active(pin, port)

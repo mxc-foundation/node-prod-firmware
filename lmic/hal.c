@@ -51,7 +51,6 @@ hal_checkTimer(u4_t targettime)
 	dt = targettime - hal_ticks();
 	if (dt < 5) {
 		// Expiration time is nigh
-		printf("one %ld\r\n", dt);
 		return 1;
 	} else if (dt > LONGSLEEP) {
 		// Timer precision is 64 ticks.  Sleep for 64 to
