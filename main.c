@@ -12,6 +12,7 @@
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
+#include "ad_lmic.h"
 #ifdef OS_BAREMETAL
 #include "rtc.h"
 #endif
@@ -114,44 +115,6 @@ spi_init(void)
 	hw_spi_init(HAL_LORA_SPI, &cfg);
 }
 
-static void
-wkup_intr_cb(void)
-{
-	uint8_t	dio = -1;
-
-	if (hw_gpio_get_pin_status(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN))
-		dio = 0;
-	else if (hw_gpio_get_pin_status(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN))
-		dio = 1;
-	else if (hw_gpio_get_pin_status(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN))
-		dio = 2;
-	else
-		goto fail;
-	radio_irq_handler(dio);
-fail:
-	hw_wkup_reset_interrupt();
-}
-
-static void
-wkup_init(void)
-{
-	hw_wkup_init(NULL);
-	hw_wkup_set_counter_threshold(1);
-	hw_gpio_set_pin_function(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_wkup_configure_pin(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN, true,
-	    HW_WKUP_PIN_STATE_HIGH);
-	hw_wkup_configure_pin(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN, true,
-	    HW_WKUP_PIN_STATE_HIGH);
-	hw_wkup_configure_pin(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN, true,
-	    HW_WKUP_PIN_STATE_HIGH);
-	hw_wkup_register_interrupt(wkup_intr_cb, 1);
-}
-
 #if 0
 static void
 sensor_init(void)
@@ -192,7 +155,6 @@ periph_setup(void)
 #ifdef OS_BAREMETAL
 	rtc_init();
 #endif
-	wkup_init();
 }
 
 static void
@@ -211,13 +173,13 @@ main_task_func(void *param)
 	cm_ahb_set_clock_divider(ahb_div1);
 	cm_lp_clk_init();
 	//sys_watchdog_init();
+	ad_lmic_init();
 #if dg_configUSE_WDOG
 	// Register the Idle task first.
 	idle_task_wdog_id = sys_watchdog_register(false);
 	ASSERT_WARNING(idle_task_wdog_id != -1);
 	sys_watchdog_configure_idle_id(idle_task_wdog_id);
 #endif
-	os_init();
 #ifdef hello
 	say_hi(&job);
 #ifndef join
@@ -245,7 +207,12 @@ main()
 	cm_clk_init_low_level();
 #endif
 	periph_setup();
+#ifdef OS_BAREMETAL
 	printf("*** BARE METAL ***\r\n");
+#endif
+#ifdef OS_FREERTOS
+	printf("*** FreeRTOS ***\r\n");
+#endif
 
 	OS_TASK_CREATE("sysinit", main_task_func, (void *)0,
 	    512 * OS_STACK_WORD_SIZE,
@@ -256,27 +223,4 @@ main()
 	for (;;)
 		;
 	return 0;
-}
-
-void debug_event (int ev) {
-	static const char* evnames[] = {
-		[EV_SCAN_TIMEOUT]   = "SCAN_TIMEOUT",
-		[EV_BEACON_FOUND]   = "BEACON_FOUND",
-		[EV_BEACON_MISSED]  = "BEACON_MISSED",
-		[EV_BEACON_TRACKED] = "BEACON_TRACKED",
-		[EV_JOINING]        = "JOINING",
-		[EV_JOINED]         = "JOINED",
-		[EV_RFU1]           = "RFU1",
-		[EV_JOIN_FAILED]    = "JOIN_FAILED",
-		[EV_REJOIN_FAILED]  = "REJOIN_FAILED",
-		[EV_TXCOMPLETE]     = "TXCOMPLETE",
-		[EV_LOST_TSYNC]     = "LOST_TSYNC",
-		[EV_RESET]          = "RESET",
-		[EV_RXCOMPLETE]     = "RXCOMPLETE",
-		[EV_LINK_DEAD]      = "LINK_DEAD",
-		[EV_LINK_ALIVE]     = "LINK_ALIVE",
-		[EV_SCAN_FOUND]     = "SCAN_FOUND",
-		[EV_TXSTART]        = "EV_TXSTART",
-	};
-	printf("%s\r\n", (ev < sizeof(evnames)/sizeof(evnames[0])) ? evnames[ev] : "EV_UNKNOWN" );
 }

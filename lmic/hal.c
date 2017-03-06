@@ -1,5 +1,6 @@
 #include "oslmic.h"
 #include "hal.h"
+#include "ad_lmic.h"
 
 #include <hw_cpm.h>
 #include <hw_timer1.h>
@@ -33,51 +34,59 @@ hal_failed()
 	hw_watchdog_gen_RST();
 	hw_watchdog_set_pos_val(1);
 	hw_watchdog_unfreeze();
-	__WFI();
+	for (;;)
+		__WFI();
 }
 
-static u4_t	target;
+#define LONGSLEEP (2 * (s4_t)(configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ))
+
+static int	needsleep;
+static u4_t	waituntil;
 
 u1_t
 hal_checkTimer(u4_t targettime)
 {
-	u4_t	ticks, dt/* , value, dummy */;
+	s4_t	dt;
 
-	ticks = hal_ticks();
-	target = targettime;
-	dt = targettime - ticks;
-	//printf("ticks %lu, targettime %lu, dt %lu (%ld), period %lu (%ld)\r\n", ticks, targettime, dt, (s4_t)dt, TICK_PERIOD, 2 * (s4_t)TICK_PERIOD + 5);
-	if ((s4_t)dt < 2 * (s4_t)(configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) + 5) {
-		printf("one %ld\r\n", (s4_t)dt);
+	dt = targettime - hal_ticks();
+	if (dt < 5) {
+		// Expiration time is nigh
+		printf("one %ld\r\n", dt);
 		return 1;
+	} else if (dt > LONGSLEEP) {
+		// Timer precision is 64 ticks.  Sleep for 64 to
+		// 128 ticks less than specified.
+		needsleep = 1;
+		ad_lmic_set_timer(
+		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
 	} else {
-		if (dt >= 0x10000)
-			dt = 0x10000;
-		//printf("delay 0x%lx (%lu, %lu)\r\n", dt, dt, dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ));
-		//vTaskDelay(dt);
-		//vTaskSuspend(dt);
-		//printf("ok\r\n");
-		//value = (dt + ticks) / (1 + dg_configTim1Prescaler);
-		//HW_TIMER1_SET_TRIGGER(value, dummy);
-		//(void)dummy;
-		return 0;
+		// Don't sleep, busy-wait instead.
+		needsleep = 0;
+		waituntil = targettime;
 	}
+	return 0;
 }
 
 void
 hal_sleep()
 {
-	u4_t	dt;
-
-	dt = target - hal_ticks();
-	if (dt >= 0x10000)
-		dt = 0x10000;
-	vTaskDelay(dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ));
+	if (needsleep) {
+		// Wait for timer or WKUP_GPIO interrupt
+		ad_lmic_sleep();
+	} else {
+		// Busy-wait
+		hal_waitUntil(waituntil - 5);
+	}
 }
 
 void
 hal_waitUntil(u4_t time)
 {
-	while (!hal_checkTimer(time))
-		;
+	s4_t	dt = time - hal_ticks();
+
+	if ((s4_t)dt > 0) {
+		hal_disableIRQs();
+		hw_cpm_delay_usec(osticks2us(dt));
+		hal_enableIRQs();
+	}
 }
