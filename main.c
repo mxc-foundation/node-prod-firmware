@@ -12,12 +12,11 @@
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
-#include "ad_lmic.h"
 #ifdef OS_BAREMETAL
 #include "rtc.h"
 #endif
 
-#define hello
+//#define hello
 #define join
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
@@ -71,9 +70,9 @@ say_hi(osjob_t *job)
 {
 	static int	n;
 
-	os_setTimedCallback(job, os_getTime() + sec2osticks(5), say_hi);
-	printf("Hello #%u @ %u (%#010lx), TIMER1 trigger %#010lx\r\n",
-	    n++, os_getTimeSecs(), os_getTime(), hw_timer1_get_trigger());
+	os_setTimedCallback(job, os_getTime() + sec2osticks(3600), say_hi);
+	printf("Hello #%u @ %u (%ld)\r\n",
+	    n++, os_getTimeSecs(), os_getTime());
 #if 0
 	if (n == 5)
 		hal_failed();
@@ -173,7 +172,7 @@ main_task_func(void *param)
 	cm_ahb_set_clock_divider(ahb_div1);
 	cm_lp_clk_init();
 	//sys_watchdog_init();
-	ad_lmic_init();
+	os_init();
 #if dg_configUSE_WDOG
 	// Register the Idle task first.
 	idle_task_wdog_id = sys_watchdog_register(false);
@@ -223,4 +222,27 @@ main()
 	for (;;)
 		;
 	return 0;
+}
+
+void debug_event (int ev) {
+	static const char* evnames[] = {
+		[EV_SCAN_TIMEOUT]   = "SCAN_TIMEOUT",
+		[EV_BEACON_FOUND]   = "BEACON_FOUND",
+		[EV_BEACON_MISSED]  = "BEACON_MISSED",
+		[EV_BEACON_TRACKED] = "BEACON_TRACKED",
+		[EV_JOINING]        = "JOINING",
+		[EV_JOINED]         = "JOINED",
+		[EV_RFU1]           = "RFU1",
+		[EV_JOIN_FAILED]    = "JOIN_FAILED",
+		[EV_REJOIN_FAILED]  = "REJOIN_FAILED",
+		[EV_TXCOMPLETE]     = "TXCOMPLETE",
+		[EV_LOST_TSYNC]     = "LOST_TSYNC",
+		[EV_RESET]          = "RESET",
+		[EV_RXCOMPLETE]     = "RXCOMPLETE",
+		[EV_LINK_DEAD]      = "LINK_DEAD",
+		[EV_LINK_ALIVE]     = "LINK_ALIVE",
+		[EV_SCAN_FOUND]     = "SCAN_FOUND",
+		[EV_TXSTART]        = "EV_TXSTART",
+	};
+	printf("%s\r\n", (ev < sizeof(evnames)/sizeof(evnames[0])) ? evnames[ev] : "EV_UNKNOWN" );
 }

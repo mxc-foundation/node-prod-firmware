@@ -146,6 +146,11 @@ void hal_waitUntil (u4_t time);
 u1_t hal_checkTimer (u4_t targettime);
 
 /*
+ * set short sleeping time
+ */
+void hal_setShortSleep(void);
+
+/*
  * perform fatal failure action.
  *   - called by assertions
  *   - action could be HALT or reboot

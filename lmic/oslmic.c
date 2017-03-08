@@ -110,15 +110,19 @@ void os_runloop () {
         if(OS.runnablejobs) {
             j = OS.runnablejobs;
             OS.runnablejobs = j->next;
-        } else if(OS.scheduledjobs && hal_checkTimer(OS.scheduledjobs->deadline)) { // check for expired timed jobs
-            j = OS.scheduledjobs;
-            OS.scheduledjobs = j->next;
+        } else if(OS.scheduledjobs) {
+            if (hal_checkTimer(OS.scheduledjobs->deadline)) { // check for expired timed jobs
+                j = OS.scheduledjobs;
+                OS.scheduledjobs = j->next;
+            }
+        } else { // nothing pending
+            hal_setShortSleep();
         }
         hal_enableIRQs();
         if(j) { // run job callback
             j->func(j);
-        } else { // nothing pending
-            hal_sleep(); // wake by irq (timer already restarted)
+        } else {
+            hal_sleep(); // wake by timer or irq (timer already restarted)
         }
     }
 }

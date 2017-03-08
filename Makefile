@@ -8,7 +8,6 @@ ELFTARGET=	$(OBJDIR)/$(PROJ).elf
 TARGET=		$(OBJDIR)/$(PROJ).bin
 
 OBJS+=	$(OBJDIR)/main.o \
-	$(OBJDIR)/ad_lmic.o \
 	$(OBJDIR)/join.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \
