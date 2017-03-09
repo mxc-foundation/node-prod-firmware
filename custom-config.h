@@ -46,6 +46,9 @@
 #define dg_configCODE_LOCATION                  NON_VOLATILE_IS_FLASH
 #define dg_configEXT_CRYSTAL_FREQ               EXT_CRYSTAL_IS_16M
 
+//#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
+//#define dg_configSKIP_MAGIC_CHECK_AT_START	1
+//#define dg_configENABLE_DEBUGGER		0
 #define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
 #define dg_configEMULATE_OTP_COPY               (0)
 
@@ -87,7 +90,7 @@
  * FreeRTOS specific config
  */
 #define OS_FREERTOS                              /* Define this to use FreeRTOS */
-#define configTOTAL_HEAP_SIZE                    14000   /* This is the FreeRTOS Total Heap Size */
+#define configTOTAL_HEAP_SIZE                    16386   /* This is the FreeRTOS Total Heap Size */
 //#define OS_BAREMETAL
 
 /*************************************************************************************************\
@@ -96,7 +99,7 @@
 #define dg_configUSE_HW_I2C                     (1)
 #define dg_configUSE_HW_IRGEN                   (1)
 #define dg_configUSE_HW_QUAD                    (1)
-#define dg_configUSE_HW_RF                      (0)
+#define dg_configUSE_HW_RF                      (1)
 #define dg_configUSE_HW_SPI                     (1)
 #define dg_configUSE_HW_TIMER0                  (1)
 #define dg_configUSE_HW_TIMER1                  (1)
@@ -105,8 +108,9 @@
 #define dg_configI2C_ADAPTER                    (1)
 #define dg_configSPI_ADAPTER                    (1)
 #define dg_configUART_ADAPTER                   (1)
-#define dg_configRF_ADAPTER                     (0)
+#define dg_configRF_ADAPTER                     (1)
 
+#define CONFIG_USE_BLE
 #define SUOTA_VERSION	SUOTA_VERSION_1_2
 #define SUOTA_PSM	0x81
 

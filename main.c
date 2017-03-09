@@ -9,6 +9,13 @@
 #include <hw_uart.h>
 #include <hw_watchdog.h>
 #include <hw_wkup.h>
+#include <resmgmt.h>
+#include <sys_power_mgr.h>
+#include <sys_watchdog.h>
+
+#include <ad_gpadc.h>
+#include <ad_nvms.h>
+#include <ble_mgr.h>
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
@@ -16,7 +23,7 @@
 #include "rtc.h"
 #endif
 
-//#define hello
+#define hello
 #define join
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
@@ -38,12 +45,13 @@ PRIVILEGED_DATA sys_clk_t	cm_sysclk = sysclk_XTAL16M;
 PRIVILEGED_DATA ahb_div_t	cm_ahbclk = ahb_div1;
 #endif
 
-#ifdef OS_FREERTOS
-static OS_TASK xHandle;
+static OS_TASK lmic_handle, ble_handle;
+static char	running;
 
 void
 vApplicationMallocFailedHook(void)
 {
+	running = 0;
 	printf("malloc\r\n");
 	hal_failed();
 }
@@ -51,16 +59,22 @@ vApplicationMallocFailedHook(void)
 void
 vApplicationStackOverflowHook(void)
 {
+	running = 0;
 	printf("stack\r\n");
 	hal_failed();
 }
-#endif
 
 int
 _write(int fd, char *ptr, int len)
 {
+	int	rem = len;
 	(void)fd;
-	hw_uart_write_buffer(HW_UART1, ptr, len);
+	while (rem--) {
+		hw_uart_write(HW_UART1, *ptr++);
+		if (running)
+			taskYIELD();
+	}
+	//hw_uart_write_buffer(HW_UART1, ptr, len);
 	return len;
 }
 
@@ -70,7 +84,7 @@ say_hi(osjob_t *job)
 {
 	static int	n;
 
-	os_setTimedCallback(job, os_getTime() + sec2osticks(3600), say_hi);
+	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
 	printf("Hello #%u @ %u (%ld)\r\n",
 	    n++, os_getTimeSecs(), os_getTime());
 #if 0
@@ -156,6 +170,8 @@ periph_setup(void)
 #endif
 }
 
+extern void	ble_task_func(void *params);
+
 static void
 main_task_func(void *param)
 {
@@ -167,18 +183,6 @@ main_task_func(void *param)
 	extern int	join_main(void);
 #endif
 
-	cm_sys_clk_init(sysclk_XTAL16M);
-	cm_apb_set_clock_divider(apb_div1);
-	cm_ahb_set_clock_divider(ahb_div1);
-	cm_lp_clk_init();
-	//sys_watchdog_init();
-	os_init();
-#if dg_configUSE_WDOG
-	// Register the Idle task first.
-	idle_task_wdog_id = sys_watchdog_register(false);
-	ASSERT_WARNING(idle_task_wdog_id != -1);
-	sys_watchdog_configure_idle_id(idle_task_wdog_id);
-#endif
 #ifdef hello
 	say_hi(&job);
 #ifndef join
@@ -190,6 +194,8 @@ main_task_func(void *param)
 #endif
 	printf("hello\r\n");
 	for (;;) {
+		vTaskDelay(0x100000);
+		continue;
 		hal_pin_nss(0);
 		hal_spi(addr);
 		byte = hal_spi(0);
@@ -199,9 +205,51 @@ main_task_func(void *param)
 	}
 }
 
+static void
+sysinit_task_func(void *param)
+{
+	cm_sys_clk_init(sysclk_XTAL16M);
+	cm_apb_set_clock_divider(apb_div1);
+	cm_ahb_set_clock_divider(ahb_div1);
+	cm_lp_clk_init();
+	sys_watchdog_init();
+#if dg_configUSE_WDOG
+	// Register the Idle task first.
+	idle_task_wdog_id = sys_watchdog_register(false);
+	ASSERT_WARNING(idle_task_wdog_id != -1);
+	sys_watchdog_configure_idle_id(idle_task_wdog_id);
+#endif
+	cm_sys_clk_set(sysclk_XTAL16M);
+	pm_system_init(NULL);
+	resource_init();
+	ad_uart_init();
+	GPADC_INIT();
+	pm_set_wakeup_mode(true);
+	pm_set_sleep_mode(pm_mode_active); //XXX
+	pm_stay_alive(); // XXX
+	ad_nvms_init();
+	ad_ble_init();
+	ble_mgr_init();
+	os_init();
+//#define LMIC_TASK_PRIORITY	OS_TASK_PRIORITY_HIGHEST
+#define LMIC_TASK_PRIORITY	OS_TASK_PRIORITY_NORMAL
+	OS_TASK_CREATE("LoRa & LMiC", main_task_func, (void *)0,
+	    2048, LMIC_TASK_PRIORITY, lmic_handle);
+#define ble__
+#ifndef ble__
+	if(0)
+#endif
+	OS_TASK_CREATE("BLE & SUOTA", ble_task_func, (void *)0,
+	    1024, OS_TASK_PRIORITY_NORMAL, ble_handle);
+	running = 1;
+	OS_TASK_DELETE(OS_GET_CURRENT_TASK());
+}
+
 int
 main()
 {
+	OS_TASK	handle;
+
 #ifdef OS_FREERTOS
 	cm_clk_init_low_level();
 #endif
@@ -213,9 +261,8 @@ main()
 	printf("*** FreeRTOS ***\r\n");
 #endif
 
-	OS_TASK_CREATE("sysinit", main_task_func, (void *)0,
-	    512 * OS_STACK_WORD_SIZE,
-	    OS_TASK_PRIORITY_HIGHEST, xHandle);
+	OS_TASK_CREATE("sysinit", sysinit_task_func, (void *)0,
+	    1024, OS_TASK_PRIORITY_HIGHEST, handle);
 	//main_task_func(0);
 
 	vTaskStartScheduler();

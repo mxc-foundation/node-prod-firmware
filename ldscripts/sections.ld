@@ -163,7 +163,7 @@ SECTIONS
                                                    + (__RetRAM0_code_end__ - __RetRAM0_code_start__)
                                                    - ORIGIN(ROM);
         __mirrored_image_size = __etext + (__data_end__ - __data_start__) - ORIGIN(ROM);
-        ASSERT((ORIGIN(RAM) == 0x7FE0000) || (ORIGIN(RAM) + LENGTH(RAM) < 0x7FDEC00), "ROM variables region (starting at 0x7FDEC00) overflowed by RAM")
+        ASSERT(ORIGIN(RAM) + LENGTH(RAM) < 0x7FDEC00, "ROM variables region (starting at 0x7FDEC00) overflowed by RAM")
         ASSERT(__RetRAM0_data_end__ < 0x7FDEC00, "ROM variables region (starting at 0x7FDEC00) overflowed by RetRAM0")
         INCLUDE da14681_00_rom.symbols
 }

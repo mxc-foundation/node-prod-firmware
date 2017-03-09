@@ -159,6 +159,7 @@ hal_waitUntil(u4_t time)
 			debug("intr\r\n");
 			break;
 		}
+		taskYIELD();
 	}
 	SET_LOW(4, 2);
 }
