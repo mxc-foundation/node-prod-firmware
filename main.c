@@ -23,8 +23,10 @@
 #include "rtc.h"
 #endif
 
-#define hello
+//#define hello
 #define join
+#define ble
+#define output
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
 
@@ -67,14 +69,18 @@ vApplicationStackOverflowHook(void)
 int
 _write(int fd, char *ptr, int len)
 {
+#ifdef output
+#if 0
 	int	rem = len;
-	(void)fd;
 	while (rem--) {
 		hw_uart_write(HW_UART1, *ptr++);
 		if (running)
 			taskYIELD();
 	}
-	//hw_uart_write_buffer(HW_UART1, ptr, len);
+#endif
+	hw_uart_write_buffer(HW_UART1, ptr, len);
+#endif
+	(void)fd;
 	return len;
 }
 
@@ -222,7 +228,7 @@ sysinit_task_func(void *param)
 	cm_sys_clk_set(sysclk_XTAL16M);
 	pm_system_init(NULL);
 	resource_init();
-	ad_uart_init();
+	//ad_uart_init();
 	GPADC_INIT();
 	pm_set_wakeup_mode(true);
 	pm_set_sleep_mode(pm_mode_active); //XXX
@@ -235,8 +241,7 @@ sysinit_task_func(void *param)
 #define LMIC_TASK_PRIORITY	OS_TASK_PRIORITY_NORMAL
 	OS_TASK_CREATE("LoRa & LMiC", main_task_func, (void *)0,
 	    2048, LMIC_TASK_PRIORITY, lmic_handle);
-#define ble__
-#ifndef ble__
+#ifndef ble
 	if(0)
 #endif
 	OS_TASK_CREATE("BLE & SUOTA", ble_task_func, (void *)0,

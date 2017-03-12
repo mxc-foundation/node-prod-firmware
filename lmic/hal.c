@@ -1,33 +1,34 @@
 #include "oslmic.h"
 #include "hal.h"
 
-#include <hw_cpm.h>
-#include <hw_timer1.h>
 #include <hw_watchdog.h>
 #include <hw_wkup.h>
 
+//#define DEBUG
+
+#ifdef DEBUG
+#define SET_HIGH(port, pin)	hw_gpio_set_active(port, pin)
+#define SET_LOW(port, pin)	hw_gpio_set_inactive(port, pin)
+#else
+#define SET_HIGH(port, pin)
+#define SET_LOW(port, pin)
+#endif
+
 static QueueHandle_t	lora_queue;
-
-static int
-handle_dio(uint8_t dio)
-{
-	BaseType_t      woken = 0;
-	uint8_t         dummy = 1;
-
-	radio_irq_handler(dio);
-	xQueueSendFromISR(lora_queue, &dummy, &woken);
-	return woken;
-}
 
 static void
 wkup_intr_cb(void)
 {
-	int     woken = 0;
+	BaseType_t	woken = 0;
+	ostime_t	now;
 
-	if (hw_gpio_get_pin_status(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN))
-		woken = handle_dio(0);
-	else if (hw_gpio_get_pin_status(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN))
-		woken = handle_dio(1);
+	if (hw_gpio_get_pin_status(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN) ||
+	    hw_gpio_get_pin_status(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN)) {
+		now = hal_ticks();
+		xQueueSendFromISR(lora_queue, &now, &woken);
+		SET_LOW(4, 1);
+		SET_LOW(4, 2);
+	}
 	hw_wkup_reset_interrupt();
 	portYIELD_FROM_ISR(woken);
 }
@@ -49,30 +50,18 @@ wkup_init(void)
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_configure_pin(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
-	hw_wkup_register_interrupt(wkup_intr_cb, 1);
+	hw_wkup_register_interrupt(wkup_intr_cb, 3);
 }
-
-//#define DEBUG
-
-#ifdef DEBUG
-#define SET_HIGH(port, pin)	hw_gpio_set_active(port, pin)
-#define SET_LOW(port, pin)	hw_gpio_set_inactive(port, pin)
-#define debug(...)		printf(__VA_ARGS__)
-#else
-#define SET_HIGH(port, pin)
-#define SET_LOW(port, pin)
-#define debug(...)
-#endif
 
 void
 hal_init()
 {
-	lora_queue = xQueueCreate(5, sizeof(uint8_t));
+	lora_queue = xQueueCreate(5, sizeof(ostime_t));
 	wkup_init();
 #ifdef DEBUG
-	hw_gpio_set_pin_function(1, 0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(4, 0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(4, 1, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(4, 2, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(0, 7, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
 #endif
 }
 
@@ -94,7 +83,6 @@ void
 hal_failed()
 {
 	__disable_irq();
-	hw_watchdog_unfreeze();
 	hw_watchdog_gen_RST();
 	hw_watchdog_set_pos_val(1);
 	hw_watchdog_unfreeze();
@@ -132,18 +120,18 @@ void
 hal_sleep()
 {
 	s4_t	dt = waituntil - hal_ticks();
-	uint8_t	dummy;
+	ostime_t	when;
 
 	if (dt > LONGSLEEP) {
+
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
-		debug("sleep %ld (%ld s)\r\n", dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1, dt / configSYSTICK_CLOCK_HZ);
-		xQueueReceive(lora_queue, &dummy,
-		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
+		if (xQueueReceive(lora_queue, &when,
+		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1))
+			radio_irq_handler(when);
 	} else {
 		// Busy-wait
-		debug("wait %ld @ %ld\r\n", waituntil - 5, ticks);
 		hal_waitUntil(waituntil - 5);
 	}
 }
@@ -151,15 +139,13 @@ hal_sleep()
 void
 hal_waitUntil(u4_t time)
 {
-	uint8_t	dummy;
+	ostime_t	when;
 
-	SET_HIGH(4, 2);
 	while ((s4_t)(time - hal_ticks()) > 0) {
-		if (xQueueReceive(lora_queue, &dummy, 0)) {
-			debug("intr\r\n");
+		if (xQueueReceive(lora_queue, &when, 0)) {
+			radio_irq_handler(when);
 			break;
 		}
 		taskYIELD();
 	}
-	SET_LOW(4, 2);
 }

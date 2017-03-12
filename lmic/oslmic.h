@@ -94,8 +94,10 @@ u1_t os_getRndU1(void);
 #define DEFINE_LMIC  struct lmic_t LMIC
 #define DECLARE_LMIC extern struct lmic_t LMIC
 
+typedef s4_t  ostime_t;
+
 void radio_init (void);
-void radio_irq_handler (u1_t dio);
+void radio_irq_handler (ostime_t now);
 void os_init (void);
 void os_runloop (void);
 
@@ -114,8 +116,6 @@ void os_runloop (void);
 #elif OSTICKS_PER_SEC < 10000 || OSTICKS_PER_SEC > 64516
 #error Illegal OSTICKS_PER_SEC - must be in range [10000:64516]. One tick must be 15.5us .. 100us long.
 #endif
-
-typedef s4_t  ostime_t;
 
 #define os_getTime()		((ostime_t)hal_ticks())
 #define os_getTimeSecs()	((uint)os_getTime() / OSTICKS_PER_SEC)

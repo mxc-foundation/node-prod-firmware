@@ -111,14 +111,16 @@ u1_t hal_spi (u1_t outval);
  */
 //void hal_disableIRQs (void);
 //#define hal_disableIRQs GLOBAL_INT_DISABLE
-#define hal_disableIRQs taskENTER_CRITICAL
+//#define hal_disableIRQs taskENTER_CRITICAL
+#define hal_disableIRQs()
 
 /*
  * enable CPU interrupts.
  */
 //void hal_enableIRQs (void);
 //#define hal_enableIRQs GLOBAL_INT_RESTORE
-#define hal_enableIRQs taskEXIT_CRITICAL
+//#define hal_enableIRQs taskEXIT_CRITICAL
+#define hal_enableIRQs()
 
 /*
  * put system and CPU in low-power mode, sleep until interrupt.

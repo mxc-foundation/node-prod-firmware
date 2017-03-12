@@ -104,7 +104,7 @@ void os_setTimedCallback (osjob_t* job, ostime_t time, osjobcb_t cb) {
 void os_runloop () {
     while(1) {
         osjob_t* j = NULL;
-        WDG_RESET();
+        //WDG_RESET(); // XXX
         hal_disableIRQs();
         // check for runnable jobs
         if(OS.runnablejobs) {
@@ -132,6 +132,9 @@ os_getRndU4()
 {
 	uint32_t	n;
 
+	hw_trng_enable(0); // XXX: needed?
+	while (hw_trng_get_fifo_level() < 1)
+		;
 	hw_trng_get_numbers(&n, 1);
 	return n;
 }

@@ -762,7 +762,7 @@ static const u2_t LORA_RXDONE_FIXUP[] = {
 
 // called by hal ext IRQ handler
 // (radio goes to stanby mode after tx/rx operations)
-void radio_irq_handler (u1_t dio) {
+void radio_irq_handler (ostime_t now) {
 #if CFG_TxContinuousMode
     // clear radio IRQ flags
     writeReg(LORARegIrqFlags, 0xFF);
@@ -773,7 +773,6 @@ void radio_irq_handler (u1_t dio) {
     opmode(OPMODE_TX);
     return;
 #endif
-    ostime_t now = os_getTime();
     if( (readReg(RegOpMode) & OPMODE_LORA) != 0) { // LORA modem
         u1_t flags = readReg(LORARegIrqFlags);
         if( flags & IRQ_LORA_TXDONE_MASK ) {
