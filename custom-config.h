@@ -61,7 +61,8 @@
 #define dg_configMEM_RETENTION_MODE_PRESERVE_IMAGE       (0x1F)
 #define dg_configSHUFFLING_MODE                 (0x3)
 
-#define dg_configUSE_WDOG                       (0)
+#define dg_configUSE_WDOG                       (1)
+#define dg_configWDOG_MAX_TASKS_CNT             (8)
 
 #define dg_configUSE_DCDC                       (1)
 

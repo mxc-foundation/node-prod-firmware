@@ -28,9 +28,6 @@
 #include "lmic.h"
 
 #include <hw_trng.h>
-#include <hw_watchdog.h>
-
-#define WDG_RESET()	hw_watchdog_set_pos_val(dg_configWDOG_RESET_VALUE)
 
 // RUNTIME STATE
 static struct {
@@ -104,7 +101,6 @@ void os_setTimedCallback (osjob_t* job, ostime_t time, osjobcb_t cb) {
 void os_runloop () {
     while(1) {
         osjob_t* j = NULL;
-        //WDG_RESET(); // XXX
         hal_disableIRQs();
         // check for runnable jobs
         if(OS.runnablejobs) {

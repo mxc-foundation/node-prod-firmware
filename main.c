@@ -47,13 +47,15 @@ PRIVILEGED_DATA sys_clk_t	cm_sysclk = sysclk_XTAL16M;
 PRIVILEGED_DATA ahb_div_t	cm_ahbclk = ahb_div1;
 #endif
 
+#if dg_configUSE_WDOG
+INITIALISED_PRIVILEGED_DATA int8_t	idle_task_wdog_id = -1;
+#endif
+
 static OS_TASK lmic_handle, ble_handle;
-static char	running;
 
 void
 vApplicationMallocFailedHook(void)
 {
-	running = 0;
 	printf("malloc\r\n");
 	hal_failed();
 }
@@ -61,10 +63,17 @@ vApplicationMallocFailedHook(void)
 void
 vApplicationStackOverflowHook(void)
 {
-	running = 0;
 	printf("stack\r\n");
 	hal_failed();
 }
+
+#if dg_configUSE_WDOG
+void
+vApplicationIdleHook(void)
+{
+	sys_watchdog_notify(idle_task_wdog_id);
+}
+#endif
 
 int
 _write(int fd, char *ptr, int len)
@@ -218,8 +227,8 @@ sysinit_task_func(void *param)
 	cm_apb_set_clock_divider(apb_div1);
 	cm_ahb_set_clock_divider(ahb_div1);
 	cm_lp_clk_init();
-	sys_watchdog_init();
 #if dg_configUSE_WDOG
+	sys_watchdog_init();
 	// Register the Idle task first.
 	idle_task_wdog_id = sys_watchdog_register(false);
 	ASSERT_WARNING(idle_task_wdog_id != -1);
@@ -246,7 +255,6 @@ sysinit_task_func(void *param)
 #endif
 	OS_TASK_CREATE("BLE & SUOTA", ble_task_func, (void *)0,
 	    1024, OS_TASK_PRIORITY_NORMAL, ble_handle);
-	running = 1;
 	OS_TASK_DELETE(OS_GET_CURRENT_TASK());
 }
 

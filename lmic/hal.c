@@ -1,8 +1,8 @@
 #include "oslmic.h"
 #include "hal.h"
 
-#include <hw_watchdog.h>
 #include <hw_wkup.h>
+#include <sys_watchdog.h>
 
 //#define DEBUG
 
@@ -13,6 +13,8 @@
 #define SET_HIGH(port, pin)
 #define SET_LOW(port, pin)
 #endif
+
+static PRIVILEGED_DATA int8_t	wdog_id;
 
 static QueueHandle_t	lora_queue;
 
@@ -56,7 +58,9 @@ wkup_init(void)
 void
 hal_init()
 {
-	lora_queue = xQueueCreate(5, sizeof(ostime_t));
+	wdog_id = sys_watchdog_register(false);
+	sys_watchdog_notify(wdog_id);
+	lora_queue = xQueueCreate(1, sizeof(ostime_t));
 	wkup_init();
 #ifdef DEBUG
 	hw_gpio_set_pin_function(4, 0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
@@ -82,12 +86,7 @@ hal_spi(u1_t outval)
 void
 hal_failed()
 {
-	__disable_irq();
-	hw_watchdog_gen_RST();
-	hw_watchdog_set_pos_val(1);
-	hw_watchdog_unfreeze();
-	for (;;)
-		__WFI();
+	hw_cpm_reboot_system();
 }
 
 #define LONGSLEEP (2 * (s4_t)(configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ))
@@ -120,15 +119,20 @@ void
 hal_sleep()
 {
 	s4_t	dt = waituntil - hal_ticks();
-	ostime_t	when;
 
 	if (dt > LONGSLEEP) {
+		BaseType_t	ret;
+		ostime_t	when;
 
+		if (dt >= 0x10000)
+			sys_watchdog_suspend(wdog_id);
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
-		if (xQueueReceive(lora_queue, &when,
-		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1))
+		ret = xQueueReceive(lora_queue, &when,
+		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
+		sys_watchdog_notify_and_resume(wdog_id);
+		if (ret)
 			radio_irq_handler(when);
 	} else {
 		// Busy-wait
@@ -141,11 +145,11 @@ hal_waitUntil(u4_t time)
 {
 	ostime_t	when;
 
+	sys_watchdog_notify(wdog_id);
 	while ((s4_t)(time - hal_ticks()) > 0) {
 		if (xQueueReceive(lora_queue, &when, 0)) {
 			radio_irq_handler(when);
 			break;
 		}
-		taskYIELD();
 	}
 }
