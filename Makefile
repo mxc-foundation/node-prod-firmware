@@ -6,6 +6,7 @@ SDKDIR?=	../DA1468x_SDK_BTLE_v_$(SDKVER)
 
 ELFTARGET=	$(OBJDIR)/$(PROJ).elf
 TARGET=		$(OBJDIR)/$(PROJ).bin
+IMGTARGET=	$(OBJDIR)/$(PROJ).img
 
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/ble-suota.o \
@@ -81,6 +82,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/arch/main/ble/arch_main.o \
 	$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/arch/main/ble/jump_table.o \
 	$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/driver/rf/src/rf_ble_functions.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/util/list.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/util/queue.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/ble_service.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/dis.o \
@@ -106,11 +108,11 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/bsp/adapters/include \
 		-I$(SDKDIR)/sdk/bsp/system/sys_man/include \
 		-I$(SDKDIR)/sdk/bsp/osal \
-		-I$(SDKDIR)/sdk/bsp/free_rtos/include \
 		-I$(SDKDIR)/sdk/interfaces/ble/config \
 		-I$(SDKDIR)/sdk/interfaces/ble/include \
 		-I$(SDKDIR)/sdk/interfaces/ble/include/adapter \
 		-I$(SDKDIR)/sdk/interfaces/ble/include/manager \
+		-I$(SDKDIR)/sdk/interfaces/ble/include/util \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/config \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/ip/ble/hl/src/host/att \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/ip/ble/hl/src/host/att/attc \
@@ -152,7 +154,8 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/driver/reg \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/driver/rf/api \
 		-I$(SDKDIR)/sdk/interfaces/ble_services/include \
-		-I$(SDKDIR)/sdk/middleware/console/include
+		-I$(SDKDIR)/sdk/middleware/console/include \
+		-I$(SDKDIR)/sdk/bsp/free_rtos/include
 CFLAGS+=	-includecustom-config.h
 LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
 		-fmessage-length=0 -fsigned-char -ffunction-sections \
@@ -165,12 +168,17 @@ LDADD=		-lble_stack_da14681_00
 all: $(TARGET)
 	arm-none-eabi-size -B $(ELFTARGET)
 
-.PHONY: all flash install clean scope
+image: $(IMGTARGET)
 
-.SUFFIXES: .bin .elf
+.PHONY: all image flash install clean scope
+
+.SUFFIXES: .img .bin .elf
 
 .elf.bin:
 	arm-none-eabi-objcopy -O binary $< $@
+
+.bin.img:
+	$(SDKDIR)/utilities/scripts/suota/v11/mkimage.sh $<
 
 #%.o: $(OBJDIR)/%.c
 #.c.o:

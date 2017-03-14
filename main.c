@@ -237,7 +237,6 @@ sysinit_task_func(void *param)
 	cm_sys_clk_set(sysclk_XTAL16M);
 	pm_system_init(NULL);
 	resource_init();
-	//ad_uart_init();
 	GPADC_INIT();
 	pm_set_wakeup_mode(true);
 	pm_set_sleep_mode(pm_mode_active); //XXX
@@ -246,7 +245,6 @@ sysinit_task_func(void *param)
 	ad_ble_init();
 	ble_mgr_init();
 	os_init();
-//#define LMIC_TASK_PRIORITY	OS_TASK_PRIORITY_HIGHEST
 #define LMIC_TASK_PRIORITY	OS_TASK_PRIORITY_NORMAL
 	OS_TASK_CREATE("LoRa & LMiC", main_task_func, (void *)0,
 	    2048, LMIC_TASK_PRIORITY, lmic_handle);
@@ -276,7 +274,6 @@ main()
 
 	OS_TASK_CREATE("sysinit", sysinit_task_func, (void *)0,
 	    1024, OS_TASK_PRIORITY_HIGHEST, handle);
-	//main_task_func(0);
 
 	vTaskStartScheduler();
 	for (;;)
