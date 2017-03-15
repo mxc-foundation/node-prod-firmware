@@ -112,7 +112,6 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/interfaces/ble/include \
 		-I$(SDKDIR)/sdk/interfaces/ble/include/adapter \
 		-I$(SDKDIR)/sdk/interfaces/ble/include/manager \
-		-I$(SDKDIR)/sdk/interfaces/ble/include/util \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/config \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/ip/ble/hl/src/host/att \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/ip/ble/hl/src/host/att/attc \

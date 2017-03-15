@@ -8,10 +8,10 @@
 #include <dis.h>
 #include <dlg_suota.h>
 #include <ias.h>
-#include <list.h>
 #include <lls.h>
 #include <sys_watchdog.h>
 #include <tps.h>
+#include <util/list.h>
 #include "sw_version.h"
 
 #include "lmic/lmic.h"
