@@ -19,9 +19,6 @@
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
-#ifdef OS_BAREMETAL
-#include "rtc.h"
-#endif
 
 //#define hello
 #define join
@@ -40,11 +37,6 @@
 #define HAL_LORA_GPIO_FUNC_SPI_DO	HW_GPIO_FUNC_SPI2_DO
 #else
 #error "Invalid HAL_LORA_SPI_NO definition"
-#endif
-
-#ifndef OS_FREERTOS
-PRIVILEGED_DATA sys_clk_t	cm_sysclk = sysclk_XTAL16M;
-PRIVILEGED_DATA ahb_div_t	cm_ahbclk = ahb_div1;
 #endif
 
 #if dg_configUSE_WDOG
@@ -102,10 +94,6 @@ say_hi(osjob_t *job)
 	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
 	printf("Hello #%u @ %u (%ld)\r\n",
 	    n++, os_getTimeSecs(), os_getTime());
-#if 0
-	if (n == 5)
-		hal_failed();
-#endif
 }
 #endif
 
@@ -180,9 +168,6 @@ periph_setup(void)
 	    HW_GPIO_FUNC_UART_RX);
 	hw_uart_init(HW_UART1, &uart_cfg);
 	spi_init();
-#ifdef OS_BAREMETAL
-	rtc_init();
-#endif
 }
 
 extern void	ble_task_func(void *params);
@@ -235,24 +220,28 @@ sysinit_task_func(void *param)
 	sys_watchdog_configure_idle_id(idle_task_wdog_id);
 #endif
 	cm_sys_clk_set(sysclk_XTAL16M);
-	pm_system_init(NULL);
+	pm_system_init(periph_setup);
+	printf("*** FreeRTOS ***\r\n");
 	resource_init();
 	GPADC_INIT();
 	pm_set_wakeup_mode(true);
-	pm_set_sleep_mode(pm_mode_active); //XXX
-	pm_stay_alive(); // XXX
+	//pm_set_sleep_mode(pm_mode_extended_sleep); //XXX
+	pm_set_sleep_mode(pm_mode_idle); //XXX
+	//pm_set_sleep_mode(pm_mode_active); //XXX
+	//pm_stay_alive(); // XXX
 	ad_nvms_init();
+#ifdef ble
 	ad_ble_init();
 	ble_mgr_init();
+#endif
 	os_init();
-#define LMIC_TASK_PRIORITY	OS_TASK_PRIORITY_NORMAL
 	OS_TASK_CREATE("LoRa & LMiC", main_task_func, (void *)0,
-	    2048, LMIC_TASK_PRIORITY, lmic_handle);
+	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
 #ifndef ble
 	if(0)
 #endif
 	OS_TASK_CREATE("BLE & SUOTA", ble_task_func, (void *)0,
-	    1024, OS_TASK_PRIORITY_NORMAL, ble_handle);
+	    1024, OS_TASK_PRIORITY_NORMAL + 1, ble_handle);
 	OS_TASK_DELETE(OS_GET_CURRENT_TASK());
 }
 
@@ -261,20 +250,9 @@ main()
 {
 	OS_TASK	handle;
 
-#ifdef OS_FREERTOS
 	cm_clk_init_low_level();
-#endif
-	periph_setup();
-#ifdef OS_BAREMETAL
-	printf("*** BARE METAL ***\r\n");
-#endif
-#ifdef OS_FREERTOS
-	printf("*** FreeRTOS ***\r\n");
-#endif
-
 	OS_TASK_CREATE("sysinit", sysinit_task_func, (void *)0,
 	    1024, OS_TASK_PRIORITY_HIGHEST, handle);
-
 	vTaskStartScheduler();
 	for (;;)
 		;
