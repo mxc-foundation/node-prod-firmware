@@ -173,7 +173,7 @@ periph_setup(void)
 extern void	ble_task_func(void *params);
 
 static void
-main_task_func(void *param)
+lora_task_func(void *param)
 {
 	uint8_t		addr = 0, byte = 0;
 #ifdef hello
@@ -235,7 +235,7 @@ sysinit_task_func(void *param)
 	ble_mgr_init();
 #endif
 	os_init();
-	OS_TASK_CREATE("LoRa & LMiC", main_task_func, (void *)0,
+	OS_TASK_CREATE("LoRa & LMiC", lora_task_func, (void *)0,
 	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
 #ifndef ble
 	if(0)
