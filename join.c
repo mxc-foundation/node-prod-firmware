@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include "lmic.h"
+#include "proto.h"
 //#include "debug.h"
 void debug_event (int ev);
 
@@ -129,6 +130,7 @@ static void blinkfunc (osjob_t* j) {
 // LMIC EVENT CALLBACK
 //////////////////////////////////////////////////
 
+#if 0
 void onEvent (ev_t ev) {
     debug_event(ev);
 
@@ -170,3 +172,4 @@ tx:
 	  break;
     }
 }
+#endif

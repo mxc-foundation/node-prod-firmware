@@ -16,9 +16,7 @@
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
-#ifdef OS_BAREMETAL
-#include "rtc.h"
-#endif
+#include "ble-suota.h"
 
 /*
  * 0x01 == BLE_APP_NOTIFY_MASK
@@ -63,6 +61,12 @@ static const dis_device_info_t	dis_info = {
 };
 
 static const char	device_name[] = "MatchStick 123";
+
+bool
+is_suota_ongoing()
+{
+	return suota_ongoing;
+}
 
 static bool
 suota_ready_cb(void)
@@ -221,11 +225,13 @@ ble_task_func(void *params)
 	uint8_t		scan_rsp[BLE_SCAN_RSP_LEN_MAX];
 	ble_service_t	*suota;
 #if dg_configUSE_WDOG
-	int8_t		wdog_id = -1; //XXX
+	int8_t		wdog_id;
 
 	wdog_id = sys_watchdog_register(false);
 #endif
 	printf("ble init\r\n");
+	ad_ble_init();
+	ble_mgr_init();
 	ble_peripheral_start();
 	ble_register_app();
 	ble_gap_mtu_size_set(512);

@@ -1,28 +1,18 @@
 #include <stdio.h>
 
 #include <console.h>
-#include <hw_cpm.h>
-#include <hw_otpc.h>
-#include <hw_qspi.h>
-#include <hw_timer1.h>
 #include <hw_trng.h>
 #include <hw_uart.h>
-#include <hw_watchdog.h>
-#include <hw_wkup.h>
-#include <resmgmt.h>
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
 
 #include <ad_gpadc.h>
 #include <ad_nvms.h>
-#include <ble_mgr.h>
 
 #include "lmic/lmic.h"
-#include "lmic/hal.h"
 
 //#define hello
 #define join
-#define ble
 #define output
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
@@ -43,7 +33,7 @@
 INITIALISED_PRIVILEGED_DATA int8_t	idle_task_wdog_id = -1;
 #endif
 
-static OS_TASK lmic_handle, ble_handle;
+static OS_TASK lmic_handle;
 
 void
 vApplicationMallocFailedHook(void)
@@ -170,8 +160,6 @@ periph_setup(void)
 	spi_init();
 }
 
-extern void	ble_task_func(void *params);
-
 static void
 lora_task_func(void *param)
 {
@@ -230,18 +218,9 @@ sysinit_task_func(void *param)
 	//pm_set_sleep_mode(pm_mode_active); //XXX
 	//pm_stay_alive(); // XXX
 	ad_nvms_init();
-#ifdef ble
-	ad_ble_init();
-	ble_mgr_init();
-#endif
 	os_init();
 	OS_TASK_CREATE("LoRa & LMiC", lora_task_func, (void *)0,
 	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
-#ifndef ble
-	if(0)
-#endif
-	OS_TASK_CREATE("BLE & SUOTA", ble_task_func, (void *)0,
-	    1024, OS_TASK_PRIORITY_NORMAL + 1, ble_handle);
 	OS_TASK_DELETE(OS_GET_CURRENT_TASK());
 }
 
@@ -257,27 +236,4 @@ main()
 	for (;;)
 		;
 	return 0;
-}
-
-void debug_event (int ev) {
-	static const char* evnames[] = {
-		[EV_SCAN_TIMEOUT]   = "SCAN_TIMEOUT",
-		[EV_BEACON_FOUND]   = "BEACON_FOUND",
-		[EV_BEACON_MISSED]  = "BEACON_MISSED",
-		[EV_BEACON_TRACKED] = "BEACON_TRACKED",
-		[EV_JOINING]        = "JOINING",
-		[EV_JOINED]         = "JOINED",
-		[EV_RFU1]           = "RFU1",
-		[EV_JOIN_FAILED]    = "JOIN_FAILED",
-		[EV_REJOIN_FAILED]  = "REJOIN_FAILED",
-		[EV_TXCOMPLETE]     = "TXCOMPLETE",
-		[EV_LOST_TSYNC]     = "LOST_TSYNC",
-		[EV_RESET]          = "RESET",
-		[EV_RXCOMPLETE]     = "RXCOMPLETE",
-		[EV_LINK_DEAD]      = "LINK_DEAD",
-		[EV_LINK_ALIVE]     = "LINK_ALIVE",
-		[EV_SCAN_FOUND]     = "SCAN_FOUND",
-		[EV_TXSTART]        = "EV_TXSTART",
-	};
-	printf("%s\r\n", (ev < sizeof(evnames)/sizeof(evnames[0])) ? evnames[ev] : "EV_UNKNOWN" );
 }

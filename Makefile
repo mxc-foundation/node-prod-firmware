@@ -10,7 +10,9 @@ IMGTARGET=	$(OBJDIR)/$(PROJ).img
 
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/ble-suota.o \
-	$(OBJDIR)/join.o
+	$(OBJDIR)/join.o \
+	$(OBJDIR)/proto.o \
+	$(OBJDIR)/sensor.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \
 	$(OBJDIR)/lmic/oslmic.o $(OBJDIR)/lmic/radio.o

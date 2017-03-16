@@ -1,3 +1,4 @@
+#include <stdio.h> //XXX
 #include <hw_uart.h> //XXX
 #include "oslmic.h"
 #include "hal.h"
