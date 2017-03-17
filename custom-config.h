@@ -114,6 +114,7 @@
 #define CONFIG_USE_BLE
 #define SUOTA_VERSION	SUOTA_VERSION_1_2
 #define SUOTA_PSM	0x81
+#define USE_PARTITION_TABLE_1MB_WITH_SUOTA
 
 /* Include bsp default values */
 #include "bsp_defaults.h"
