@@ -7,10 +7,11 @@ Quick experiments with Gimasi's Loraduino/Tuino cloud suggest
 that the maximum payload length is 0x33 (51) bytes.
 
 Payload is consisting of several commands in a Type-Length-Value
-format.  The first byte is consisting of Type (high 4 bits),
-defining the command, and Length (low 4 bits), the length of the
+format.  The first byte is consisting of Type (bits [7:4]),
+defining the command, and Length (bits [3:0]), the length of the
 arguments in bytes.  If the Length bits are 0xF (binary 1111),
-the command has its length specified in the second byte.
+the command has its length specified in bits [5:0] of the second
+byte.
 
 The commands are as follows:
 
@@ -27,17 +28,19 @@ Number	Name		Length	Description
 				tuun BLE and SUOTA on for
 				upgrades.  The argument is as
 				follows:
-				High bit:
+				bit [7]:
 					0	just reboot
 					1	BLE on
-				Low 7 bits:
-					00	TBD
-					01	5 minutes
-					02	15 minutes
-					03	30 minutes
-					04	1 hour
-					05	2 hours
-					06	4 hours
-					07-0F	TBD
+				bits [6:3]:
+						Reserved
+				bits [2:0]:
+					0	TBD
+					1	5 minutes
+					2	15 minutes
+					3	30 minutes
+					4	1 hour
+					5	2 hours
+					6	4 hours
+					7	TBD
 
 Response: TBD
