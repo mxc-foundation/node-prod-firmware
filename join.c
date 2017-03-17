@@ -27,7 +27,6 @@
 
 #include <stdio.h>
 #include "lmic.h"
-#include "proto.h"
 //#include "debug.h"
 void debug_event (int ev);
 

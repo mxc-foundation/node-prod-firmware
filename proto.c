@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "lmic/lmic.h"
 #include "ble-suota.h"
-#include "proto.h"
 #include "sensor.h"
 
 #define PORT		0x01
