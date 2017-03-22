@@ -137,6 +137,12 @@ hal_failed()
 
 static u4_t	waituntil;
 
+void
+hal_resetWatchdog(void)
+{
+	sys_watchdog_notify(wdog_id);
+}
+
 u1_t
 hal_checkTimer(u4_t targettime)
 {
@@ -168,7 +174,6 @@ hal_sleep()
 		BaseType_t	ret;
 		ostime_t	when;
 
-		sys_watchdog_notify(wdog_id);
 		if (dt >= 0x10000)
 			sys_watchdog_suspend(wdog_id);
 		// Timer precision is 64 ticks.  Sleep for 64 to
@@ -190,7 +195,6 @@ hal_waitUntil(u4_t time)
 {
 	ostime_t	when;
 
-	sys_watchdog_notify(wdog_id);
 	while ((s4_t)(time - hal_ticks()) > 0) {
 		if (xQueueReceive(lora_queue, &when, 0)) {
 			radio_irq_handler(when);

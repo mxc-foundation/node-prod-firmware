@@ -102,6 +102,7 @@ void os_runloop () {
     while(1) {
         osjob_t* j = NULL;
         hal_disableIRQs();
+        hal_resetWatchdog();
         // check for runnable jobs
         if(OS.runnablejobs) {
             j = OS.runnablejobs;
