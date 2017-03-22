@@ -7,12 +7,12 @@
 #include <sys_watchdog.h>
 
 #include <ad_gpadc.h>
-#include <ad_nvms.h>
+#include <ad_nvms_ves.h>
 
 #include "lmic/lmic.h"
+#include "proto.h"
 
 //#define hello
-#define join
 #define output
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
@@ -161,39 +161,6 @@ periph_setup(void)
 }
 
 static void
-lora_task_func(void *param)
-{
-	uint8_t		addr = 0, byte = 0;
-#ifdef hello
-	osjob_t		job;
-#endif
-#ifdef join
-	extern int	join_main(void);
-#endif
-
-#ifdef hello
-	say_hi(&job);
-#ifndef join
-	os_runloop();
-#endif
-#endif
-#ifdef join
-	join_main();
-#endif
-	printf("hello\r\n");
-	for (;;) {
-		vTaskDelay(0x100000);
-		continue;
-		hal_pin_nss(0);
-		hal_spi(addr);
-		byte = hal_spi(0);
-		hal_pin_nss(1);
-		printf("%02x: %02x\r\n", addr, byte);
-		addr = (addr + 1) & 0x7f;
-	}
-}
-
-static void
 sysinit_task_func(void *param)
 {
 	cm_sys_clk_init(sysclk_XTAL16M);
@@ -218,7 +185,7 @@ sysinit_task_func(void *param)
 	//pm_set_sleep_mode(pm_mode_active); //XXX
 	//pm_stay_alive(); // XXX
 	ad_nvms_init();
-	os_init();
+	ad_nvms_ves_init();
 	OS_TASK_CREATE("LoRa & LMiC", lora_task_func, (void *)0,
 	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
 	OS_TASK_DELETE(OS_GET_CURRENT_TASK());

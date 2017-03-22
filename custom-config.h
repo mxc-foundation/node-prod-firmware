@@ -116,6 +116,8 @@
 #define SUOTA_PSM	0x81
 #define USE_PARTITION_TABLE_1MB_WITH_SUOTA
 
+#define dg_configNVPARAM_ADAPTER                (1)
+
 /* Include bsp default values */
 #include "bsp_defaults.h"
 

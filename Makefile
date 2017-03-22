@@ -10,7 +10,6 @@ IMGTARGET=	$(OBJDIR)/$(PROJ).img
 
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/ble-suota.o \
-	$(OBJDIR)/join.o \
 	$(OBJDIR)/proto.o \
 	$(OBJDIR)/sensor.o
 
@@ -26,6 +25,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_nvms.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_nvms_direct.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_nvms_ves.o \
+	$(OBJDIR)/sdk/bsp/adapters/src/ad_nvparam.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_rf.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_temp_sens.o \
 	$(OBJDIR)/sdk/bsp/free_rtos/event_groups.o \

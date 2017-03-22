@@ -2,8 +2,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <ad_nvparam.h>
+#include <platform_nvparam.h>
 #include "lmic/lmic.h"
 #include "ble-suota.h"
+#include "proto.h"
 #include "sensor.h"
 
 #define DEBUG
@@ -46,6 +49,36 @@ static const ostime_t	reboot_timeouts[] = {
 
 static uint8_t	pend_tx_data[MAX_LEN_PAYLOAD];
 static uint8_t	pend_tx_len;
+
+/* dead4d6174636858 */
+static u1_t	appeui[8] = { 'X', 'h', 'c', 't', 'a', 'M', 0xad, 0xde };
+/* dec04d6174636858 */
+static u1_t	deveui[8] = { 'X', 'h', 'c', 't', 'a', 'M', 0xc0, 0xde };
+/* 00000000000000000000000000000000 */
+static u1_t	devkey[16];
+
+#define PARAM_DEV_KEY_OFF	0
+#define PARAM_DEV_KEY_LEN	sizeof(devkey)
+#define PARAM_APP_EUI_OFF	(PARAM_DEV_KEY_OFF + PARAM_DEV_KEY_LEN)
+#define PARAM_APP_EUI_LEN	sizeof(appeui)
+
+void
+os_getArtEui(u1_t *buf)
+{
+	memcpy(buf, appeui, sizeof(appeui));
+}
+
+void
+os_getDevEui(u1_t *buf)
+{
+	memcpy(buf, deveui, sizeof(deveui));
+}
+
+void
+os_getDevKey(u1_t *buf)
+{
+	memcpy(buf, devkey, sizeof(devkey));
+}
 
 static void
 do_reboot(osjob_t *job)
@@ -233,4 +266,64 @@ onEvent(ev_t ev)
 	default:
 		break;
 	}
+}
+
+void
+read_param(nvms_t handle, uint32_t addr, uint8_t *buf, uint32_t len)
+{
+	uint8_t	tmp[16];
+	size_t	i;
+
+	ad_nvms_read(handle, addr, tmp, len);
+	for (i = 0; i < len; i++) {
+		if (tmp[i] != 0xff) {
+			memcpy(buf, tmp, len);
+			break;
+		}
+	}
+}
+
+static void
+param_init(void)
+{
+	nvms_t		nvms;
+	nvparam_t	nvparam;
+	uint16_t	param_len;
+	uint8_t		buf[6];
+	uint8_t		valid;
+
+	nvms = ad_nvms_open(NVMS_GENERIC_PART);
+	read_param(nvms, PARAM_DEV_KEY_OFF, devkey, PARAM_DEV_KEY_LEN);
+	read_param(nvms, PARAM_APP_EUI_OFF, appeui, PARAM_APP_EUI_LEN);
+	nvparam = ad_nvparam_open("ble_platform");
+	param_len = ad_nvparam_get_length(nvparam, TAG_BLE_PLATFORM_BD_ADDRESS,
+	    NULL);
+	ad_nvparam_read_offset(nvparam, TAG_BLE_PLATFORM_BD_ADDRESS,
+	    param_len - sizeof(valid), sizeof(valid), &valid);
+	if (valid == 0) {
+		ad_nvparam_read(nvparam, TAG_BLE_PLATFORM_BD_ADDRESS,
+		    sizeof(buf), buf);
+		memcpy(deveui, buf, 3);
+		deveui[3] = 0xff;
+		deveui[4] = 0xfe;
+		memcpy(deveui + 5, buf + 3, 3);
+	}
+}
+
+static void
+lora_init(osjob_t* j)
+{
+	LMIC_reset();
+	LMIC_startJoining();
+}
+
+void
+lora_task_func(void *param)
+{
+	osjob_t	init_job;
+
+	param_init();
+	os_init();
+	os_setTimedCallback(&init_job, hal_ticks() + sec2osticks(3), lora_init);
+	os_runloop();
 }
