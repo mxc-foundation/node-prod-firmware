@@ -18,11 +18,26 @@ The commands are as follows:
 Number	Name		Length	Description
 ------	----		------	-----------
 
-0	Get params	TBD	TBD
+0	Get/set params	1	Get parameter described by fitst
+				byte.
+			>=2	Set parameter described by first
+				byte to the value specified in
+				the rest of the message.
 
-1	Set params	TBD	TBD
+				Parameters are as follows:
 
-2	Reboot/Upgrade	0	Reboot the mote immediately.
+				param	len	description
+				0	6	DevEUI-48 and BLE
+						MAC address (MSBF)
+				1	8	AppEUI-64 (MSBF)
+				2	16	AppKey
+						(write-only)
+				3	TBD	Sensor period
+
+				Parameters 0, 1 and 2 are
+				actualized after reboot.
+
+1	Reboot/Upgrade	0	Reboot the mote immediately.
 			1	Reboot the mote after the
 				specified timeout; optionally
 				tuun BLE and SUOTA on for
@@ -43,4 +58,10 @@ Number	Name		Length	Description
 					6	4 hours
 					7	TBD
 
-Response: TBD
+Number	Name		Length	Description
+------	----		------	-----------
+0	Sensor data	>=1	Sensor data.
+1	Param value	>=2	Response to the "Get params"
+				command.  The first byte is the
+				param number, the rest are the
+				value.

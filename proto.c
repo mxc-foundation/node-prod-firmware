@@ -23,7 +23,7 @@
 
 typedef enum {
 	INFO_SENSOR_DATA	= 0x00,
-	INFO_CMD_RESPONSE	= 0x10,
+	INFO_PARAM		= 0x10,
 } uplink_info;
 
 /* CMD_REBOOT_UPGRADE */
@@ -50,17 +50,69 @@ static const ostime_t	reboot_timeouts[] = {
 static uint8_t	pend_tx_data[MAX_LEN_PAYLOAD];
 static uint8_t	pend_tx_len;
 
-/* dead4d6174636858 */
-static u1_t	appeui[8] = { 'X', 'h', 'c', 't', 'a', 'M', 0xad, 0xde };
-/* dec04d6174636858 */
-static u1_t	deveui[8] = { 'X', 'h', 'c', 't', 'a', 'M', 0xc0, 0xde };
-/* 00000000000000000000000000000000 */
-static u1_t	devkey[16];
+/* EUI-48: 78af58040000  EUI-64: 78af58fffe040000 */
+static u1_t	deveui[6] = { 0x00, 0x00, 0x04, 0x58, 0xaf, 0x78, };
+/* 78af580000040000 */
+static u1_t	appeui[8] = { 0x00, 0x00, 0x04, 0x00, 0x00, 0x58, 0xaf, 0x78, };
+/* df89dc73d9f52c0609edb2185efa4a34 */
+static u1_t	devkey[16] = {
+	0xdf, 0x89, 0xdc, 0x73, 0xd9, 0xf5, 0x2c, 0x06,
+	0x09, 0xed, 0xb2, 0x18, 0x5e, 0xfa, 0x4a, 0x34,
+};
 
-#define PARAM_DEV_KEY_OFF	0
-#define PARAM_DEV_KEY_LEN	sizeof(devkey)
-#define PARAM_APP_EUI_OFF	(PARAM_DEV_KEY_OFF + PARAM_DEV_KEY_LEN)
+/* NVPARAM "ble_platform" */
+#define PARAM_DEV_EUI_OFF	TAG_BLE_PLATFORM_BD_ADDRESS
+#define PARAM_DEV_EUI_LEN	sizeof(deveui)
+
+/* VES */
+#define PARAM_APP_EUI_OFF	0
 #define PARAM_APP_EUI_LEN	sizeof(appeui)
+#define PARAM_DEV_KEY_OFF	(PARAM_APP_EUI_OFF + PARAM_APP_EUI_LEN)
+#define PARAM_DEV_KEY_LEN	sizeof(devkey)
+
+#define PARAM_FLAG_BLE_NV	0x01	/* Stored in BLE NVPARAM area */
+#define PARAM_FLAG_REVERSE	0x02	/* Reversed in protocol */
+#define PARAM_FLAG_WRITE_ONLY	0x04	/* "Get param" disallowed */
+
+#define PARAM_MAX_LEN		16	/* sizeof(devkey) */
+
+struct param_def {
+	void		*mem;		/* Location in memory */
+	uint16_t	 offset;	/* Location in permanent storage */
+	uint8_t		 len;		/* Length */
+	uint8_t		 flags;		/* Flags */
+};
+
+static const struct param_def	params[] = {
+	{
+		.mem	= deveui,
+		.offset	= PARAM_DEV_EUI_OFF,
+		.len	= PARAM_DEV_EUI_LEN,
+		.flags	= PARAM_FLAG_BLE_NV | PARAM_FLAG_REVERSE,
+	},
+	{
+		.mem	= appeui,
+		.offset	= PARAM_APP_EUI_OFF,
+		.len	= PARAM_APP_EUI_LEN,
+		.flags	= PARAM_FLAG_REVERSE,
+	},
+	{
+		.mem	= devkey,
+		.offset	= PARAM_DEV_KEY_OFF,
+		.len	= PARAM_DEV_KEY_LEN,
+		.flags	= PARAM_FLAG_WRITE_ONLY,
+	},
+};
+
+static inline void
+reverse_memcpy(void *dest, void *src, size_t len)
+{
+	char	*d = dest, *s = src;
+
+	do {
+		d[--len] = *s++;
+	} while (len);
+}
 
 void
 os_getArtEui(u1_t *buf)
@@ -71,13 +123,82 @@ os_getArtEui(u1_t *buf)
 void
 os_getDevEui(u1_t *buf)
 {
-	memcpy(buf, deveui, sizeof(deveui));
+	memcpy(buf, deveui, 3);
+	buf[3] = 0xfe;
+	buf[4] = 0xff;
+	memcpy(buf + 5, deveui + 3, 3);
 }
 
 void
 os_getDevKey(u1_t *buf)
 {
 	memcpy(buf, devkey, sizeof(devkey));
+}
+
+/* Read param from permanent storage into memory */
+static void
+read_param(const struct param_def *param)
+{
+	uint8_t	buf[PARAM_MAX_LEN];
+
+	if (param->flags & PARAM_FLAG_BLE_NV) {
+		nvparam_t	nvparam;
+		uint16_t	param_len;
+		uint8_t		valid;
+
+		nvparam = ad_nvparam_open("ble_platform");
+		param_len = ad_nvparam_get_length(nvparam, param->offset, NULL);
+		OS_ASSERT(param_len == param->len + 1);
+		ad_nvparam_read_offset(nvparam, param->offset,
+		    param_len - sizeof(valid), sizeof(valid), &valid);
+		if (valid != 0x00)
+			return;
+		ad_nvparam_read(nvparam, param->offset, param->len, param->mem);
+	} else {
+		nvms_t	nvms;
+		int	i;
+
+		OS_ASSERT(sizeof(buf) >= param->len);
+		nvms = ad_nvms_open(NVMS_GENERIC_PART);
+		ad_nvms_read(nvms, param->offset, buf, param->len);
+		for (i = 0; i < param->len; i++) {
+			if (buf[i] != 0xff) {
+				memcpy(param->mem, buf, param->len);
+				return;
+			}
+		}
+	}
+}
+
+/* Set param in memory and write it to permanent storage */
+static void
+write_param(const struct param_def *param, void *data)
+{
+	uint8_t		buf[PARAM_MAX_LEN + 1];
+
+	OS_ASSERT(param->len <= sizeof(buf));
+	if (param->flags & PARAM_FLAG_REVERSE)
+		reverse_memcpy(buf, data, param->len);
+	else
+		memcpy(buf, data, param->len);
+	memcpy(param->mem, buf, param->len);
+	if (param->flags & PARAM_FLAG_BLE_NV) {
+		nvparam_t	nvparam;
+		uint16_t	param_len;
+
+		nvparam = ad_nvparam_open("ble_platform");
+		param_len = ad_nvparam_get_length(nvparam, param->offset, NULL);
+		OS_ASSERT(param_len == param->len + 1);
+		OS_ASSERT(param_len <= sizeof(buf));
+		buf[param->len] = 0x00;
+		ad_nvparam_write(nvparam, param->offset, param->len + 1, buf);
+		//ad_nvms_flush(ad_nvms_open(NVMS_PARAM_PART), 0);
+	} else {
+		nvms_t		nvms;
+
+		nvms = ad_nvms_open(NVMS_GENERIC_PART);
+		ad_nvms_write(nvms, param->offset, buf, param->len);
+	}
 }
 
 static void
@@ -108,13 +229,58 @@ ble_on(void)
 }
 
 static void
-handle_get_params(uint8_t *data, uint8_t len)
+tx_enqueue(uint8_t cmd, int len, void *data)
 {
+	if (ARRAY_SIZE(pend_tx_data) - pend_tx_len < len + 1 + (len > LEN_MASK))
+		return;
+	if (len <= LEN_MASK)
+		pend_tx_data[pend_tx_len++] = cmd | len;
+	else {
+		pend_tx_data[pend_tx_len++] = cmd | LEN_MASK;
+		pend_tx_data[pend_tx_len++] = len & LONG_LEN_MASK;
+	}
+	memcpy(pend_tx_data + pend_tx_len, data, len);
+	pend_tx_len += len;
+#ifdef DEBUG
+	printf("set tx data:");
+	for (int i = 0; i < pend_tx_len; i++)
+		printf(" %02x", pend_tx_data[i]);
+	printf("\r\n");
+#endif
+	LMIC_setTxData2(PORT, pend_tx_data, pend_tx_len, 0);
+	status |= STATUS_TX_PENDING;
 }
 
 static void
-handle_set_params(uint8_t *data, uint8_t len)
+handle_params(uint8_t *data, uint8_t len)
 {
+	uint8_t	buf[PARAM_MAX_LEN + 1];
+	uint8_t	idx;
+
+	if (len == 0)
+		return;
+	idx = *data++;
+	len--;
+	if (len == 0) {
+		/* get */
+		if (!(params[idx].flags & PARAM_FLAG_WRITE_ONLY)) {
+
+			buf[0] = idx;
+			if (params[idx].flags & PARAM_FLAG_REVERSE) {
+				reverse_memcpy(buf + 1, params[idx].mem,
+				    params[idx].len);
+			} else {
+				memcpy(buf + 1, params[idx].mem,
+				    params[idx].len);
+			}
+			tx_enqueue(INFO_PARAM, params[idx].len + 1, buf);
+		}
+	} else {
+		/* set */
+		if (idx >= ARRAY_SIZE(params) || params[idx].len != len)
+			return;
+		write_param(params + idx, data);
+	}
 }
 
 static void
@@ -142,14 +308,12 @@ handle_reboot_upgrade(uint8_t *data, uint8_t len)
 }
 
 typedef enum {
-	CMD_GET_PARAMS		= 0x0,
-	CMD_SET_PARAMS		= 0x1,
-	CMD_REBOOT_UPGRADE	= 0x2,
+	CMD_GET_SET_PARAMS	= 0x0,
+	CMD_REBOOT_UPGRADE	= 0x1,
 } downlink_cmd;
 
 static void	(* const downlink_handlers[])(uint8_t *, uint8_t) = {
-	[CMD_GET_PARAMS]	= handle_get_params,
-	[CMD_SET_PARAMS]	= handle_set_params,
+	[CMD_GET_SET_PARAMS]	= handle_params,
 	[CMD_REBOOT_UPGRADE]	= handle_reboot_upgrade,
 };
 
@@ -191,26 +355,17 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 static void
 proto_send_sensor_data(osjob_t *job)
 {
+	uint8_t	buf[MAX_LEN_PAYLOAD];
 	size_t	len;
 
 	os_setTimedCallback(job, hal_ticks() + SENSOR_PERIOD,
 	    proto_send_sensor_data);
 	if (ARRAY_SIZE(pend_tx_data) - pend_tx_len < 2)
 		return;
-	len = sensor_get_data(pend_tx_data + pend_tx_len + 1,
-	    MIN(ARRAY_SIZE(pend_tx_data) - pend_tx_len - 1, LEN_MASK));
+	len = sensor_get_data(buf, sizeof(buf));
 	if (len == 0)
 		return;
-	pend_tx_data[pend_tx_len] = INFO_SENSOR_DATA | (len & LEN_MASK);
-	pend_tx_len += len + 1;
-#ifdef DEBUG
-	printf("set tx data:");
-	for (int i = 0; i < pend_tx_len; i++)
-		printf(" %02x", pend_tx_data[i]);
-	printf("\r\n");
-#endif
-	LMIC_setTxData2(PORT, pend_tx_data, pend_tx_len, 0);
-	status |= STATUS_TX_PENDING;
+	tx_enqueue(INFO_SENSOR_DATA, len, buf);
 }
 
 #ifdef DEBUG
@@ -250,7 +405,9 @@ onEvent(ev_t ev)
 	debug_event(ev);
 	switch(ev) {
 	case EV_JOINED:
+#ifdef DEBUG
 		printf("netid = %lu\r\n", LMIC.netid);
+#endif
 		proto_send_sensor_data(&sensor_job);
 		break;
 	case EV_TXSTART:
@@ -268,46 +425,26 @@ onEvent(ev_t ev)
 	}
 }
 
-void
-read_param(nvms_t handle, uint32_t addr, uint8_t *buf, uint32_t len)
-{
-	uint8_t	tmp[16];
-	size_t	i;
-
-	ad_nvms_read(handle, addr, tmp, len);
-	for (i = 0; i < len; i++) {
-		if (tmp[i] != 0xff) {
-			memcpy(buf, tmp, len);
-			break;
-		}
-	}
-}
-
 static void
 param_init(void)
 {
-	nvms_t		nvms;
-	nvparam_t	nvparam;
-	uint16_t	param_len;
-	uint8_t		buf[6];
-	uint8_t		valid;
+	int	i;
 
-	nvms = ad_nvms_open(NVMS_GENERIC_PART);
-	read_param(nvms, PARAM_DEV_KEY_OFF, devkey, PARAM_DEV_KEY_LEN);
-	read_param(nvms, PARAM_APP_EUI_OFF, appeui, PARAM_APP_EUI_LEN);
-	nvparam = ad_nvparam_open("ble_platform");
-	param_len = ad_nvparam_get_length(nvparam, TAG_BLE_PLATFORM_BD_ADDRESS,
-	    NULL);
-	ad_nvparam_read_offset(nvparam, TAG_BLE_PLATFORM_BD_ADDRESS,
-	    param_len - sizeof(valid), sizeof(valid), &valid);
-	if (valid == 0) {
-		ad_nvparam_read(nvparam, TAG_BLE_PLATFORM_BD_ADDRESS,
-		    sizeof(buf), buf);
-		memcpy(deveui, buf, 3);
-		deveui[3] = 0xff;
-		deveui[4] = 0xfe;
-		memcpy(deveui + 5, buf + 3, 3);
+	for (i = 0; i < ARRAY_SIZE(params); i++) {
+		read_param(params + i);
+#ifdef DEBUG
+		for (int j = 0; j < params[i].len; j++)
+			printf("%02x", ((uint8_t *)params[i].mem)[j]);
+		printf("\r\n");
+#endif
 	}
+#ifdef DEBUG
+	uint8_t buf[8];
+	os_getDevEui(buf);
+	for (int j = 0; j < 8; j++)
+		printf("%02x", buf[j]);
+	printf("\r\n");
+#endif
 }
 
 static void
