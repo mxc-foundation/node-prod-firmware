@@ -100,7 +100,7 @@ CC=		arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb
 CFLAGS+=	-std=gnu11 -Wall -Werror
 CFLAGS+=	-g -Os -fsigned-char -ffunction-sections -fdata-sections
 CFLAGS+=	-Ddg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A \
-		-Ddg_configBLACK_ORCA_IC_STEP=BLACK_ORCA_IC_STEP_D \
+		-Ddg_configBLACK_ORCA_IC_STEP=BLACK_ORCA_IC_STEP_E \
 		-DCONFIG_AT45DB011D=1 -DCONFIG_24LC256=1 -DCONFIG_FM75=1
 #CFLAGS+=	-DRELEASE_BUILD
 CFLAGS+=	-I. -Ilmic \
@@ -161,10 +161,10 @@ CFLAGS+=	-includecustom-config.h
 LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
 		-fmessage-length=0 -fsigned-char -ffunction-sections \
 		-fdata-sections -Wall \
-		-L$(SDKDIR)/sdk/interfaces/ble_stack/DA14681-00-Release \
+		-L$(SDKDIR)/sdk/interfaces/ble_stack/DA14681-01-Release \
 		--specs=nano.specs --specs=nosys.specs \
 		-Tldscripts/mem.ld -Tldscripts/sections.ld
-LDADD=		-lble_stack_da14681_00
+LDADD=		-lble_stack_da14681_01
 
 all: $(TARGET)
 	arm-none-eabi-size -B $(ELFTARGET)

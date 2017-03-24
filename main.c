@@ -152,9 +152,9 @@ periph_setup(void)
 		HW_DMA_CHANNEL_0,
 	};
 
-	hw_gpio_set_pin_function(1, 3, HW_GPIO_MODE_OUTPUT,
+	hw_gpio_set_pin_function(4, 5, HW_GPIO_MODE_OUTPUT,
 	    HW_GPIO_FUNC_UART_TX);
-	hw_gpio_set_pin_function(2, 3, HW_GPIO_MODE_INPUT,
+	hw_gpio_set_pin_function(4, 4, HW_GPIO_MODE_INPUT,
 	    HW_GPIO_FUNC_UART_RX);
 	hw_uart_init(HW_UART1, &uart_cfg);
 	spi_init();

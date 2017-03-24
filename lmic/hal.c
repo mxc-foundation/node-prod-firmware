@@ -116,6 +116,20 @@ hal_init()
 void
 hal_pin_rst(u1_t val)
 {
+	if (val == 2) {
+		hw_gpio_set_pin_function(HAL_LORA_REST_PORT, HAL_LORA_REST_PIN,
+		    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	} else {
+		hw_gpio_set_pin_function(HAL_LORA_REST_PORT, HAL_LORA_REST_PIN,
+		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+		if (val) {
+			hw_gpio_set_active(HAL_LORA_REST_PORT,
+			    HAL_LORA_REST_PIN);
+		} else {
+			hw_gpio_set_inactive(HAL_LORA_REST_PORT,
+			    HAL_LORA_REST_PIN);
+		}
+	}
 }
 
 u1_t
@@ -130,6 +144,7 @@ hal_spi(u1_t outval)
 void
 hal_failed()
 {
+	printf("hal failed\r\n");
 	hw_cpm_reboot_system();
 }
 

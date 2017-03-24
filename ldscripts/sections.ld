@@ -154,7 +154,7 @@ SECTIONS
                 . = ALIGN(4);
                 __RetRAM1_end__ = .;
         } > RetRAM1
-        RETENTION_BLE 0x7FDEC00 (NOLOAD) :
+        RETENTION_BLE 0x7FDC000 (NOLOAD) :
         {
                 KEEP(*(ble_variables))
         } > RetRAM0
@@ -163,7 +163,7 @@ SECTIONS
                                                    + (__RetRAM0_code_end__ - __RetRAM0_code_start__)
                                                    - ORIGIN(ROM);
         __mirrored_image_size = __etext + (__data_end__ - __data_start__) - ORIGIN(ROM);
-        ASSERT(ORIGIN(RAM) + LENGTH(RAM) < 0x7FDEC00, "ROM variables region (starting at 0x7FDEC00) overflowed by RAM")
-        ASSERT(__RetRAM0_data_end__ < 0x7FDEC00, "ROM variables region (starting at 0x7FDEC00) overflowed by RetRAM0")
-        INCLUDE da14681_00_rom.symbols
+        ASSERT(ORIGIN(RAM) + LENGTH(RAM) < 0x7FDC000, "ROM variables region (starting at 0x7FDC000) overflowed by RAM")
+        ASSERT(__RetRAM0_data_end__ < 0x7FDC000, "ROM variables region (starting at 0x7FDC000) overflowed by RetRAM0")
+        INCLUDE da14681_01_rom.symbols
 }
