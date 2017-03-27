@@ -3,11 +3,9 @@
 #include <console.h>
 #include <hw_trng.h>
 #include <hw_uart.h>
+#include <resmgmt.h>
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
-
-#include <ad_gpadc.h>
-#include <ad_nvms_ves.h>
 
 #include "lmic/lmic.h"
 #include "proto.h"
@@ -57,6 +55,7 @@ vApplicationIdleHook(void)
 }
 #endif
 
+#ifndef CONFIG_RETARGET
 int
 _write(int fd, char *ptr, int len)
 {
@@ -74,6 +73,7 @@ _write(int fd, char *ptr, int len)
 	(void)fd;
 	return len;
 }
+#endif
 
 #ifdef hello
 static void
@@ -178,14 +178,11 @@ sysinit_task_func(void *param)
 	pm_system_init(periph_setup);
 	printf("*** FreeRTOS ***\r\n");
 	resource_init();
-	GPADC_INIT();
 	pm_set_wakeup_mode(true);
 	//pm_set_sleep_mode(pm_mode_extended_sleep); //XXX
 	pm_set_sleep_mode(pm_mode_idle); //XXX
 	//pm_set_sleep_mode(pm_mode_active); //XXX
 	//pm_stay_alive(); // XXX
-	ad_nvms_init();
-	ad_nvms_ves_init();
 	OS_TASK_CREATE("LoRa & LMiC", lora_task_func, (void *)0,
 	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
 	OS_TASK_DELETE(OS_GET_CURRENT_TASK());

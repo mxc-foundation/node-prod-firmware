@@ -1,6 +1,6 @@
 PROJ=		minimal
 OBJDIR?=	obj
-SDKVER?=	1.0.6.968
+SDKVER?=	1.0.8.1050.1
 SDKDIR?=	../DA1468x_SDK_BTLE_v_$(SDKVER)
 #PROD_ID?=	DA14681-00
 
@@ -20,6 +20,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/startup/startup_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/system_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/vector_table.o \
+	$(OBJDIR)/sdk/bsp/adapters/src/ad_crypto.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_flash.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_gpadc.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_nvms.o \
@@ -38,7 +39,11 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/memory/src/qspi_automode.o \
 	$(OBJDIR)/sdk/bsp/osal/resmgmt.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_cpm.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_crypto.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_dma.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_ecc.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_ecc_curves.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_ecc_ucode.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_gpio.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_gpadc.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_hard_fault.o \
@@ -58,6 +63,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/system/sys_man/sys_clock_mgr.o \
 	$(OBJDIR)/sdk/bsp/system/sys_man/sys_power_mgr.o \
 	$(OBJDIR)/sdk/bsp/system/sys_man/sys_rtc.o \
+	$(OBJDIR)/sdk/bsp/system/sys_man/sys_trng.o \
 	$(OBJDIR)/sdk/bsp/system/sys_man/sys_watchdog.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/adapter/ad_ble.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/ble_common.o \
@@ -94,6 +100,9 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/tps.o
 
 DEPS=		$(OBJS:.o=.d)
+
+LDSCRIPTS=	obj/mem.ld obj/sections.ld
+LDSCRIPTFLAGS=	$(LDSCRIPTS:%=-T%)
 
 CC=		arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb
 #CFLAGS+=	-Wall -Wextra -Werror
@@ -163,7 +172,7 @@ LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
 		-fdata-sections -Wall \
 		-L$(SDKDIR)/sdk/interfaces/ble_stack/DA14681-01-Release \
 		--specs=nano.specs --specs=nosys.specs \
-		-Tldscripts/mem.ld -Tldscripts/sections.ld
+		$(LDSCRIPTFLAGS)
 LDADD=		-lble_stack_da14681_01
 
 all: $(TARGET)
@@ -197,7 +206,10 @@ $(OBJDIR)/%.o: $(SDKDIR)/%.S
 	mkdir -p `dirname $@`
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(ELFTARGET): $(OBJS)
+$(OBJDIR)/%.ld: ldscripts/%.ld.h
+	$(CC) $(CFLAGS) -E -P -c "$<" -o "$@"
+
+$(ELFTARGET): $(OBJS) $(LDSCRIPTS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDADD)
 
 flash install: all

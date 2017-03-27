@@ -230,7 +230,6 @@ ble_task_func(void *params)
 	wdog_id = sys_watchdog_register(false);
 #endif
 	printf("ble init\r\n");
-	ad_ble_init();
 	ble_mgr_init();
 	ble_peripheral_start();
 	ble_register_app();

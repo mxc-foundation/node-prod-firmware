@@ -1,5 +1,5 @@
-/* Linker script to configure memory regions. 
- * Need modifying for a specific board. 
+/* Linker script to configure memory regions.
+ * May need to be modified for a specific board.
  *   ROM.ORIGIN: starting address of read-only RAM area
  *   ROM.LENGTH: length of read-only RAM area
  *   RetRAMx.ORIGIN: starting address of retained RAMx area
@@ -16,215 +16,153 @@
  *   |   execution mode |     mirrored     |      cached      |
  *   |code is stored in |                  |                  |
  *   |------------------|------------------|------------------|
- *   |    JTAG Download |  RAM (0x7FC0000) |  RAM (0x7FC0000) |
+ *   |    JTAG Download |  RAM (0x7FC0000) |        N/A       |
  *   |------------------|------------------|------------------|
  *   |              OTP |  RAM (0x7FC0000) |  OTP (0x7F80000) |
  *   |------------------|------------------|------------------|
- *   |            Flash |  RAM (0x7FC0000) | QSPI (0x8000000) |
+ *   |            Flash |        N/A       | QSPI (0x8000000) |
  *   |------------------|------------------|------------------|
  *
- * The positioning of the RAM and the RetRAM areas depends on the positioning of the ROM area. More
- * specifically,
+ * The positioning of the RAM and the RetRAM areas depends on the positioning of the ROM area and
+ * the placement of the ROM variables.
  *
- *   |------------------|------------------|------------------|
- *   |   execution mode |        RAM       |      RetRAM      |
- *   |code is stored in |                  |                  |
- *   |------------------|------------------|------------------|
- *   |  RAM (0x7FC0000) |  after the code  |  after the code  |
- *   |(JTAG or mirrored)|   or the RetRAM  |    or the RAM    |
- *   |------------------|------------------|------------------|
- *   |   OTP (cached)   |  at 0x7FC0000 or |  at 0x7FC0000 or |
- *   |                  | after the RetRAM |   after the RAM  |
- *   |------------------|------------------|------------------|
- *   |   QSPI (cached)  |  at 0x7FC0100 or |  at 0x7FC0100 or |
- *   |                  | after the RetRAM |   after the RAM  |
- *   |------------------|------------------|------------------|
- *
- * The above table are valid when the code is preconfigured to run from a specific location. If the
- * configuration is taken from the OTP header then the code is built to run from 0x0 and the RAM
- * base address is set by the user at RAM_BASE.
- * 
- * Up to 3 non-continuous Retention Memory areas may be defined. Up to 3 non-continuous RAM Memory
- * areas may be defined, also.
+ * In theory, up to 3 non-continuous Retention Memory areas may be defined. Up to 3
+ * non-continuous RAM Memory areas may be defined, also. Note that the GNU Linker does not support
+ * automatic splitting of sections. So, for example, having the RAM area lying at [0x7FC8000 -
+ * 0x7FCA000] and [0x7FD4000 - 0x7FD6000] is not possible. Two separate RAM sections should be
+ * defined, RAM1 and RAM2, and a non-automatic way of placing data into these sections should be
+ * derived. This is application specific.
  *
  * Parameters that control the final memory layout:
- * - dg_configCONFIG_VIA_OTP_HEADER
- * - dg_configCODE_LOCATION
- * - dg_configEXEC_MODE
  * - CODE_SIZE     The size of the code in the format the linker understands (e.g. 64K).
- * - RETRAM_0_SIZE The size of the Retention RAM. 
+ * - RETRAM_x_SIZE The size of the Retention RAM x.
  * - RAM_SIZE      The size of the RAM.
- * - RAM_START     The base address of the RAM in case of configuration via the OTP header. Since 
- *                 there is no way to know the proper value, it is initialized for mirrored mode.
- *
- * Optional parameterization (one option must be used):
- * (auto mode)
  * - RETRAM_FIRST  A switch that controls whether the RetRAM will be placed before the RAM or not.
  *
- * (manual mode)
- * - RETRAM_0_OFFSET The offset of the beginning of the RetRAM0 from the base address 
- *                 (RAM_BASE_ADDRESS).
- * - RAM_OFFSET    The offset of the beginning of the RAM from the base address (RAM_BASE_ADDRESS).
- * or
- * - RETRAM_0_BASE The absolute address where the RetRAM starts.
- * - RAM_BASE      The absolute address where the RAM starts.
- *
  * Limitations
- * - This version supports only 1 Retention RAM and 1 RAM area.
+ * - This version supports only 2 Retention RAM and 1 RAM areas.
  *
+ * Note
+ *
+ * In DA14680/1-01 mirrored mode the highest memory location that the code uses, is the one defined
+ * by its actual size. In principle, this could be as high as 0x7FDC000 (when the BLE is used) but
+ * this would mean that (i) no retained data have been defined (which is ok, since in mirrored mode
+ * all RAM + Cache is retained) and (ii) that the data should fit inside 16K (the Cache).
  */
 
-/*** Parameterization starts here ***/
-
-#if dg_configCODE_LOCATION == NON_VOLATILE_IS_NONE
-#define CODE_SIZE     ( 84 * 1024)
-#define RETRAM_0_SIZE ( 44 * 1024)
-#define RETRAM_1_SIZE (  0 * 1024)              // Retention RAM area for Heap(s)
-#define RAM_SIZE      ( 16 * 1024)
-/* Auto mode. Set to 1 to place RetRAM before RAM else set to 0. */
-#define RETRAM_FIRST                    1
-#else
-#define CODE_SIZE     ( 56 * 1024)
-#define RETRAM_0_SIZE ( 24 * 1024)
-#define RETRAM_1_SIZE (  0 * 1024)              // Retention RAM area for Heap(s)
-#define RAM_SIZE      ( 38 * 1024)
-#define RAM_START     0x7FC0000 + CODE_SIZE // Used only when dg_configCONFIG_VIA_OTP_HEADER is 1
-#endif
-
-/* Auto mode. Set to 1 to place RetRAM before RAM else set to 0. */
-#define RETRAM_FIRST                    1
-
-/* Manual mode. RETRAM_FIRST is ignored. Comment-out for auto mode. */
-//#define RETRAM_0_OFFSET                 0
-//#define RAM_OFFSET                      (32 * 1024)
-//#define RETRAM_0_BASE                   0x7FC8000
-//#define RAM_BASE                        0x7FD0000
-
-/*** Parameterization ends here  - Do not change anything below this line! ***/
+/*** Do not change anything below this line! ***/
 
 /* --------------------------------------------------------------------------------------------- */
+        #define IVT_AREA_OVERHEAD               0x100
 
-#define CACHED_OVERHEAD                 0x100
+#if (dg_configCODE_LOCATION == NON_VOLATILE_IS_NONE)
+                #define CODE_BASE_ADDRESS               (0x7FC0000)
+                #define RAM_BASE_ADDRESS                (CODE_BASE_ADDRESS + CODE_SIZE)
+                #define __RAM_OVERHEAD                  (0)
 
-#if (RETRAM_1_SIZE > CACHED_OVERHEAD)
-#define RETRAM_1_SZ                     (RETRAM_1_SIZE - CACHED_OVERHEAD)
+#elif (dg_configCODE_LOCATION == NON_VOLATILE_IS_OTP)
+        #if (dg_configEXEC_MODE != MODE_IS_CACHED)
+                #define CODE_BASE_ADDRESS       (0x7FC0000)
+                        #define RAM_BASE_ADDRESS        (CODE_BASE_ADDRESS + CODE_SIZE)
+                        #define __RAM_OVERHEAD          (0)
+        #else
+                #define CODE_BASE_ADDRESS       (0x7F80000)
+                #define RAM_BASE_ADDRESS        (0x7FC0000)
+                #define __RAM_OVERHEAD          (IVT_AREA_OVERHEAD)
+        #endif
+
+#elif (dg_configCODE_LOCATION == NON_VOLATILE_IS_FLASH)
+        #if (dg_configEXEC_MODE != MODE_IS_CACHED)
+                #error "QSPI mirrored execution mode is not supported!"
+        #else
+                #define CODE_BASE_ADDRESS       (0x8000000 + dg_configIMAGE_FLASH_OFFSET)
+                #define RAM_BASE_ADDRESS        (0x7FC0000)
+                #define __RAM_OVERHEAD          (IVT_AREA_OVERHEAD)
+        #endif
+
 #else
-#define RETRAM_1_SZ                     0
+        #error "Unknown code location type..."
 #endif
 
-#if (dg_configCONFIG_VIA_OTP_HEADER == 0)
-# if (dg_configCODE_LOCATION == NON_VOLATILE_IS_NONE)
-        #define CODE_BASE_ADDRESS       0x7FC0000
-        #define RAM_BASE_ADDRESS        CODE_BASE_ADDRESS + CODE_SIZE
-        
-# elif (dg_configCODE_LOCATION == NON_VOLATILE_IS_OTP)
-#  if (dg_configEXEC_MODE == MODE_IS_MIRRORED)
-        #define CODE_BASE_ADDRESS       0x7FC0000
-        #define RAM_BASE_ADDRESS        CODE_BASE_ADDRESS + CODE_SIZE
-#  else
-        #define CODE_BASE_ADDRESS       0x7F80000
-        #define RAM_BASE_ADDRESS        0x7FC0000
-#  endif
-
-# elif (dg_configCODE_LOCATION == NON_VOLATILE_IS_FLASH)
-#  if (dg_configEXEC_MODE == MODE_IS_MIRRORED)
-        #warning "QSPI mirrored execution mode is not supported!"
-        #undef CODE_SIZE
-        #define CODE_SIZE               0
-#  else
-        #define CODE_BASE_ADDRESS       0x8000000 + dg_configIMAGE_FLASH_OFFSET
-        #define RAM_BASE_ADDRESS        0x7FC0000
-#  endif
-
-# else
-        #warning "Unknown code location type..."
-        #undef CODE_SIZE
-        #define CODE_SIZE               0
-# endif
-
-#else // dg_configCONFIG_VIA_OTP_HEADER
-        #define CODE_BASE_ADDRESS       0x0
-        #define RAM_BASE_ADDRESS        RAM_START
-#endif
-
-#if (dg_configCODE_LOCATION == NON_VOLATILE_IS_FLASH) && (dg_configEXEC_MODE == MODE_IS_CACHED)
-        #define __DIFF__                CACHED_OVERHEAD
+#if (RETRAM_1_SIZE > IVT_AREA_OVERHEAD)
+        #define RETRAM_1_SZ                     (RETRAM_1_SIZE - IVT_AREA_OVERHEAD)
 #else
-        #define __DIFF__                0
+        #define RETRAM_1_SZ                     0
 #endif
 
 #ifdef RETRAM_0_BASE
         #undef RETRAM_0_OFFSET
-        #define RETRAM_0_OFFSET         (RETRAM_0_BASE - (RAM_BASE_ADDRESS))
+        #define RETRAM_0_OFFSET                 (RETRAM_0_BASE - (RAM_BASE_ADDRESS))
 #endif
 
 #ifdef RAM_BASE
         #undef RAM_OFFSET
-        #define RAM_OFFSET              (RAM_BASE + RETRAM_1_SZ - (RAM_BASE_ADDRESS))
+        #define RAM_OFFSET                      (RAM_BASE + RETRAM_1_SZ - (RAM_BASE_ADDRESS))
 #endif
 
 #if (RETRAM_FIRST == 1)
+        #if (RETRAM_1_SZ != 0)
+                #error "RETRAM_1 has been defined while RETRAM_FIRST == 1..."
+        #endif
+
         #ifndef RETRAM_0_OFFSET
-        #define RETRAM_0_OFFSET         __DIFF__
+                #define RETRAM_0_OFFSET         (__RAM_OVERHEAD) /* offset from RAM_BASE_ADDRESS */
         #endif
-        
-        #if (RETRAM_0_SIZE > CACHED_OVERHEAD)
-        #define RETRAM_0_SZ             (RETRAM_0_SIZE - __DIFF__)
+
+        #if (RETRAM_0_SIZE > IVT_AREA_OVERHEAD)
+                #define RETRAM_0_SZ             (RETRAM_0_SIZE - __RAM_OVERHEAD)
         #else
-        #define RETRAM_0_SZ             0
+                #define RETRAM_0_SZ             (0) /* Wrong configuration */
         #endif
-        
+
         #ifndef RAM_OFFSET
-        #define RAM_OFFSET              (RETRAM_0_SZ + __DIFF__)
+                #define RAM_OFFSET              (RETRAM_0_SIZE)
         #endif
-        #define RAM_SZ                  RAM_SIZE
+
+        #define RAM_SZ                          (RAM_SIZE)
+
 #else
         #ifndef RAM_OFFSET
-        #define RAM_OFFSET              __DIFF__
-        #endif
-        
-        #if (RAM_SIZE > __DIFF__)
-                #if (RETRAM_1_SIZE > CACHED_OVERHEAD)
-                #define RAM_SZ          (RAM_SIZE)
+                #if (RETRAM_1_SZ == 0)
+                #define RAM_OFFSET              (__RAM_OVERHEAD) /* offset from RAM_BASE_ADDRESS */
                 #else
-                #define RAM_SZ          (RAM_SIZE - __DIFF__)
+                #define RAM_OFFSET              (RETRAM_1_SIZE)
+                #endif
+        #endif
+
+        #if (RAM_SIZE > IVT_AREA_OVERHEAD)
+                #if (RETRAM_1_SZ == 0)
+                #define RAM_SZ                  (RAM_SIZE - __RAM_OVERHEAD)
+                #else
+                #define RAM_SZ                  (RAM_SIZE)
                 #endif
         #else
-        #define RAM_SZ                  0
+                #define RAM_SZ                  (0) /* Wrong configuration */
         #endif
-        
+
         #ifndef RETRAM_0_OFFSET
-        #define RETRAM_0_OFFSET         (RAM_SZ + __DIFF__)
+                #define RETRAM_0_OFFSET         (RAM_SIZE + RETRAM_1_SIZE)
         #endif
-        #define RETRAM_0_SZ             RETRAM_0_SIZE
+
+        #define RETRAM_0_SZ                     (RETRAM_0_SIZE)
+#endif
+
+#if (dg_configCODE_LOCATION == NON_VOLATILE_IS_NONE) || (dg_configEXEC_MODE != MODE_IS_CACHED)
+        #define RAM_UPPER_LIMIT                 (0x7FE4000)
+#else
+        #define RAM_UPPER_LIMIT                 (0x7FE0000)
 #endif
 
 #if ((RAM_BASE_ADDRESS + RETRAM_0_OFFSET) < 0x7FC0000) || \
-    ((RAM_BASE_ADDRESS + RETRAM_0_OFFSET) > 0x7FE0000) || \
-    ((RAM_BASE_ADDRESS + RETRAM_0_OFFSET + RETRAM_0_SZ) > 0x7FE0000)
-        #warning "RetRAM0 area is out of bounds!"
-        #undef CODE_SIZE
-        #define CODE_SIZE               0
+    ((RAM_BASE_ADDRESS + RETRAM_0_OFFSET) > RAM_UPPER_LIMIT) || \
+    ((RAM_BASE_ADDRESS + RETRAM_0_OFFSET + RETRAM_0_SZ) > RAM_UPPER_LIMIT)
+        #error "RetRAM0 area is out of bounds!"
 #endif
-
-#if (dg_configCODE_LOCATION == NON_VOLATILE_IS_NONE)
-#if ((RAM_BASE_ADDRESS + RAM_OFFSET) < 0x7FC0000) || \
-    ((RAM_BASE_ADDRESS + RAM_OFFSET) > 0x7FE4000) || \
-    ((RAM_BASE_ADDRESS + RAM_OFFSET + RAM_SZ) > 0x7FE4000)
-        #warning "RAM area is out of bounds!"
-        #undef CODE_SIZE
-        #define CODE_SIZE               0
-#endif
-
-#else
 
 #if ((RAM_BASE_ADDRESS + RAM_OFFSET) < 0x7FC0000) || \
-    ((RAM_BASE_ADDRESS + RAM_OFFSET) > 0x7FE0000) || \
-    ((RAM_BASE_ADDRESS + RAM_OFFSET + RAM_SZ) > 0x7FE0000)
-        #warning "RAM area is out of bounds!"
-        #undef CODE_SIZE
-        #define CODE_SIZE               0
-#endif
+    ((RAM_BASE_ADDRESS + RAM_OFFSET) > RAM_UPPER_LIMIT) || \
+    ((RAM_BASE_ADDRESS + RAM_OFFSET + RAM_SZ) > RAM_UPPER_LIMIT)
+        #error "RAM area is out of bounds!"
 #endif
 
 /* --------------------------------------------------------------------------------------------- */
@@ -514,43 +452,55 @@
         #define RETBLOCK_3_END          0
 #endif
 
+/* Take Cache into account */
+#if (dg_configEXEC_MODE != MODE_IS_CACHED)
+        #if (RETBLOCK_1_END == 0x7FE0000)
+                #undef RETBLOCK_1_END
+                #define RETBLOCK_1_END  0x7FE4000
+        #endif
+
+        #if (RETBLOCK_2_END == 0x7FE0000)
+                #undef RETBLOCK_2_END
+                #define RETBLOCK_2_END  0x7FE4000
+        #endif
+
+        #if (RETBLOCK_3_END == 0x7FE0000)
+                #undef RETBLOCK_3_END
+                #define RETBLOCK_3_END  0x7FE4000
+        #endif
+#endif
+
 #if (RETRAM_0_SIZE != 0)
-# if (dg_configMEM_RETENTION_MODE == 0)
-# warning "RetRAM is used but dg_configMEM_RETENTION_MODE is 0!"
-# undef CODE_SIZE
-# define CODE_SIZE                      0
-# endif
+        #if (dg_configMEM_RETENTION_MODE == 0)
+                #error "RetRAM is used but dg_configMEM_RETENTION_MODE is 0!"
+        #endif
 
-# if (_RETRAM_0_BASE_ADDR >= RETBLOCK_1_START) && ((_RETRAM_0_BASE_ADDR + RETRAM_0_SIZE) <= RETBLOCK_1_END)
-        // RetRAM0 belongs to a retained block
-# elif (_RETRAM_0_BASE_ADDR >= RETBLOCK_2_START) && ((_RETRAM_0_BASE_ADDR + RETRAM_0_SIZE) <= RETBLOCK_2_END)
-        // RetRAM0 belongs to a retained block
-# elif (_RETRAM_0_BASE_ADDR >= RETBLOCK_3_START) && ((_RETRAM_0_BASE_ADDR + RETRAM_0_SIZE) <= RETBLOCK_3_END)
-        // RetRAM0 belongs to a retained block
-# else
-# warning "RetRAM0 is used but dg_configMEM_RETENTION_MODE (or dg_configSHUFFLING_MODE) is not correct!"
-# undef CODE_SIZE
-# define CODE_SIZE                      0
-# endif
+        #if (_RETRAM_0_BASE_ADDR >= RETBLOCK_1_START) \
+                && ((_RETRAM_0_BASE_ADDR + RETRAM_0_SIZE) <= RETBLOCK_1_END)
+                // RetRAM0 belongs to a retained block
+        #elif (_RETRAM_0_BASE_ADDR >= RETBLOCK_2_START) \
+                && ((_RETRAM_0_BASE_ADDR + RETRAM_0_SIZE) <= RETBLOCK_2_END)
+                // RetRAM0 belongs to a retained block
+        #elif (_RETRAM_0_BASE_ADDR >= RETBLOCK_3_START) \
+                && ((_RETRAM_0_BASE_ADDR + RETRAM_0_SIZE) <= RETBLOCK_3_END)
+                // RetRAM0 belongs to a retained block
+        #else
+                #error "RetRAM0 is used but dg_configMEM_RETENTION_MODE (or dg_configSHUFFLING_MODE) is not correct!"
+        #endif
 #endif
 
-#if (RETRAM_1_SIZE > CACHED_OVERHEAD)
-# if (RETRAM_FIRST == 0)
-# define _RETRAM_1_BASE_ADDR            (RETBLOCK_1_START + CACHED_OVERHEAD)
-# else
-# define _RETRAM_1_BASE_ADDR            (_RETRAM_0_BASE_ADDR + RETRAM_0_SIZE)
-# endif
+#if (RETRAM_1_SZ > 0)
+        #define _RETRAM_1_BASE_ADDR     (RETBLOCK_1_START + IVT_AREA_OVERHEAD)
 #else
-#define _RETRAM_1_BASE_ADDR             (0)
+        #define _RETRAM_1_BASE_ADDR     (0)
 #endif
 
-#if ((_RETRAM_1_BASE_ADDR + RETRAM_1_SZ) <= RETBLOCK_1_END)
+#if (RETBLOCK_1_START == 0x7FC0000) && ((_RETRAM_1_BASE_ADDR + RETRAM_1_SZ) <= RETBLOCK_1_END)
         // RetRAM1 belongs to a retained block
 #else
-# warning "RetRAM for Heaps is used but dg_configMEM_RETENTION_MODE (or dg_configSHUFFLING_MODE) is not correct!"
+        #error "RetRAM for Heaps is used but dg_configMEM_RETENTION_MODE (or dg_configSHUFFLING_MODE) is not correct!"
 #endif
 
-#ifdef FOR_MEMLD
 MEMORY
 {
         ROM (rx)     : ORIGIN = CODE_BASE_ADDRESS,                  LENGTH = CODE_SIZE
@@ -558,4 +508,3 @@ MEMORY
         RetRAM1 (rwx): ORIGIN = _RETRAM_1_BASE_ADDR,                LENGTH = RETRAM_1_SZ
         RAM (rw)     : ORIGIN = RAM_BASE_ADDRESS + RAM_OFFSET,      LENGTH = RAM_SZ
 }
-#endif
