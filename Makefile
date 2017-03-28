@@ -99,6 +99,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/lls.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/tps.o
 
+CONFIG_H=	custom-config.h
 DEPS=		$(OBJS:.o=.d)
 
 LDSCRIPTS=	obj/mem.ld obj/sections.ld
@@ -166,7 +167,7 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/interfaces/ble_services/include \
 		-I$(SDKDIR)/sdk/middleware/console/include \
 		-I$(SDKDIR)/sdk/bsp/free_rtos/include
-CFLAGS+=	-includecustom-config.h
+CFLAGS+=	-include$(CONFIG_H)
 LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
 		-fmessage-length=0 -fsigned-char -ffunction-sections \
 		-fdata-sections -Wall \
@@ -193,6 +194,8 @@ image: $(IMGTARGET)
 #%.o: $(OBJDIR)/%.c
 #.c.o:
 #	arm-none-eabi-gcc -c $<
+
+$(OBJS): $(CONFIG_H)
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p `dirname $@`
