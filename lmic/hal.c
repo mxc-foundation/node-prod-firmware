@@ -101,6 +101,7 @@ wkup_init(void)
 void
 hal_init()
 {
+	cm_wait_lp_clk_ready();
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
 	pm_register_adapter(&ad_lmic_call_backs);

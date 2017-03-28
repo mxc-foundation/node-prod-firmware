@@ -461,6 +461,6 @@ lora_task_func(void *param)
 
 	param_init();
 	os_init();
-	os_setTimedCallback(&init_job, hal_ticks() + sec2osticks(3), lora_init);
+	os_setCallback(&init_job, lora_init);
 	os_runloop();
 }
