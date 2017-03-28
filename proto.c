@@ -10,6 +10,8 @@
 #include "sensor.h"
 
 #define DEBUG
+//#define HELLO
+//#define BLE_ALWAYS_ON
 
 #define PORT		0x01
 
@@ -447,6 +449,18 @@ param_init(void)
 #endif
 }
 
+#ifdef HELLO
+static void
+say_hi(osjob_t *job)
+{
+	static int	n;
+
+	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
+	printf("Hello #%u @ %u (%ld), %04x\r\n",
+	    n++, os_getTimeSecs(), os_getTime(), *(uint16_t*)0x5000000a);
+}
+#endif
+
 static void
 lora_init(osjob_t* j)
 {
@@ -458,9 +472,18 @@ void
 lora_task_func(void *param)
 {
 	osjob_t	init_job;
+#ifdef HELLO
+	osjob_t	hello_job;
+#endif
 
+#ifdef BLE_ALWAYS_ON
+	ble_on();
+#endif
 	param_init();
 	os_init();
 	os_setCallback(&init_job, lora_init);
+#ifdef HELLO
+	os_setCallback(&hello_job, say_hi); // XXX
+#endif
 	os_runloop();
 }

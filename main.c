@@ -10,7 +10,6 @@
 #include "lmic/lmic.h"
 #include "proto.h"
 
-//#define hello
 #define output
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
@@ -72,18 +71,6 @@ _write(int fd, char *ptr, int len)
 #endif
 	(void)fd;
 	return len;
-}
-#endif
-
-#ifdef hello
-static void
-say_hi(osjob_t *job)
-{
-	static int	n;
-
-	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
-	printf("Hello #%u @ %u (%ld)\r\n",
-	    n++, os_getTimeSecs(), os_getTime());
 }
 #endif
 
