@@ -97,7 +97,9 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/dlg_suota.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/ias.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/lls.o \
-	$(OBJDIR)/sdk/interfaces/ble_services/src/tps.o
+	$(OBJDIR)/sdk/interfaces/ble_services/src/tps.o \
+	$(OBJDIR)/sdk/middleware/segger_tools/SEGGER/SEGGER_RTT.o \
+	$(OBJDIR)/sdk/middleware/segger_tools/SEGGER/SEGGER_RTT_printf.o
 
 CONFIG_H=	custom-config.h
 DEPS=		$(OBJS:.o=.d)
@@ -166,6 +168,8 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/driver/rf/api \
 		-I$(SDKDIR)/sdk/interfaces/ble_services/include \
 		-I$(SDKDIR)/sdk/middleware/console/include \
+		-I$(SDKDIR)/sdk/middleware/segger_tools/Config \
+		-I$(SDKDIR)/sdk/middleware/segger_tools/SEGGER \
 		-I$(SDKDIR)/sdk/bsp/free_rtos/include
 CFLAGS+=	-include$(CONFIG_H)
 LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
@@ -181,7 +185,7 @@ all: $(TARGET)
 
 image: $(IMGTARGET)
 
-.PHONY: all image flash install clean scope
+.PHONY: all image install flash firstflash run clean scope
 
 .SUFFIXES: .img .bin .elf
 
@@ -221,10 +225,16 @@ flash install: all
 firstflash: all
 	$(SDKDIR)/utilities/scripts/suota/v11/initial_flash.sh $(TARGET)
 
-#	/opt/SEGGER/JLink/JLinkGDBServer -if swd -device Cortex-M0 -endian little -speed 8000 -port 2331 -swoport 2332 -telnetport 2333 -vd -ir -localhostonly 1 -log jlink.log -s &
-#	$(SDKDIR)/binaries/cli_programmer --prod-id $(PROD_ID) \
-#		gdbserver write_qspi 0 $(TARGET)
-#	sleep 1
+run: install
+	JLinkGDBServer -if swd -device Cortex-M0 -endian little -speed 8000 \
+		-port 2331 -swoport 2332 -telnetport 2333 -vd -ir \
+		-localhostonly 1 -log jlink.log -s &
+	arm-none-eabi-gdb \
+		-ex 'target remote :2331' \
+		-ex 'eval "monitor exec SetRTTAddr %p", &_SEGGER_RTT' \
+		-ex 'monitor reset' \
+		-ex continue \
+		$(ELFTARGET)
 
 clean:
 	-rm -r $(OBJDIR) $(CLEANFILES)

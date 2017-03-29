@@ -78,8 +78,6 @@
 
 #define dg_configUSE_HW_TRNG			1
 
-#define __HEAP_SIZE                             0x0800
-
 /*************************************************************************************************\
  * FreeRTOS specific config
  */
@@ -111,8 +109,9 @@
 
 #define dg_configNVPARAM_ADAPTER                (1)
 
-#define CONFIG_CUSTOM_PRINT
+//#define CONFIG_CUSTOM_PRINT
 //#define CONFIG_RETARGET
+#define CONFIG_RTT
 
 /*
  * Controls the retRAM size used by the project.

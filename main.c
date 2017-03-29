@@ -10,8 +10,6 @@
 #include "lmic/lmic.h"
 #include "proto.h"
 
-#define output
-
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
 
 #if HAL_LORA_SPI_NO == 1
@@ -24,6 +22,10 @@
 #define HAL_LORA_GPIO_FUNC_SPI_DO	HW_GPIO_FUNC_SPI2_DO
 #else
 #error "Invalid HAL_LORA_SPI_NO definition"
+#endif
+
+#ifdef CONFIG_RETARGET
+extern void	retarget_init(void);
 #endif
 
 #if dg_configUSE_WDOG
@@ -54,21 +56,11 @@ vApplicationIdleHook(void)
 }
 #endif
 
-#ifndef CONFIG_RETARGET
+#ifdef CONFIG_CUSTOM_PRINT
 int
 _write(int fd, char *ptr, int len)
 {
-#ifdef output
-#if 0
-	int	rem = len;
-	while (rem--) {
-		hw_uart_write(HW_UART1, *ptr++);
-		if (running)
-			taskYIELD();
-	}
-#endif
 	hw_uart_write_buffer(HW_UART1, ptr, len);
-#endif
 	(void)fd;
 	return len;
 }
@@ -124,8 +116,11 @@ sensor_get(void)
 }
 #endif
 
+#ifdef CONFIG_RTT
+#define uart_init()
+#else
 static void
-periph_setup(void)
+uart_init(void)
 {
 	uart_config	uart_cfg = {
 		HW_UART_BAUDRATE_115200,
@@ -144,6 +139,13 @@ periph_setup(void)
 	hw_gpio_set_pin_function(4, 4, HW_GPIO_MODE_INPUT,
 	    HW_GPIO_FUNC_UART_RX);
 	hw_uart_init(HW_UART1, &uart_cfg);
+}
+#endif
+
+static void
+periph_setup(void)
+{
+	uart_init();
 	spi_init();
 }
 
@@ -165,6 +167,9 @@ sysinit_task_func(void *param)
 	pm_system_init(periph_setup);
 	printf("*** FreeRTOS ***\r\n");
 	resource_init();
+#ifdef CONFIG_RETARGET
+	retarget_init();
+#endif
 	pm_set_wakeup_mode(true);
 	//pm_set_sleep_mode(pm_mode_extended_sleep); //XXX
 	pm_set_sleep_mode(pm_mode_idle); //XXX
