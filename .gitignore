@@ -1,5 +1,6 @@
 obj/
 cli_gdb_server.log
+cli_programmer.ini
 jlink.log
 cscope.*
 .*.swp
