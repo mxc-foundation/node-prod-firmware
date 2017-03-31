@@ -11,24 +11,13 @@
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
 
+#include "hw.h"
 #include "lmic/lmic.h"
 #include "proto.h"
 
 #define CLOCK_DEBUG
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
-
-#if HAL_LORA_SPI_NO == 1
-#define HAL_LORA_GPIO_FUNC_SPI_CLK	HW_GPIO_FUNC_SPI_CLK
-#define HAL_LORA_GPIO_FUNC_SPI_DI	HW_GPIO_FUNC_SPI_DI
-#define HAL_LORA_GPIO_FUNC_SPI_DO	HW_GPIO_FUNC_SPI_DO
-#elif HAL_LORA_SPI_NO == 2
-#define HAL_LORA_GPIO_FUNC_SPI_CLK	HW_GPIO_FUNC_SPI2_CLK
-#define HAL_LORA_GPIO_FUNC_SPI_DI	HW_GPIO_FUNC_SPI2_DI
-#define HAL_LORA_GPIO_FUNC_SPI_DO	HW_GPIO_FUNC_SPI2_DO
-#else
-#error "Invalid HAL_LORA_SPI_NO definition"
-#endif
 
 extern int	_write(int fd, char *ptr, int len);
 
@@ -81,7 +70,7 @@ static void
 spi_init(void)
 {
 	spi_config	cfg = {
-		{HAL_LORA_SPI_CS_PORT, HAL_LORA_SPI_CS_PIN},
+		{ HW_LORA_SPI_CS_PORT, HW_LORA_SPI_CS_PIN },
 		HW_SPI_WORD_8BIT,
 		HW_SPI_MODE_MASTER,
 		HW_SPI_POL_LOW,
@@ -96,19 +85,19 @@ spi_init(void)
 	};
 
 	hw_trng_enable(NULL);
-	hw_gpio_set_pin_function(HAL_LORA_SPI_CLK_PORT, HAL_LORA_SPI_CLK_PIN,
-	    HW_GPIO_MODE_OUTPUT, HAL_LORA_GPIO_FUNC_SPI_CLK);
-	hw_gpio_set_pin_function(HAL_LORA_SPI_DI_PORT,  HAL_LORA_SPI_DI_PIN,
-	    HW_GPIO_MODE_INPUT,  HAL_LORA_GPIO_FUNC_SPI_DI);
-	hw_gpio_set_pin_function(HAL_LORA_SPI_DO_PORT,  HAL_LORA_SPI_DO_PIN,
-	    HW_GPIO_MODE_OUTPUT, HAL_LORA_GPIO_FUNC_SPI_DO);
-	hw_gpio_set_pin_function(HAL_LORA_SPI_CS_PORT,  HAL_LORA_SPI_CS_PIN,
+	hw_gpio_set_pin_function(HW_LORA_SPI_CLK_PORT, HW_LORA_SPI_CLK_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_LORA_GPIO_FUNC_SPI_CLK);
+	hw_gpio_set_pin_function(HW_LORA_SPI_DI_PORT,  HW_LORA_SPI_DI_PIN,
+	    HW_GPIO_MODE_INPUT,  HW_LORA_GPIO_FUNC_SPI_DI);
+	hw_gpio_set_pin_function(HW_LORA_SPI_DO_PORT,  HW_LORA_SPI_DO_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_LORA_GPIO_FUNC_SPI_DO);
+	hw_gpio_set_pin_function(HW_LORA_SPI_CS_PORT,  HW_LORA_SPI_CS_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HAL_LORA_RX_PORT,      HAL_LORA_RX_PIN,
+	hw_gpio_set_pin_function(HW_LORA_RX_PORT,      HW_LORA_RX_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HAL_LORA_TX_PORT,      HAL_LORA_TX_PIN,
+	hw_gpio_set_pin_function(HW_LORA_TX_PORT,      HW_LORA_TX_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_spi_init(HAL_LORA_SPI, &cfg);
+	hw_spi_init(HW_LORA_SPI, &cfg);
 }
 
 #if 0

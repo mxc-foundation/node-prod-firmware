@@ -70,8 +70,8 @@ wkup_intr_cb(void)
 	BaseType_t	woken = 0;
 	ostime_t	now;
 
-	if (hw_gpio_get_pin_status(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN) ||
-	    hw_gpio_get_pin_status(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN)) {
+	if (hw_gpio_get_pin_status(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN) ||
+	    hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN)) {
 		now = hal_ticks();
 		xQueueSendFromISR(lora_queue, &now, &woken);
 	}
@@ -84,17 +84,17 @@ wkup_init(void)
 {
 	hw_wkup_init(NULL);
 	hw_wkup_set_counter_threshold(1);
-	hw_gpio_set_pin_function(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN,
+	hw_gpio_set_pin_function(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN,
+	hw_gpio_set_pin_function(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN,
+	hw_gpio_set_pin_function(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_wkup_configure_pin(HAL_LORA_DIO0_PORT, HAL_LORA_DIO0_PIN, true,
+	hw_wkup_configure_pin(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
-	hw_wkup_configure_pin(HAL_LORA_DIO1_PORT, HAL_LORA_DIO1_PIN, true,
+	hw_wkup_configure_pin(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
-	hw_wkup_configure_pin(HAL_LORA_DIO2_PORT, HAL_LORA_DIO2_PIN, true,
+	hw_wkup_configure_pin(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_register_interrupt(wkup_intr_cb, 1);
 }
@@ -119,17 +119,17 @@ void
 hal_pin_rst(u1_t val)
 {
 	if (val == 2) {
-		hw_gpio_set_pin_function(HAL_LORA_REST_PORT, HAL_LORA_REST_PIN,
+		hw_gpio_set_pin_function(HW_LORA_REST_PORT, HW_LORA_REST_PIN,
 		    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	} else {
-		hw_gpio_set_pin_function(HAL_LORA_REST_PORT, HAL_LORA_REST_PIN,
+		hw_gpio_set_pin_function(HW_LORA_REST_PORT, HW_LORA_REST_PIN,
 		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
 		if (val) {
-			hw_gpio_set_active(HAL_LORA_REST_PORT,
-			    HAL_LORA_REST_PIN);
+			hw_gpio_set_active(HW_LORA_REST_PORT,
+			    HW_LORA_REST_PIN);
 		} else {
-			hw_gpio_set_inactive(HAL_LORA_REST_PORT,
-			    HAL_LORA_REST_PIN);
+			hw_gpio_set_inactive(HW_LORA_REST_PORT,
+			    HW_LORA_REST_PIN);
 		}
 	}
 }

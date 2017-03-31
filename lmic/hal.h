@@ -31,38 +31,9 @@
 #include <sdk_defs.h>
 #include <hw_spi.h>
 #include <osal.h>
-#ifdef OS_FREERTOS
 #include <sys_rtc.h>
-#else
-#include "rtc.h"
-#endif
 
-#define HAL_LORA_SPI_NO		2
-
-#define HAL_LORA_SPI_CLK_PORT	1
-#define HAL_LORA_SPI_CLK_PIN	0
-#define HAL_LORA_SPI_DI_PORT	1
-#define HAL_LORA_SPI_DI_PIN	2
-#define HAL_LORA_SPI_DO_PORT	1
-#define HAL_LORA_SPI_DO_PIN	5
-#define HAL_LORA_SPI_CS_PORT	4
-#define HAL_LORA_SPI_CS_PIN	1
-#define HAL_LORA_RX_PORT	4
-#define HAL_LORA_RX_PIN		3
-#define HAL_LORA_TX_PORT	4
-#define HAL_LORA_TX_PIN		2
-#define HAL_LORA_REST_PORT	1
-#define HAL_LORA_REST_PIN	4
-#define HAL_LORA_DIO0_PORT	4
-#define HAL_LORA_DIO0_PIN	0
-#define HAL_LORA_DIO1_PORT	3
-#define HAL_LORA_DIO1_PIN	7
-#define HAL_LORA_DIO2_PORT	3
-#define HAL_LORA_DIO2_PIN	6
-
-#define __DEFINE_HAL_LORA_SPI_INT(x)	HW_SPI ## x
-#define __DEFINE_HAL_LORA_SPI(x)	__DEFINE_HAL_LORA_SPI_INT(x)
-#define HAL_LORA_SPI			__DEFINE_HAL_LORA_SPI(HAL_LORA_SPI_NO)
+#include "hw.h"
 
 /*
  * initialize hardware (IO, SPI, TIMER, IRQ).
@@ -86,11 +57,11 @@ void hal_init (void);
 //void hal_pin_rxtx (u1_t val);
 #define hal_pin_rxtx(tx)	do {			\
 	if (tx) {					\
-		hw_gpio_set_inactive(HAL_LORA_RX_PORT, HAL_LORA_RX_PIN); \
-		hw_gpio_set_active(  HAL_LORA_TX_PORT, HAL_LORA_TX_PIN); \
+		hw_gpio_set_inactive(HW_LORA_RX_PORT, HW_LORA_RX_PIN); \
+		hw_gpio_set_active(  HW_LORA_TX_PORT, HW_LORA_TX_PIN); \
 	} else {					\
-		hw_gpio_set_inactive(HAL_LORA_TX_PORT, HAL_LORA_TX_PIN); \
-		hw_gpio_set_active(  HAL_LORA_RX_PORT, HAL_LORA_RX_PIN); \
+		hw_gpio_set_inactive(HW_LORA_TX_PORT, HW_LORA_TX_PIN); \
+		hw_gpio_set_active(  HW_LORA_RX_PORT, HW_LORA_RX_PIN); \
 	}						\
 } while (0)
 
