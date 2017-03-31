@@ -52,7 +52,9 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_rf.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_spi.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_tempsens.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_timer0.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_timer1.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_timer2.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_trng.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_uart.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_usb_charger.o \

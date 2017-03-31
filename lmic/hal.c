@@ -8,6 +8,7 @@
 #include <sys_watchdog.h>
 
 //#define DEBUG
+#define CLOCK_DEBUG
 
 #ifdef DEBUG
 #define SET_HIGH(port, pin)	hw_gpio_set_active(port, pin)
@@ -157,6 +158,9 @@ void
 hal_resetWatchdog(void)
 {
 	sys_watchdog_notify(wdog_id);
+#ifdef CLOCK_DEBUG
+	sys_watchdog_suspend(wdog_id);
+#endif
 }
 
 u1_t
@@ -197,7 +201,9 @@ hal_sleep()
 		// Wait for timer or WKUP_GPIO interrupt
 		ret = xQueueReceive(lora_queue, &when,
 		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
+#ifndef CLOCK_DEBUG
 		sys_watchdog_notify_and_resume(wdog_id);
+#endif
 		if (ret)
 			radio_irq_handler(when);
 	} else {
