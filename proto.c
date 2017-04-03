@@ -357,7 +357,7 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 static void
 proto_send_sensor_data(osjob_t *job)
 {
-	uint8_t	buf[MAX_LEN_PAYLOAD];
+	char	buf[MAX_LEN_PAYLOAD];
 	size_t	len;
 
 	os_setTimedCallback(job, hal_ticks() + SENSOR_PERIOD,
@@ -480,6 +480,7 @@ lora_task_func(void *param)
 	ble_on();
 #endif
 	param_init();
+	sensor_init();
 	os_init();
 	os_setCallback(&init_job, lora_init);
 #ifdef HELLO

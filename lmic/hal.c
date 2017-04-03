@@ -8,7 +8,7 @@
 #include <sys_watchdog.h>
 
 //#define DEBUG
-#define CLOCK_DEBUG
+//#define CLOCK_DEBUG
 
 #ifdef DEBUG
 #define SET_HIGH(port, pin)	hw_gpio_set_active(port, pin)

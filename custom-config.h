@@ -107,6 +107,8 @@
 #define SUOTA_PSM	0x81
 #define USE_PARTITION_TABLE_1MB_WITH_SUOTA
 
+#define HW_UART_ENABLE_USER_ISR
+
 #define dg_configNVPARAM_ADAPTER                (1)
 
 //#define CONFIG_CUSTOM_PRINT
