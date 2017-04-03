@@ -115,6 +115,10 @@
 //#define CONFIG_RETARGET
 #define CONFIG_RTT
 
+#ifdef CONFIG_CUSTOM_PRINT
+#define __HEAP_SIZE                             0x600
+#endif
+
 /*
  * Controls the retRAM size used by the project.
  * 0: all RAM is retained
