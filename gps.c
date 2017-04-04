@@ -62,7 +62,6 @@ valid_crc(char *msg, int len)
 	char	*p;
 	int	 ccrc, icrc; /* computed and indicated CRCs */
 
-	printf("valid_crc: ");
 	if (*msg != '$')
 		return false;
 	/* String must end with "*XX\r\n", where XX are two hex digits. */
@@ -81,9 +80,6 @@ valid_crc(char *msg, int len)
 	for (p = msg + 1; p < msg + len - 5; p++) {
 		ccrc ^= *p;
 	}
-	printf("crc %02x: ", ccrc);
-	for (p = msg; p < msg + len; p++)
-		printf("%c", *p);
 	return ccrc == icrc;
 }
 
@@ -187,7 +183,6 @@ rx_callback(void *data, uint16_t len)
 	memcpy(gps_buf + gps_len, rxbuf + start, i - start);
 	gps_len += i - start;
 	hw_uart_receive(HW_UART2, rxbuf, sizeof(rxbuf), rx_callback, NULL);
-	printf("gps rx %d\r\n", len);
 }
 
 void

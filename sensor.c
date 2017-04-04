@@ -59,7 +59,7 @@ sensor_get_data(char *buf, int len)
 		led_set_status(rlen > 1 ? LED_BLINK_GREEN : LED_BLINK_RED);
 		printf("GPS: ");
 		for (int i = 0; i < rlen; i++)
-			printf("%02x", buf[i]);
+			printf("%02x", (uint8_t)buf[i]);
 		printf("\r\n");
 		break;
 	}
