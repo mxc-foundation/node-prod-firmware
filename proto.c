@@ -52,8 +52,12 @@ static const ostime_t	reboot_timeouts[] = {
 	/* TBD */
 };
 
-static uint8_t	pend_tx_data[MAX_LEN_PAYLOAD];
-static uint8_t	pend_tx_len;
+#define MAX_PAYLOAD_LEN		51
+#define MAX_SENSOR_DATA_LEN	16
+
+static uint8_t	pend_tx_data[MAX_PAYLOAD_LEN];
+static uint8_t	sens_data[MAX_SENSOR_DATA_LEN];
+static uint8_t	pend_tx_len, sens_len;
 
 /* EUI-48: 78af58040000  EUI-64: 78af58fffe040000 */
 static u1_t	deveui[6] = { 0x00, 0x00, 0x04, 0x58, 0xaf, 0x78, };
@@ -233,27 +237,60 @@ ble_on(void)
 	status |= STATUS_BLE_ON;
 }
 
+#define LEN_LEN(len)	(1 + ((len) >= LEN_MASK))
+
 static void
-tx_enqueue(uint8_t cmd, int len, void *data)
+tx_enqueue(uint8_t *dest, uint8_t *dlen, uint8_t maxlen,
+    uint8_t cmd, int len, void *data)
 {
-	if (ARRAY_SIZE(pend_tx_data) - pend_tx_len < len + 1 + (len > LEN_MASK))
+	if (*dlen + LEN_LEN(len) + len > maxlen)
 		return;
-	if (len <= LEN_MASK)
-		pend_tx_data[pend_tx_len++] = cmd | len;
+	if (len < LEN_MASK)
+		dest[(*dlen)++] = cmd | len;
 	else {
-		pend_tx_data[pend_tx_len++] = cmd | LEN_MASK;
-		pend_tx_data[pend_tx_len++] = len & LONG_LEN_MASK;
+		dest[(*dlen)++] = cmd | LEN_MASK;
+		dest[(*dlen)++] = len & LONG_LEN_MASK;
 	}
-	memcpy(pend_tx_data + pend_tx_len, data, len);
-	pend_tx_len += len;
+	memcpy(dest + *dlen, data, len);
+	*dlen += len;
+}
+
+static void
+set_tx_data(void)
+{
+	int	total_len = pend_tx_len;
+
+	if (pend_tx_len + sens_len <= ARRAY_SIZE(pend_tx_data)) {
+		memcpy(pend_tx_data + pend_tx_len, sens_data, sens_len);
+		total_len += sens_len;
+	}
 #ifdef DEBUG
 	printf("set tx data:");
-	for (int i = 0; i < pend_tx_len; i++)
+	for (int i = 0; i < total_len; i++)
 		printf(" %02x", pend_tx_data[i]);
 	printf("\r\n");
 #endif
-	LMIC_setTxData2(PORT, pend_tx_data, pend_tx_len, 0);
-	status |= STATUS_TX_PENDING;
+	if (total_len) {
+		LMIC_setTxData2(PORT, pend_tx_data, total_len, 0);
+		status |= STATUS_TX_PENDING;
+	}
+}
+
+static inline void
+tx_enqueue_cmd(uint8_t cmd, int len, void *data)
+{
+	tx_enqueue(pend_tx_data, &pend_tx_len, ARRAY_SIZE(pend_tx_data),
+	    cmd, len, data);
+	set_tx_data();
+}
+
+static inline void
+tx_set_sens_data(int len, void *data)
+{
+	sens_len = 0;
+	tx_enqueue(sens_data, &sens_len, ARRAY_SIZE(sens_data),
+	    INFO_SENSOR_DATA, len, data);
+	set_tx_data();
 }
 
 static void
@@ -278,7 +315,7 @@ handle_params(uint8_t *data, uint8_t len)
 				memcpy(buf + 1, params[idx].mem,
 				    params[idx].len);
 			}
-			tx_enqueue(INFO_PARAM, params[idx].len + 1, buf);
+			tx_enqueue_cmd(INFO_PARAM, params[idx].len + 1, buf);
 		}
 	} else {
 		/* set */
@@ -370,7 +407,7 @@ proto_send_sensor_data(osjob_t *job)
 	len = sensor_get_data(buf, sizeof(buf));
 	if (len == 0)
 		return;
-	tx_enqueue(INFO_SENSOR_DATA, len, buf);
+	tx_set_sens_data(len, buf);
 }
 
 #ifdef DEBUG
@@ -425,6 +462,7 @@ onEvent(ev_t ev)
 		ad_lmic_allow_sleep(false);
 		status &= ~STATUS_TX_PENDING;
 		pend_tx_len = 0;
+		sens_len = 0;
 		if (status & STATUS_JOINED)
 			led_set(LED_GREEN, LED_BLINK);
 		else
