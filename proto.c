@@ -7,6 +7,7 @@
 #include "lmic/ad_lmic.h"
 #include "lmic/lmic.h"
 #include "ble-suota.h"
+#include "led.h"
 #include "proto.h"
 #include "sensor.h"
 
@@ -35,8 +36,9 @@ typedef enum {
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
-#define STATUS_TX_PENDING	0x01
-#define STATUS_BLE_ON		0x02
+#define STATUS_JOINED		0x01
+#define STATUS_TX_PENDING	0x02
+#define STATUS_BLE_ON		0x04
 static uint8_t	status;
 
 static const ostime_t	reboot_timeouts[] = {
@@ -407,22 +409,33 @@ onEvent(ev_t ev)
 
 	debug_event(ev);
 	switch(ev) {
+	case EV_JOINING:
+		led_set(LED_RED, LED_BREATH);
+		break;
 	case EV_JOINED:
 #ifdef DEBUG
 		printf("netid = %lu\r\n", LMIC.netid);
 #endif
+		status |= STATUS_JOINED;
+		led_set(LED_RED, LED_OFF);
+		led_set(LED_GREEN, LED_BREATH);
 		proto_send_sensor_data(&sensor_job);
 		break;
 	case EV_TXSTART:
 		ad_lmic_allow_sleep(false);
 		status &= ~STATUS_TX_PENDING;
 		pend_tx_len = 0;
+		if (status & STATUS_JOINED)
+			led_set(LED_GREEN, LED_BLINK);
+		else
+			led_set(LED_RED, LED_BREATH);
 		break;
 	case EV_TXCOMPLETE:
 		if (LMIC.dataLen != 0) {
 			proto_handle(LMIC.frame[LMIC.dataBeg - 1],
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
+		led_set(LED_GREEN, LED_BREATH);
 		ad_lmic_allow_sleep(true);
 		break;
 	default:

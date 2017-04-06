@@ -2,7 +2,6 @@
 #include <hw_gpio.h>
 #include "gps.h"
 #include "hw.h"
-#include "led.h"
 #include "sensor.h"
 #include <stdio.h>
 
@@ -56,7 +55,6 @@ sensor_get_data(char *buf, int len)
 	switch (sensor_type) {
 	case SENSOR_TYPE_GPS:
 		rlen += gps_read(buf + 1, len - 1);
-		led_set_status(rlen > 1 ? LED_BLINK_GREEN : LED_BLINK_RED);
 		printf("GPS: ");
 		for (int i = 0; i < rlen; i++)
 			printf("%02x", (uint8_t)buf[i]);
