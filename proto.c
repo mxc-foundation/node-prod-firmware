@@ -21,7 +21,7 @@
 
 #define LONG_LEN_MASK	0x3f
 
-#define SENSOR_PERIOD	sec2osticks(10)
+#define SENSOR_PERIOD	sec2osticks(60)
 
 typedef enum {
 	INFO_SENSOR_DATA	= 0x00,
