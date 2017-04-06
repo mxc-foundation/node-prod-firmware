@@ -1,5 +1,6 @@
 #include <stdio.h> //XXX
 #include <hw_uart.h> //XXX
+#include "ad_lmic.h"
 #include "oslmic.h"
 #include "hal.h"
 
@@ -19,64 +20,27 @@
 #endif
 
 PRIVILEGED_DATA static int8_t	wdog_id;
-static QueueHandle_t		lora_queue;
-
-static bool
-ad_lmic_prepare_for_sleep(void)
-{
-	//extern unsigned long	_vStackTop[], _pvHeapStart[];
-
-	//printf("%s [%lu]\r\n", __func__, (unsigned long)_vStackTop - (unsigned long)_pvHeapStart);
-	hw_uart_write_buffer(HW_UART1, __func__, strlen(__func__));
-	hw_uart_write_buffer(HW_UART1, "\r\n", 2);
-	//printf("%s\r\n", __func__);
-	sys_watchdog_notify(wdog_id); // XXX
-	sys_watchdog_suspend(wdog_id); // XXX
-	return true; // XXX
-}
-
-static void
-ad_lmic_sleep_canceled(void)
-{
-	hw_uart_write_buffer(HW_UART1, __func__, strlen(__func__));
-	hw_uart_write_buffer(HW_UART1, "\r\n", 2);
-}
-
-static void
-ad_lmic_wake_up_ind(bool arg)
-{
-	hw_uart_write_buffer(HW_UART1, __func__, strlen(__func__));
-	hw_uart_write_buffer(HW_UART1, arg ? "(1)\r\n" : "(0)\r\n", 5);
-}
-
-static void
-ad_lmic_xtal16m_ready_ind(void)
-{
-	hw_uart_write_buffer(HW_UART1, __func__, strlen(__func__));
-	hw_uart_write_buffer(HW_UART1, "\r\n", 2);
-}
-
-static const adapter_call_backs_t	ad_lmic_call_backs = {
-	.ad_prepare_for_sleep		= ad_lmic_prepare_for_sleep,
-	.ad_sleep_canceled		= ad_lmic_sleep_canceled,
-	.ad_wake_up_ind			= ad_lmic_wake_up_ind,
-	.ad_xtal16m_ready_ind		= ad_lmic_xtal16m_ready_ind,
-	.ad_sleep_preparation_time	= 0,
-};
+PRIVILEGED_DATA static QueueHandle_t		lora_queue;
 
 static void
 wkup_intr_cb(void)
 {
 	BaseType_t	woken = 0;
 	ostime_t	now;
+	bool		send;
 
-	if (hw_gpio_get_pin_status(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN) ||
-	    hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN)) {
+	send = lora_queue &&
+	    (hw_gpio_get_pin_status(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN) ||
+	     hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN));
+	if (send) {
 		now = hal_ticks();
 		xQueueSendFromISR(lora_queue, &now, &woken);
 	}
 	hw_wkup_reset_interrupt();
-	portYIELD_FROM_ISR(woken);
+	//extern int	_write(int fd, char *ptr, int len);
+	//_write(1, "wkup\r\n", 6);
+	if (send)
+		portYIELD_FROM_ISR(woken);
 }
 
 static void
@@ -84,19 +48,34 @@ wkup_init(void)
 {
 	hw_wkup_init(NULL);
 	hw_wkup_set_counter_threshold(1);
+	//hw_wkup_set_debounce_time(16); // XXX
 	hw_gpio_set_pin_function(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+#if 0
+	hw_gpio_set_pin_function(HW_USER_BTN_PORT,  HW_USER_BTN_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+#endif
 	hw_wkup_configure_pin(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_configure_pin(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_configure_pin(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
+#if 0
+	hw_wkup_configure_pin(HW_USER_BTN_PORT,  HW_USER_BTN_PIN,  true,
+	    HW_WKUP_PIN_STATE_LOW);
+#endif
 	hw_wkup_register_interrupt(wkup_intr_cb, 1);
+}
+
+void
+hal_periph_init()
+{
+	wkup_init();
 }
 
 void
@@ -105,9 +84,8 @@ hal_init()
 	cm_wait_lp_clk_ready();
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
-	pm_register_adapter(&ad_lmic_call_backs);
 	lora_queue = xQueueCreate(1, sizeof(ostime_t));
-	wkup_init();
+	ad_lmic_init();
 #ifdef DEBUG
 	hw_gpio_set_pin_function(4, 0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(4, 1, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
@@ -157,10 +135,17 @@ static u4_t	waituntil;
 void
 hal_resetWatchdog(void)
 {
-	sys_watchdog_notify(wdog_id);
+	sys_watchdog_notify_and_resume(wdog_id);
 #ifdef CLOCK_DEBUG
 	sys_watchdog_suspend(wdog_id);
 #endif
+}
+
+void
+hal_suspendWatchdog(void)
+{
+	sys_watchdog_notify(wdog_id);
+	sys_watchdog_suspend(wdog_id);
 }
 
 u1_t
@@ -194,13 +179,17 @@ hal_sleep()
 		BaseType_t	ret;
 		ostime_t	when;
 
-		if (dt >= 0x10000)
+		if (dt >= 0x10000) {
+			if (dt >= sec2osticks(10))
+				ad_lmic_hal_sleeping(true);
 			sys_watchdog_suspend(wdog_id);
+		}
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
 		ret = xQueueReceive(lora_queue, &when,
 		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
+		ad_lmic_hal_sleeping(false);
 #ifndef CLOCK_DEBUG
 		sys_watchdog_notify_and_resume(wdog_id);
 #endif

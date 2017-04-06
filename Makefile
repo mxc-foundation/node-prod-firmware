@@ -16,8 +16,12 @@ OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/sensor.o \
 	$(OBJDIR)/strtonum.o
 
-OBJS+=	$(OBJDIR)/lmic/aes.o $(OBJDIR)/lmic/hal.o $(OBJDIR)/lmic/lmic.o \
-	$(OBJDIR)/lmic/oslmic.o $(OBJDIR)/lmic/radio.o
+OBJS+=	$(OBJDIR)/lmic/ad_lmic.o \
+	$(OBJDIR)/lmic/aes.o \
+	$(OBJDIR)/lmic/hal.o \
+	$(OBJDIR)/lmic/lmic.o \
+	$(OBJDIR)/lmic/oslmic.o \
+	$(OBJDIR)/lmic/radio.o
 
 OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/startup/startup_ARMCM0.o \

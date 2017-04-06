@@ -39,6 +39,7 @@
  * initialize hardware (IO, SPI, TIMER, IRQ).
  */
 void hal_init (void);
+void hal_periph_init (void);
 
 /*
  * drive radio NSS pin (0=low, 1=high).
@@ -109,6 +110,7 @@ void hal_sleep (void);
 #define hal_ticks()	((u4_t)rtc_get())
 
 void hal_resetWatchdog(void);
+void hal_suspendWatchdog(void);
 
 /*
  * busy-wait until specified timestamp (in ticks) is reached.

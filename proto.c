@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <ad_nvparam.h>
 #include <platform_nvparam.h>
+#include "lmic/ad_lmic.h"
 #include "lmic/lmic.h"
 #include "ble-suota.h"
 #include "proto.h"
@@ -413,6 +414,7 @@ onEvent(ev_t ev)
 		proto_send_sensor_data(&sensor_job);
 		break;
 	case EV_TXSTART:
+		ad_lmic_allow_sleep(false);
 		status &= ~STATUS_TX_PENDING;
 		pend_tx_len = 0;
 		break;
@@ -421,6 +423,7 @@ onEvent(ev_t ev)
 			proto_handle(LMIC.frame[LMIC.dataBeg - 1],
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
+		ad_lmic_allow_sleep(true);
 		break;
 	default:
 		break;

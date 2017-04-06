@@ -140,6 +140,7 @@ periph_setup(void)
 	uart_init();
 	spi_init();
 	led_init();
+	hal_periph_init();
 }
 
 static void
