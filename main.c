@@ -157,7 +157,6 @@ sysinit_task_func(void *param)
 	ASSERT_WARNING(idle_task_wdog_id != -1);
 	sys_watchdog_configure_idle_id(idle_task_wdog_id);
 #endif
-	cm_sys_clk_set(sysclk_XTAL16M);
 	pm_system_init(periph_setup);
 	printf("*** FreeRTOS ***\r\n");
 	resource_init();
