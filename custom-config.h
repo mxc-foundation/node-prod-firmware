@@ -82,7 +82,7 @@
  * FreeRTOS specific config
  */
 #define OS_FREERTOS                              /* Define this to use FreeRTOS */
-#define configTOTAL_HEAP_SIZE                    16386   /* This is the FreeRTOS Total Heap Size */
+#define configTOTAL_HEAP_SIZE                    15810   /* This is the FreeRTOS Total Heap Size */
 //#define OS_BAREMETAL
 
 /*************************************************************************************************\
@@ -124,7 +124,7 @@
  * 0: all RAM is retained
  * 1: retention memory size is optimal
  */
-#define proj_configOPTIMAL_RETRAM               (0)
+#define proj_configOPTIMAL_RETRAM               (1)
 
 #if !defined(RELEASE_BUILD) && (proj_configOPTIMAL_RETRAM == 1)
     #undef proj_configOPTIMAL_RETRAM
