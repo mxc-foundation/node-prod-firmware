@@ -208,7 +208,7 @@ image: $(IMGTARGET)
 #.c.o:
 #	arm-none-eabi-gcc -c $<
 
-$(OBJS): $(CONFIG_H)
+$(OBJS) $(LDSCRIPTS): $(CONFIG_H)
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p `dirname $@`
