@@ -3,7 +3,6 @@
 #include "gps.h"
 #include "hw.h"
 #include "sensor.h"
-#include <stdio.h>
 
 #define SENSOR_TYPE_UNKNOWN	0
 #define SENSOR_TYPE_GPS		1
@@ -36,7 +35,6 @@ detect_sensor(void)
 void
 sensor_init()
 {
-	printf("sensor init\r\n");
 	sensor_power_init();
 	detect_sensor();
 	if (sensor_cb[sensor_type].init)
@@ -55,10 +53,6 @@ sensor_get_data(char *buf, int len)
 	switch (sensor_type) {
 	case SENSOR_TYPE_GPS:
 		rlen += gps_read(buf + 1, len - 1);
-		printf("GPS: ");
-		for (int i = 0; i < rlen; i++)
-			printf("%02x", (uint8_t)buf[i]);
-		printf("\r\n");
 		break;
 	}
 	return rlen;

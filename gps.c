@@ -7,8 +7,6 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include <stdio.h>
-
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 extern long long	strtonum(const char *numstr, long long minval,
@@ -115,7 +113,6 @@ proc_gpgga(char *data[], int sz)
 	struct gps_fix	 fix;
 	const char	*errstr;
 
-	printf("GPGGA %c\r\n", data[GPGGA_FIX][0]);
 	fix.fix = strtonum(data[GPGGA_FIX], 0, 6, &errstr);
 	if (fix.fix) {
 		fix.lat = parse_latlon(data[GPGGA_LAT], MAXLAT,
@@ -200,7 +197,6 @@ gps_init()
 		.rx_dma_channel		= HW_DMA_CHANNEL_0,
 	};
 
-	printf("gps init\r\n");
 	hw_gpio_set_pin_function(HW_SENSOR_UART_TX_PORT, HW_SENSOR_UART_TX_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_UART2_TX);
 	hw_gpio_set_pin_function(HW_SENSOR_UART_RX_PORT, HW_SENSOR_UART_RX_PIN,
