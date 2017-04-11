@@ -92,22 +92,6 @@ spi_init(void)
 	hw_spi_init(HW_LORA_SPI, &cfg);
 }
 
-#if 0
-static void
-sensor_init(void)
-{
-#define SENSOR_PORT	0
-#define SENSOR_PIN	7
-	hw_gpio_set_pin_function(SENSOR_PORT, SENSOR_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_ADC);
-}
-
-static int
-sensor_get(void)
-{
-}
-#endif
-
 #ifdef CONFIG_RTT
 #define uart_init()
 #else
