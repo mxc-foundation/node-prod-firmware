@@ -7,9 +7,9 @@
 #include "lmic/ad_lmic.h"
 #include "lmic/lmic.h"
 #include "bat.h"
-#include "ble-suota.h"
+#include "ble.h"
 #include "led.h"
-#include "proto.h"
+#include "lora.h"
 #include "sensor.h"
 
 #define DEBUG
@@ -219,7 +219,7 @@ do_reboot(osjob_t *job)
 
 	/* If SUOTA is active, delay reboot, but force it after
 	 * 256 * 5s (21 min 20 sec). */
-	if (is_suota_ongoing() && --cnt) {
+	if (ble_is_suota_ongoing() && --cnt) {
 		os_setTimedCallback(job, hal_ticks() + sec2osticks(5),
 		    do_reboot);
 		return;

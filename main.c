@@ -9,8 +9,8 @@
 
 #include "hw.h"
 #include "led.h"
+#include "lora.h"
 #include "lmic/lmic.h"
-#include "proto.h"
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
 

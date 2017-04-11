@@ -16,7 +16,7 @@
 
 #include "lmic/lmic.h"
 #include "lmic/hal.h"
-#include "ble-suota.h"
+#include "ble.h"
 
 /*
  * 0x01 == BLE_APP_NOTIFY_MASK
@@ -63,7 +63,7 @@ static const dis_device_info_t	dis_info = {
 static const char	device_name[] = "MatchStick 123";
 
 bool
-is_suota_ongoing()
+ble_is_suota_ongoing()
 {
 	return suota_ongoing;
 }

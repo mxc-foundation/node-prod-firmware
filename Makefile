@@ -9,11 +9,11 @@ TARGET=		$(OBJDIR)/$(PROJ).bin
 IMGTARGET=	$(OBJDIR)/$(PROJ).img
 
 OBJS+=	$(OBJDIR)/main.o \
-	$(OBJDIR)/ble-suota.o \
 	$(OBJDIR)/bat.o \
+	$(OBJDIR)/ble.o \
 	$(OBJDIR)/gps.o \
 	$(OBJDIR)/led.o \
-	$(OBJDIR)/proto.o \
+	$(OBJDIR)/lora.o \
 	$(OBJDIR)/sensor.o \
 	$(OBJDIR)/strtonum.o
 
