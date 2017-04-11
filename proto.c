@@ -6,6 +6,7 @@
 #include <platform_nvparam.h>
 #include "lmic/ad_lmic.h"
 #include "lmic/lmic.h"
+#include "bat.h"
 #include "ble-suota.h"
 #include "led.h"
 #include "proto.h"
@@ -26,8 +27,9 @@
 #define SENSOR_PERIOD	sec2osticks(60)
 
 typedef enum {
-	INFO_SENSOR_DATA	= 0x00,
-	INFO_PARAM		= 0x10,
+	INFO_PARAM		= 0x00,
+	INFO_SENSOR_DATA	= 0x10,
+	INFO_BATTERY		= 0x20,
 } uplink_info;
 
 /* CMD_REBOOT_UPGRADE */
@@ -277,11 +279,10 @@ set_tx_data(void)
 }
 
 static inline void
-tx_enqueue_cmd(uint8_t cmd, int len, void *data)
+tx_enqueue_info(uint8_t cmd, int len, void *data)
 {
 	tx_enqueue(pend_tx_data, &pend_tx_len, ARRAY_SIZE(pend_tx_data),
 	    cmd, len, data);
-	set_tx_data();
 }
 
 static inline void
@@ -290,7 +291,6 @@ tx_set_sens_data(int len, void *data)
 	sens_len = 0;
 	tx_enqueue(sens_data, &sens_len, ARRAY_SIZE(sens_data),
 	    INFO_SENSOR_DATA, len, data);
-	set_tx_data();
 }
 
 static void
@@ -315,7 +315,7 @@ handle_params(uint8_t *data, uint8_t len)
 				memcpy(buf + 1, params[idx].mem,
 				    params[idx].len);
 			}
-			tx_enqueue_cmd(INFO_PARAM, params[idx].len + 1, buf);
+			tx_enqueue_info(INFO_PARAM, params[idx].len + 1, buf);
 		}
 	} else {
 		/* set */
@@ -392,22 +392,31 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 		data += plen;
 		len -= plen;
 	}
+	set_tx_data();
 }
 
 static void
-proto_send_sensor_data(osjob_t *job)
+proto_send_periodic_data(osjob_t *job)
 {
-	char	buf[MAX_LEN_PAYLOAD];
-	size_t	len;
+	static uint8_t	last_bat_level;
+	char		buf[MAX_LEN_PAYLOAD];
+	size_t		len;
+	uint8_t		cur_bat_level;
 
 	os_setTimedCallback(job, hal_ticks() + SENSOR_PERIOD,
-	    proto_send_sensor_data);
+	    proto_send_periodic_data);
 	if (ARRAY_SIZE(pend_tx_data) - pend_tx_len < 2)
 		return;
+	cur_bat_level = bat_level();
+	if (cur_bat_level != last_bat_level) {
+		last_bat_level = cur_bat_level;
+		tx_enqueue_info(INFO_BATTERY, 1, &cur_bat_level);
+	}
 	len = sensor_get_data(buf, sizeof(buf));
 	if (len == 0)
 		return;
 	tx_set_sens_data(len, buf);
+	set_tx_data();
 }
 
 #ifdef DEBUG
@@ -456,7 +465,7 @@ onEvent(ev_t ev)
 		status |= STATUS_JOINED;
 		led_set(LED_RED, LED_OFF);
 		led_set(LED_GREEN, LED_BREATH);
-		proto_send_sensor_data(&sensor_job);
+		proto_send_periodic_data(&sensor_job);
 		break;
 	case EV_TXSTART:
 		ad_lmic_allow_sleep(false);
