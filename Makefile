@@ -225,6 +225,7 @@ $(OBJDIR)/%.o: $(SDKDIR)/%.S
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.ld: ldscripts/%.ld.h
+	mkdir -p `dirname $@`
 	$(CC) $(CFLAGS) -E -P -c "$<" -o "$@"
 
 $(ELFTARGET): $(OBJS) $(LDSCRIPTS)
