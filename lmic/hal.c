@@ -8,17 +8,6 @@
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
 
-//#define DEBUG
-//#define CLOCK_DEBUG
-
-#ifdef DEBUG
-#define SET_HIGH(port, pin)	hw_gpio_set_active(port, pin)
-#define SET_LOW(port, pin)	hw_gpio_set_inactive(port, pin)
-#else
-#define SET_HIGH(port, pin)
-#define SET_LOW(port, pin)
-#endif
-
 PRIVILEGED_DATA static int8_t	wdog_id;
 PRIVILEGED_DATA static QueueHandle_t		lora_queue;
 
@@ -37,8 +26,6 @@ wkup_intr_cb(void)
 		xQueueSendFromISR(lora_queue, &now, &woken);
 	}
 	hw_wkup_reset_interrupt();
-	//extern int	_write(int fd, char *ptr, int len);
-	//_write(1, "wkup\r\n", 6);
 	if (send)
 		portYIELD_FROM_ISR(woken);
 }
@@ -48,27 +35,22 @@ wkup_init(void)
 {
 	hw_wkup_init(NULL);
 	hw_wkup_set_counter_threshold(1);
-	//hw_wkup_set_debounce_time(16); // XXX
 	hw_gpio_set_pin_function(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-#if 0
 	hw_gpio_set_pin_function(HW_USER_BTN_PORT,  HW_USER_BTN_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-#endif
 	hw_wkup_configure_pin(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_configure_pin(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_configure_pin(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
-#if 0
 	hw_wkup_configure_pin(HW_USER_BTN_PORT,  HW_USER_BTN_PIN,  true,
 	    HW_WKUP_PIN_STATE_LOW);
-#endif
 	hw_wkup_register_interrupt(wkup_intr_cb, 1);
 }
 
@@ -86,11 +68,6 @@ hal_init()
 	sys_watchdog_notify(wdog_id);
 	lora_queue = xQueueCreate(1, sizeof(ostime_t));
 	ad_lmic_init();
-#ifdef DEBUG
-	hw_gpio_set_pin_function(4, 0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(4, 1, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(4, 2, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-#endif
 }
 
 void
