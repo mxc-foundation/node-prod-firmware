@@ -125,7 +125,7 @@ CFLAGS+=	-g -Os -fsigned-char -ffunction-sections -fdata-sections
 CFLAGS+=	-Ddg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A \
 		-Ddg_configBLACK_ORCA_IC_STEP=BLACK_ORCA_IC_STEP_E \
 		-DCONFIG_AT45DB011D=1 -DCONFIG_24LC256=1 -DCONFIG_FM75=1
-#CFLAGS+=	-DRELEASE_BUILD
+CFLAGS+=	-DRELEASE_BUILD
 CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/bsp/include -I$(SDKDIR)/sdk/bsp/config \
 		-I$(SDKDIR)/sdk/bsp/peripherals/include \
