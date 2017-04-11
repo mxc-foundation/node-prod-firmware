@@ -27,6 +27,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/startup/startup_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/system_ARMCM0.o \
 	$(OBJDIR)/sdk/bsp/startup/vector_table.o \
+	$(OBJDIR)/sdk/bsp/adapters/src/ad_battery.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_crypto.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_flash.o \
 	$(OBJDIR)/sdk/bsp/adapters/src/ad_gpadc.o \

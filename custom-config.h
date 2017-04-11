@@ -63,11 +63,13 @@
 #define dg_configFLASH_CONNECTED_TO		(FLASH_CONNECTED_TO_1V8)
 
 #define dg_configBATTERY_TYPE                   (BATTERY_TYPE_LIMN2O4)
-#define dg_configBATTERY_CHARGE_CURRENT         2       // 30mA
-#define dg_configBATTERY_PRECHARGE_CURRENT      20      // 2.1mA
+#define dg_configBATTERY_CHARGE_CURRENT         11      // 300mA
+#define dg_configBATTERY_PRECHARGE_CURRENT      27      // 11.3mA
 #define dg_configBATTERY_CHARGE_NTC             1       // disabled
+#define dg_configPRECHARGING_THRESHOLD          2462    // 3.006V
+#define dg_configCHARGING_THRESHOLD             2498    // 3.05V
 
-#define dg_configUSE_USB_CHARGER                0
+#define dg_configUSE_USB_CHARGER                1
 #define dg_configALLOW_CHARGING_NOT_ENUM        1
 
 #define dg_configUSE_ProDK                      (1)
@@ -82,7 +84,7 @@
  * FreeRTOS specific config
  */
 #define OS_FREERTOS                              /* Define this to use FreeRTOS */
-#define configTOTAL_HEAP_SIZE                    15810   /* This is the FreeRTOS Total Heap Size */
+#define configTOTAL_HEAP_SIZE                    15804   /* This is the FreeRTOS Total Heap Size */
 //#define OS_BAREMETAL
 
 /*************************************************************************************************\
