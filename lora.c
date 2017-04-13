@@ -120,9 +120,9 @@ reverse_memcpy(void *dest, void *src, size_t len)
 {
 	char	*d = dest, *s = src;
 
-	do {
+	while (len) {
 		d[--len] = *s++;
-	} while (len);
+	}
 }
 
 void
