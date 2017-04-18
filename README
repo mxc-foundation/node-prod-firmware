@@ -40,7 +40,7 @@ Number	Name		Length	Description
 1	Reboot/Upgrade	0	Reboot the mote immediately.
 			1	Reboot the mote after the
 				specified timeout; optionally
-				tuun BLE and SUOTA on for
+				turn BLE and SUOTA on for
 				upgrades.  The argument is as
 				follows:
 				bit [7]:
