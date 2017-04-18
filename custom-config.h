@@ -142,7 +142,7 @@
 #if (proj_configOPTIMAL_RETRAM == 0)
     #define dg_configMEM_RETENTION_MODE         (0x1F)
     #define dg_configSHUFFLING_MODE             (0x3)
-#elif dg_configEXEC_MODE != MODE_IS_CACHED
+#else
     #define dg_configMEM_RETENTION_MODE         (0x14)
     #define dg_configSHUFFLING_MODE             (0x2)
 #endif
