@@ -113,7 +113,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/middleware/segger_tools/SEGGER/SEGGER_RTT.o \
 	$(OBJDIR)/sdk/middleware/segger_tools/SEGGER/SEGGER_RTT_printf.o
 
-CONFIG_H=	custom-config.h
+CONFIG_H=	custom_config.h
 DEPS=		$(OBJS:.o=.d)
 
 LDSCRIPTS=	obj/mem.ld obj/sections.ld
