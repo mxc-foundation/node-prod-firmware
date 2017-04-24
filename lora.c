@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <ad_nvparam.h>
 #include <platform_nvparam.h>
-#include "lmic/ad_lmic.h"
 #include "lmic/lmic.h"
 #include "bat.h"
 #include "ble.h"
@@ -468,7 +467,6 @@ onEvent(ev_t ev)
 		proto_send_periodic_data(&sensor_job);
 		break;
 	case EV_TXSTART:
-		ad_lmic_allow_sleep(false);
 		status &= ~STATUS_TX_PENDING;
 		pend_tx_len = 0;
 		sens_len = 0;
@@ -483,7 +481,6 @@ onEvent(ev_t ev)
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
 		led_set(LED_GREEN, LED_BREATH);
-		ad_lmic_allow_sleep(true);
 		break;
 	default:
 		break;

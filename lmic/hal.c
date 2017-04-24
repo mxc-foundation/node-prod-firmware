@@ -1,5 +1,4 @@
 #include <stdio.h> //XXX
-#include "ad_lmic.h"
 #include "oslmic.h"
 #include "hal.h"
 
@@ -101,7 +100,6 @@ hal_init()
 	sys_watchdog_notify(wdog_id);
 	wkup_init();
 	lora_queue = xQueueCreate(1, sizeof(ostime_t));
-	ad_lmic_init();
 }
 
 void
@@ -190,18 +188,13 @@ hal_sleep()
 		BaseType_t	ret;
 		ostime_t	when;
 
-		if (dt >= 0x10000) {
-			if (dt >= sec2osticks(10))
-				ad_lmic_hal_sleeping(true);
+		if (dt >= 0x10000)
 			sys_watchdog_suspend(wdog_id);
-		}
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
-		ad_lmic_hal_sleeping(true);
 		ret = xQueueReceive(lora_queue, &when,
 		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
-		ad_lmic_hal_sleeping(false);
 #ifndef CLOCK_DEBUG
 		sys_watchdog_notify_and_resume(wdog_id);
 #endif
