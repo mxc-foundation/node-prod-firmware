@@ -7,6 +7,13 @@
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
 
+#define EV_LORA_DIO	0
+#define EV_BTN_PRESS	1
+struct event {
+	uint8_t		ev;
+	ostime_t	t;
+};
+
 PRIVILEGED_DATA static int8_t	wdog_id;
 PRIVILEGED_DATA static QueueHandle_t		lora_queue;
 
@@ -14,18 +21,19 @@ static void
 wkup_intr_cb(void)
 {
 	BaseType_t	woken = 0;
-	ostime_t	now;
-	bool		send;
+	struct event	ev;
 
-	send = lora_queue &&
-	    (hw_gpio_get_pin_status(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN) ||
-	     hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN));
-	if (send) {
-		now = hal_ticks();
-		xQueueSendFromISR(lora_queue, &now, &woken);
+	ev.t = hal_ticks();
+	if (hw_gpio_get_pin_status(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN) ||
+	    hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN)) {
+		ev.ev = EV_LORA_DIO;
+	} else {
+		ev.ev = EV_BTN_PRESS;
 	}
+	if (lora_queue)
+		xQueueSendFromISR(lora_queue, &ev, &woken);
 	hw_wkup_reset_interrupt();
-	if (send)
+	if (lora_queue)
 		portYIELD_FROM_ISR(woken);
 }
 
@@ -99,7 +107,7 @@ hal_init()
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
 	wkup_init();
-	lora_queue = xQueueCreate(1, sizeof(ostime_t));
+	lora_queue = xQueueCreate(2, sizeof(struct event));
 }
 
 void
@@ -135,6 +143,22 @@ hal_failed()
 {
 	printf("hal failed\r\n");
 	hw_cpm_reboot_system();
+}
+
+void
+hal_handle_event(struct event ev)
+{
+	switch (ev.ev) {
+	case EV_LORA_DIO:
+		radio_irq_handler(ev.t);
+		break;
+	case EV_BTN_PRESS:
+		// XXX
+		printf("button\r\n");
+		break;
+	default:
+		hal_failed();
+	}
 }
 
 #define LONGSLEEP (2 * (s4_t)(configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ))
@@ -186,20 +210,20 @@ hal_sleep()
 
 	if (dt > LONGSLEEP) {
 		BaseType_t	ret;
-		ostime_t	when;
+		struct event	ev;
 
 		if (dt >= 0x10000)
 			sys_watchdog_suspend(wdog_id);
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
-		ret = xQueueReceive(lora_queue, &when,
+		ret = xQueueReceive(lora_queue, &ev,
 		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
 #ifndef CLOCK_DEBUG
 		sys_watchdog_notify_and_resume(wdog_id);
 #endif
 		if (ret)
-			radio_irq_handler(when);
+			hal_handle_event(ev);
 	} else {
 		// Busy-wait
 		hal_waitUntil(waituntil - 5);
@@ -209,11 +233,11 @@ hal_sleep()
 void
 hal_waitUntil(u4_t time)
 {
-	ostime_t	when;
+	struct event	ev;
 
 	while ((s4_t)(time - hal_ticks()) > 0) {
-		if (xQueueReceive(lora_queue, &when, 0)) {
-			radio_irq_handler(when);
+		if (xQueueReceive(lora_queue, &ev, 0)) {
+			hal_handle_event(ev);
 			break;
 		}
 	}
