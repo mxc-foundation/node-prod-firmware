@@ -71,12 +71,15 @@ static u1_t	devkey[16] = {
 };
 
 /* NVPARAM "ble_platform" */
+#define PARAM_DEV_EUI		0
 #define PARAM_DEV_EUI_OFF	TAG_BLE_PLATFORM_BD_ADDRESS
 #define PARAM_DEV_EUI_LEN	sizeof(deveui)
 
 /* VES */
+#define PARAM_APP_EUI		1
 #define PARAM_APP_EUI_OFF	0
 #define PARAM_APP_EUI_LEN	sizeof(appeui)
+#define PARAM_DEV_KEY		2
 #define PARAM_DEV_KEY_OFF	(PARAM_APP_EUI_OFF + PARAM_APP_EUI_LEN)
 #define PARAM_DEV_KEY_LEN	sizeof(devkey)
 
@@ -94,19 +97,19 @@ struct param_def {
 };
 
 static const struct param_def	params[] = {
-	{
+	[PARAM_DEV_EUI] = {
 		.mem	= deveui,
 		.offset	= PARAM_DEV_EUI_OFF,
 		.len	= PARAM_DEV_EUI_LEN,
 		.flags	= PARAM_FLAG_BLE_NV | PARAM_FLAG_REVERSE,
 	},
-	{
+	[PARAM_APP_EUI] = {
 		.mem	= appeui,
 		.offset	= PARAM_APP_EUI_OFF,
 		.len	= PARAM_APP_EUI_LEN,
 		.flags	= PARAM_FLAG_REVERSE,
 	},
-	{
+	[PARAM_DEV_KEY] = {
 		.mem	= devkey,
 		.offset	= PARAM_DEV_KEY_OFF,
 		.len	= PARAM_DEV_KEY_LEN,
