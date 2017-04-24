@@ -34,8 +34,6 @@
 #define dg_configTEMPSENS_ADAPTER               1
 #define dg_configGPADC_ADAPTER                  1
 
-#define SERIAL_CONSOLE_RETARGET                 1
-
 #define dg_configUSE_LP_CLK                     LP_CLK_32768
 #define dg_configEXEC_MODE                      MODE_IS_CACHED
 #define dg_configCODE_LOCATION                  NON_VOLATILE_IS_FLASH
