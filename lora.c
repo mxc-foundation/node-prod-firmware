@@ -55,10 +55,12 @@ static const ostime_t	reboot_timeouts[] = {
 
 #define MAX_PAYLOAD_LEN		51
 #define MAX_SENSOR_DATA_LEN	16
+#define MAX_BATTERY_DATA_LEN	2
 
 static uint8_t	pend_tx_data[MAX_PAYLOAD_LEN];
-static uint8_t	sens_data[MAX_SENSOR_DATA_LEN];
-static uint8_t	pend_tx_len, sens_len;
+static uint8_t	sensor_data[MAX_SENSOR_DATA_LEN];
+static uint8_t	battery_data[MAX_BATTERY_DATA_LEN];
+static uint8_t	pend_tx_len, sensor_len, battery_len;
 
 /* EUI-48: 78af58040000  EUI-64: 78af58fffe040000 */
 static u1_t	deveui[6] = { 0x00, 0x00, 0x04, 0x58, 0xaf, 0x78, };
@@ -259,15 +261,20 @@ tx_enqueue(uint8_t *dest, uint8_t *dlen, uint8_t maxlen,
 	*dlen += len;
 }
 
+#define ADD_TX(x)	do {						\
+	if (total_len + x ## _len <= ARRAY_SIZE(pend_tx_data)) {	\
+		memcpy(pend_tx_data + total_len, x ## _data, x ## _len);\
+		total_len += x ## _len;					\
+	}								\
+} while (0)
+
 static void
 set_tx_data(void)
 {
 	int	total_len = pend_tx_len;
 
-	if (pend_tx_len + sens_len <= ARRAY_SIZE(pend_tx_data)) {
-		memcpy(pend_tx_data + pend_tx_len, sens_data, sens_len);
-		total_len += sens_len;
-	}
+	ADD_TX(battery);
+	ADD_TX(sensor);
 #ifdef DEBUG
 	printf("set tx data:");
 	for (int i = 0; i < total_len; i++)
@@ -280,20 +287,18 @@ set_tx_data(void)
 	}
 }
 
-static inline void
-tx_enqueue_info(uint8_t cmd, int len, void *data)
-{
-	tx_enqueue(pend_tx_data, &pend_tx_len, ARRAY_SIZE(pend_tx_data),
-	    cmd, len, data);
-}
+#define TX_CLEAR(x)	do {						\
+	x ## _len = 0;							\
+} while (0)
 
-static inline void
-tx_set_sens_data(int len, void *data)
-{
-	sens_len = 0;
-	tx_enqueue(sens_data, &sens_len, ARRAY_SIZE(sens_data),
-	    INFO_SENSOR_DATA, len, data);
-}
+#define TX_SET(x, cmd, len, data)	do {				\
+	TX_CLEAR(x);							\
+	tx_enqueue(x ## _data, &x ## _len, ARRAY_SIZE(x ## _data),	\
+	    cmd, len, data);						\
+} while (0)
+
+#define TX_ENQUEUE(cmd, len, data)	TX_SET(pend_tx, cmd, len, data)
+
 
 static void
 handle_params(uint8_t *data, uint8_t len)
@@ -317,7 +322,7 @@ handle_params(uint8_t *data, uint8_t len)
 				memcpy(buf + 1, params[idx].mem,
 				    params[idx].len);
 			}
-			tx_enqueue_info(INFO_PARAM, params[idx].len + 1, buf);
+			TX_ENQUEUE(INFO_PARAM, params[idx].len + 1, buf);
 		}
 	} else {
 		/* set */
@@ -412,12 +417,11 @@ proto_send_periodic_data(osjob_t *job)
 	cur_bat_level = bat_level();
 	if (cur_bat_level != last_bat_level) {
 		last_bat_level = cur_bat_level;
-		tx_enqueue_info(INFO_BATTERY, 1, &cur_bat_level);
+		TX_SET(battery, INFO_BATTERY, 1, &cur_bat_level);
 	}
 	len = sensor_get_data(buf, sizeof(buf));
-	if (len == 0)
-		return;
-	tx_set_sens_data(len, buf);
+	if (len != 0)
+		TX_SET(sensor, INFO_SENSOR_DATA, len, buf);
 	set_tx_data();
 }
 
@@ -471,8 +475,9 @@ onEvent(ev_t ev)
 		break;
 	case EV_TXSTART:
 		status &= ~STATUS_TX_PENDING;
-		pend_tx_len = 0;
-		sens_len = 0;
+		TX_CLEAR(pend_tx);
+		TX_CLEAR(sensor);
+		TX_CLEAR(battery);
 		if (status & STATUS_JOINED)
 			led_set(LED_GREEN, LED_BLINK);
 		else
