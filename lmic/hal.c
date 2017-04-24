@@ -4,6 +4,7 @@
 #include "oslmic.h"
 #include "hal.h"
 
+#include <hw_trng.h>
 #include <hw_wkup.h>
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
@@ -35,14 +36,6 @@ wkup_init(void)
 {
 	hw_wkup_init(NULL);
 	hw_wkup_set_counter_threshold(1);
-	hw_gpio_set_pin_function(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HW_USER_BTN_PORT,  HW_USER_BTN_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	hw_wkup_configure_pin(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_configure_pin(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN, true,
@@ -54,10 +47,51 @@ wkup_init(void)
 	hw_wkup_register_interrupt(wkup_intr_cb, 1);
 }
 
+static void
+hal_lora_init(void)
+{
+	spi_config	cfg = {
+		.cs_pad		= {
+			.port	= HW_LORA_SPI_CS_PORT,
+			.pin	= HW_LORA_SPI_CS_PIN,
+		},
+		.word_mode	= HW_SPI_WORD_8BIT,
+		.smn_role	= HW_SPI_MODE_MASTER,
+		.polarity_mode	= HW_SPI_POL_LOW,
+		.phase_mode	= HW_SPI_PHA_MODE_0,
+		.mint_mode	= HW_SPI_MINT_DISABLE,
+		.xtal_freq	= HW_SPI_FREQ_DIV_2,
+		.fifo_mode	= HW_SPI_FIFO_RX_TX,
+	};
+
+	hw_gpio_set_pin_function(HW_LORA_SPI_CLK_PORT, HW_LORA_SPI_CLK_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_LORA_GPIO_FUNC_SPI_CLK);
+	hw_gpio_set_pin_function(HW_LORA_SPI_DI_PORT,  HW_LORA_SPI_DI_PIN,
+	    HW_GPIO_MODE_INPUT,  HW_LORA_GPIO_FUNC_SPI_DI);
+	hw_gpio_set_pin_function(HW_LORA_SPI_DO_PORT,  HW_LORA_SPI_DO_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_LORA_GPIO_FUNC_SPI_DO);
+	hw_gpio_set_pin_function(HW_LORA_SPI_CS_PORT,  HW_LORA_SPI_CS_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HW_LORA_RX_PORT,      HW_LORA_RX_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HW_LORA_TX_PORT,      HW_LORA_TX_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HW_LORA_DIO0_PORT,    HW_LORA_DIO0_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HW_LORA_DIO1_PORT,    HW_LORA_DIO1_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HW_LORA_DIO2_PORT,    HW_LORA_DIO2_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HW_USER_BTN_PORT,     HW_USER_BTN_PIN,
+	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	hw_spi_init(HW_LORA_SPI, &cfg);
+}
+
 void
 hal_periph_init()
 {
-	wkup_init();
+	hw_trng_enable(NULL);
+	hal_lora_init();
 }
 
 void
@@ -66,6 +100,7 @@ hal_init()
 	cm_wait_lp_clk_ready();
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
+	wkup_init();
 	lora_queue = xQueueCreate(1, sizeof(ostime_t));
 	ad_lmic_init();
 }
@@ -164,6 +199,7 @@ hal_sleep()
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
+		ad_lmic_hal_sleeping(true);
 		ret = xQueueReceive(lora_queue, &when,
 		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
 		ad_lmic_hal_sleeping(false);

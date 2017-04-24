@@ -58,40 +58,6 @@ _write(int fd, char *ptr, int len)
 }
 #endif
 
-static void
-spi_init(void)
-{
-	spi_config	cfg = {
-		{ HW_LORA_SPI_CS_PORT, HW_LORA_SPI_CS_PIN },
-		HW_SPI_WORD_8BIT,
-		HW_SPI_MODE_MASTER,
-		HW_SPI_POL_LOW,
-		HW_SPI_PHA_MODE_0,
-		HW_SPI_MINT_DISABLE,
-		HW_SPI_FREQ_DIV_2,
-		HW_SPI_FIFO_RX_TX,
-		0,
-		0,
-		0,
-		0,
-	};
-
-	hw_trng_enable(NULL);
-	hw_gpio_set_pin_function(HW_LORA_SPI_CLK_PORT, HW_LORA_SPI_CLK_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_LORA_GPIO_FUNC_SPI_CLK);
-	hw_gpio_set_pin_function(HW_LORA_SPI_DI_PORT,  HW_LORA_SPI_DI_PIN,
-	    HW_GPIO_MODE_INPUT,  HW_LORA_GPIO_FUNC_SPI_DI);
-	hw_gpio_set_pin_function(HW_LORA_SPI_DO_PORT,  HW_LORA_SPI_DO_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_LORA_GPIO_FUNC_SPI_DO);
-	hw_gpio_set_pin_function(HW_LORA_SPI_CS_PORT,  HW_LORA_SPI_CS_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HW_LORA_RX_PORT,      HW_LORA_RX_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HW_LORA_TX_PORT,      HW_LORA_TX_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_spi_init(HW_LORA_SPI, &cfg);
-}
-
 #ifdef CONFIG_RTT
 #define uart_init()
 #else
@@ -122,7 +88,6 @@ static void
 periph_setup(void)
 {
 	uart_init();
-	spi_init();
 	led_init();
 	hal_periph_init();
 }
