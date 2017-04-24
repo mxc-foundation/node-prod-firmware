@@ -2,7 +2,6 @@
 #include "oslmic.h"
 #include "hal.h"
 
-#include <hw_trng.h>
 #include <hw_wkup.h>
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
@@ -96,7 +95,6 @@ hal_lora_init(void)
 void
 hal_periph_init()
 {
-	hw_trng_enable(NULL);
 	hal_lora_init();
 }
 

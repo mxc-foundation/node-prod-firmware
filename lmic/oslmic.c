@@ -27,7 +27,7 @@
 
 #include "lmic.h"
 
-#include <hw_trng.h>
+#include <sys_trng.h>
 
 // RUNTIME STATE
 static struct {
@@ -124,26 +124,20 @@ void os_runloop () {
     }
 }
 
-static u4_t
-os_getRndU4()
-{
-	uint32_t	n;
-
-	hw_trng_enable(0); // XXX: needed?
-	while (hw_trng_get_fifo_level() < 1)
-		;
-	hw_trng_get_numbers(&n, 1);
-	return n;
-}
-
 u1_t
 os_getRndU1()
 {
-	return os_getRndU4();
+	uint8_t	byte;
+
+	sys_trng_get_bytes(&byte, 1);
+	return byte;
 }
 
 u2_t
 os_getRndU2()
 {
-	return os_getRndU4();
+	u2_t	num;
+
+	sys_trng_get_bytes((uint8_t *)&num, sizeof(num));
+	return num;
 }

@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include <console.h>
-#include <hw_trng.h>
 #include <hw_uart.h>
 #include <resmgmt.h>
 #include <sys_power_mgr.h>
