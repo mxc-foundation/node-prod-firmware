@@ -68,9 +68,9 @@
 #define dg_configBATTERY_CHARGE_NTC             1       // disabled
 #define dg_configPRECHARGING_THRESHOLD          2462    // 3.006V
 #define dg_configCHARGING_THRESHOLD             2498    // 3.05V
-#define dg_configPRECHARGING_TIMEOUT    ( 2 * 60 * 60 * 100)  // 2 hours
-#define dg_configCHARGING_CC_TIMEOUT    (12 * 60 * 60 * 100)  // 12 hours
-#define dg_configCHARGING_CV_TIMEOUT    ( 8 * 60 * 60 * 100)  // 8 hours
+#define dg_configPRECHARGING_TIMEOUT    (2 * 60 * 60 * 100)  // 2 hours
+#define dg_configCHARGING_CC_TIMEOUT    (9 * 60 * 60 * 100)  // 9 hours
+#define dg_configCHARGING_CV_TIMEOUT    (8 * 60 * 60 * 100)  // 8 hours
 
 #define dg_configUSE_USB_CHARGER                1
 #define dg_configALLOW_CHARGING_NOT_ENUM        1
