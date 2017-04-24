@@ -27,12 +27,9 @@
 #ifndef CUSTOM_CONFIG_QSPI_H_
 #define CUSTOM_CONFIG_QSPI_H_
 
-#define dg_configDISABLE_BACKGROUND_FLASH_OPS	1
+#define dg_configDISABLE_BACKGROUND_FLASH_OPS   (1)
 
 #include "bsp_definitions.h"
-
-#define dg_configTEMPSENS_ADAPTER               1
-#define dg_configGPADC_ADAPTER                  1
 
 #define dg_configUSE_LP_CLK                     LP_CLK_32768
 #define dg_configEXEC_MODE                      MODE_IS_CACHED
@@ -40,25 +37,24 @@
 #define dg_configEXT_CRYSTAL_FREQ               EXT_CRYSTAL_IS_16M
 
 //#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
-//#define dg_configSKIP_MAGIC_CHECK_AT_START	1
-//#define dg_configENABLE_DEBUGGER		0
+//#define dg_configSKIP_MAGIC_CHECK_AT_START      (1)
+//#define dg_configENABLE_DEBUGGER                (0)
 #define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
 #define dg_configEMULATE_OTP_COPY               (0)
 
-#define dg_configIMAGE_FLASH_OFFSET		0x20000
-#define dg_configSUOTA_SUPPORT			1
-
-#define dg_configUSER_CAN_USE_TIMER1            (0)
+#define dg_configIMAGE_FLASH_OFFSET             0x20000
+#define dg_configSUOTA_SUPPORT                  (1)
 
 #define dg_configUSE_WDOG                       (1)
 #define dg_configWDOG_MAX_TASKS_CNT             (8)
 
 #define dg_configUSE_DCDC                       (1)
 
-#define dg_configPOWER_1V8_ACTIVE               (1)
+#define dg_configFLASH_CONNECTED_TO             (FLASH_CONNECTED_TO_1V8)
 #define dg_configFLASH_POWER_DOWN               (1)
+
+#define dg_configPOWER_1V8_ACTIVE               (1)
 #define dg_configPOWER_1V8_SLEEP                (1)
-#define dg_configFLASH_CONNECTED_TO		(FLASH_CONNECTED_TO_1V8)
 
 #define dg_configBATTERY_TYPE                   (BATTERY_TYPE_LIMN2O4)
 #define dg_configBATTERY_CHARGE_CURRENT         11      // 300mA
@@ -72,14 +68,17 @@
 
 #define dg_configUSE_USB_CHARGER                1
 #define dg_configALLOW_CHARGING_NOT_ENUM        1
+#if 0
+#define DEBUG_USB_CHARGER                       (1)
+#define DEBUG_USB_CHARGER_FSM                   (1)
+#define DEBUG_USB_CHARGER_PRINT                 (1)
+#define USB_CHARGER_TIMING_DEBUG                (1)
+#endif
 
 #define dg_configUSE_ProDK                      (1)
 
 #define dg_configUSE_SW_CURSOR                  (1)
 
-#define dg_configCACHEABLE_QSPI_AREA_LEN        (NVMS_PARAM_PART_start - MEMORY_QSPIF_BASE)
-
-#define dg_configUSE_HW_TRNG			1
 
 /*************************************************************************************************\
  * FreeRTOS specific config
@@ -96,23 +95,28 @@
 #define dg_configUSE_HW_QUAD                    (1)
 #define dg_configUSE_HW_RF                      (1)
 #define dg_configUSE_HW_SPI                     (1)
+#define dg_configUSE_HW_TRNG                    (1)
+
 #define dg_configUSE_HW_TIMER0                  (1)
 #define dg_configUSE_HW_TIMER1                  (1)
 #define dg_configUSE_HW_TIMER2                  (1)
 
+#define dg_configGPADC_ADAPTER                  (1)
 #define dg_configI2C_ADAPTER                    (1)
+#define dg_configNVPARAM_ADAPTER                (1)
 #define dg_configSPI_ADAPTER                    (1)
 #define dg_configUART_ADAPTER                   (1)
 #define dg_configRF_ADAPTER                     (1)
+#define dg_configTEMPSENS_ADAPTER               (1)
+
+#define dg_configCACHEABLE_QSPI_AREA_LEN        (NVMS_PARAM_PART_start - MEMORY_QSPIF_BASE)
 
 #define CONFIG_USE_BLE
-#define SUOTA_VERSION	SUOTA_VERSION_1_2
-#define SUOTA_PSM	0x81
+#define SUOTA_VERSION                           SUOTA_VERSION_1_2
+#define SUOTA_PSM                               0x81
 #define USE_PARTITION_TABLE_1MB_WITH_SUOTA
 
 #define HW_UART_ENABLE_USER_ISR
-
-#define dg_configNVPARAM_ADAPTER                (1)
 
 //#define CONFIG_CUSTOM_PRINT
 //#define CONFIG_RETARGET
