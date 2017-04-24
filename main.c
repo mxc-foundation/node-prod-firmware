@@ -117,6 +117,7 @@ sysinit_task_func(void *param)
 	pm_set_sleep_mode(pm_mode_idle); //XXX
 	//pm_set_sleep_mode(pm_mode_active); //XXX
 	//pm_stay_alive(); // XXX
+	cm_sys_clk_set(sysclk_XTAL16M);
 	OS_TASK_CREATE("LoRa & LMiC", lora_task_func, (void *)0,
 	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
 	OS_TASK_DELETE(OS_GET_CURRENT_TASK());
