@@ -35,6 +35,7 @@ led_init(void)
 		.on_reload	= 0x1fff,
 	};
 	timer2_config	t2cfg = {
+		.frequency	= HW_TIMER2_MAX_VALUE,
 		.pwm3_start	= 0,
 		.pwm3_end	= 0xffff,
 		.pwm4_start	= 0,
