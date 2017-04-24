@@ -1,5 +1,5 @@
 #include <ad_battery.h>
-#include "bat.h"
+#include "sensor/bat.h"
 
 #define mV_DIV	10
 #define mV_MIN	2000				/* 2000 mV */

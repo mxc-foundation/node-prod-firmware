@@ -10,12 +10,14 @@ IMGTARGET=	$(OBJDIR)/$(PROJ).img
 MAPTARGET=	$(OBJDIR)/$(PROJ).map
 
 OBJS+=	$(OBJDIR)/main.o \
-	$(OBJDIR)/bat.o \
 	$(OBJDIR)/ble.o \
-	$(OBJDIR)/gps.o \
 	$(OBJDIR)/led.o \
-	$(OBJDIR)/lora.o \
-	$(OBJDIR)/sensor.o \
+	$(OBJDIR)/lora/lora.o \
+	$(OBJDIR)/lora/param.o \
+	$(OBJDIR)/lora/proto.o \
+	$(OBJDIR)/sensor/bat.o \
+	$(OBJDIR)/sensor/gps.o \
+	$(OBJDIR)/sensor/sensor.o \
 	$(OBJDIR)/strtonum.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o \
