@@ -525,7 +525,7 @@ say_hi(osjob_t *job)
 #endif
 
 static void
-lora_init(osjob_t* j)
+lora_init(osjob_t *j)
 {
 	LMIC_reset();
 	LMIC_startJoining();
