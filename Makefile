@@ -7,6 +7,7 @@ SDKDIR?=	../DA1468x_SDK_BTLE_v_$(SDKVER)
 ELFTARGET=	$(OBJDIR)/$(PROJ).elf
 TARGET=		$(OBJDIR)/$(PROJ).bin
 IMGTARGET=	$(OBJDIR)/$(PROJ).img
+MAPTARGET=	$(OBJDIR)/$(PROJ).map
 
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/bat.o \
@@ -183,9 +184,10 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/middleware/segger_tools/SEGGER \
 		-I$(SDKDIR)/sdk/bsp/free_rtos/include
 CFLAGS+=	-include$(CONFIG_H)
-LDFLAGS=	-Os -Xlinker --gc-sections -L$(SDKDIR)/sdk/bsp/misc \
+LDFLAGS=	-Os -Xlinker --gc-sections -Xlinker -Map=$(MAPTARGET) \
 		-fmessage-length=0 -fsigned-char -ffunction-sections \
 		-fdata-sections -Wall \
+		-L$(SDKDIR)/sdk/bsp/misc \
 		-L$(SDKDIR)/sdk/interfaces/ble_stack/DA14681-01-Release \
 		--specs=nano.specs --specs=nosys.specs \
 		$(LDSCRIPTFLAGS)
