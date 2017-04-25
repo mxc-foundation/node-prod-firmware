@@ -1,4 +1,4 @@
-/* LoRa MatchX protocol */
+/* Parameter handling */
 
 #include <stdint.h>
 #include <ad_nvparam.h>

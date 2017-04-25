@@ -1,4 +1,4 @@
-/* LoRa MatchX protocol */
+/* LoRa task */
 
 #include <stdint.h>
 #include <stdio.h>
