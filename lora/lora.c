@@ -54,30 +54,29 @@ onEvent(ev_t ev)
 	debug_event(ev);
 	switch(ev) {
 	case EV_JOINING:
-		led_set(LED_RED, LED_BREATH);
+		LED_SET(LED_RED, LED_BREATH);
 		break;
 	case EV_JOINED:
 #ifdef DEBUG
 		printf("netid = %lu\r\n", LMIC.netid);
 #endif
 		status |= STATUS_JOINED;
-		led_set(LED_RED, LED_OFF);
-		led_set(LED_GREEN, LED_BREATH);
+		LED_SET(LED_GREEN, LED_BREATH);
 		proto_send_periodic_data(&sensor_job);
 		break;
 	case EV_TXSTART:
 		proto_txstart();
 		if (status & STATUS_JOINED)
-			led_set(LED_GREEN, LED_BLINK);
+			LED_SET(LED_GREEN, LED_BLINK);
 		else
-			led_set(LED_RED, LED_BREATH);
+			LED_SET(LED_RED, LED_BREATH);
 		break;
 	case EV_TXCOMPLETE:
 		if (LMIC.dataLen != 0) {
 			proto_handle(LMIC.frame[LMIC.dataBeg - 1],
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
-		led_set(LED_GREEN, LED_BREATH);
+		LED_SET(LED_GREEN, LED_BREATH);
 		break;
 	default:
 		break;
