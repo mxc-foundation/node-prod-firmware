@@ -13,7 +13,7 @@ arguments in bytes.  If the Length bits are 0xF (binary 1111),
 the command has its length specified in bits [5:0] of the second
 byte.
 
-The commands are as follows:
+Downlink commands are as follows:
 
 Number	Name		Length	Description
 ------	----		------	-----------
@@ -57,6 +57,8 @@ Number	Name		Length	Description
 					5	2 hours
 					6	4 hours
 					7	TBD
+
+Uplink reports are as follows:
 
 Number	Name		Length	Description
 ------	----		------	-----------
