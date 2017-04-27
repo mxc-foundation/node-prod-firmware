@@ -99,7 +99,7 @@ parse_latlon(char *s, int max, bool negate)
 		return 0;
 	d = m / 100;
 	m %= 100;
-	f = strtonum(s, 0, 9999, &errstr);
+	f = strtonum(frac, 0, 9999, &errstr);
 	if (errstr)
 		return 0;
 	for (i = 0; i < 4 - strlen(frac); i++)
