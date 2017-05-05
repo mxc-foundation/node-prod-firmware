@@ -18,12 +18,14 @@ ad_lora_prepare_for_sleep(void)
 	if (!suspends_active)
 		return true;
 	now = hal_ticks();
+	taskENTER_CRITICAL();
 	for (id = 0; id < LORA_SUSPENDS; id++) {
 		if ((suspends_active & (1 << id)) &&
 		    now - suspended_until[id] > 0) {
 			suspends_active &= ~(1 << id);
 		}
 	}
+	taskEXIT_CRITICAL();
 	return !suspends_active;
 }
 
@@ -36,17 +38,21 @@ ad_lora_suspend_sleep(int id, ostime_t period)
 {
 	ostime_t	until = hal_ticks() + period;
 
+	taskENTER_CRITICAL();
 	if (!(suspends_active & (1 << id)) ||
 	    (until - suspended_until[id]) > 0) {
 		suspends_active |= (1 << id);
 		suspended_until[id] = until;
 	}
+	taskEXIT_CRITICAL();
 }
 
 void
 ad_lora_allow_sleep(int id)
 {
+	taskENTER_CRITICAL();
 	suspends_active &= ~(1 << id);
+	taskEXIT_CRITICAL();
 }
 
 void
