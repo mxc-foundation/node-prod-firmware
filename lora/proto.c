@@ -227,7 +227,7 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 	set_tx_data();
 }
 
-void
+static void
 proto_send_periodic_data(osjob_t *job)
 {
 	PRIVILEGED_DATA static uint8_t	last_bat_level;
@@ -248,6 +248,14 @@ proto_send_periodic_data(osjob_t *job)
 	if (len != 0)
 		TX_SET(sensor, INFO_SENSOR_DATA, len, buf);
 	set_tx_data();
+}
+
+void
+proto_send_data(void)
+{
+	PRIVILEGED_DATA static osjob_t	proto_job;
+
+	os_setCallback(&proto_job, proto_send_periodic_data);
 }
 
 void

@@ -58,8 +58,6 @@ debug_event(int ev)
 void
 onEvent(ev_t ev)
 {
-	PRIVILEGED_DATA static osjob_t	sensor_job;
-
 	debug_event(ev);
 	switch(ev) {
 	case EV_JOINING:
@@ -76,7 +74,7 @@ onEvent(ev_t ev)
 #endif
 		status |= STATUS_JOINED;
 		led_notify(LED_STATE_IDLE);
-		proto_send_periodic_data(&sensor_job);
+		proto_send_data();
 		break;
 	case EV_TXSTART:
 		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, sec2osticks(7));
