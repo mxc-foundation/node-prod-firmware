@@ -2110,19 +2110,12 @@ void LMIC_reset (void) {
     EV(devCond, INFO, (e_.reason = EV::devCond_t::LMIC_EV,
                        e_.eui    = MAIN::CDEV->getEui(),
                        e_.info   = EV_RESET));
-    printf("LMIC_reset:");
-    //printf(" os_radio");
     os_radio(RADIO_RST);
-    //printf(" os_clearCallback");
     os_clearCallback(&LMIC.osjob);
 
-    //printf(" os_clearMem");
     os_clearMem((xref2u1_t)&LMIC,SIZEOFEXPR(LMIC));
-    //printf(" init(LMIC)");
     LMIC.devaddr      =  0;
-    //printf(" os_getRndU2");
     LMIC.devNonce     =  os_getRndU2();
-    //printf(" ...");
     LMIC.opmode       =  OP_NONE;
     LMIC.errcr        =  CR_4_5;
     LMIC.adrEnabled   =  FCT_ADREN;
@@ -2132,10 +2125,8 @@ void LMIC_reset (void) {
     LMIC.ping.dr      =  DR_PING;   // ditto
     LMIC.ping.intvExp =  0xFF;
 #if defined(CFG_us915)
-    //printf(" initDefaultChannels");
     initDefaultChannels();
 #endif
-    //printf(" DO_DEVDB");
     DO_DEVDB(LMIC.devaddr,      devaddr);
     DO_DEVDB(LMIC.devNonce,     devNonce);
     DO_DEVDB(LMIC.dn2Dr,        dn2Dr);
@@ -2143,7 +2134,6 @@ void LMIC_reset (void) {
     DO_DEVDB(LMIC.ping.freq,    pingFreq);
     DO_DEVDB(LMIC.ping.dr,      pingDr);
     DO_DEVDB(LMIC.ping.intvExp, pingIntvExp);
-    printf("\r\n");
 }
 
 

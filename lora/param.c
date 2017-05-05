@@ -1,6 +1,8 @@
 /* Parameter handling */
 
 #include <stdint.h>
+#include <unistd.h>
+
 #include <ad_nvparam.h>
 #include <platform_nvparam.h>
 #include "lmic/lmic.h"
@@ -197,16 +199,21 @@ param_init(void)
 	for (i = 0; i < ARRAY_SIZE(params); i++) {
 		read_param(params + i);
 #ifdef DEBUG
-		for (int j = 0; j < params[i].len; j++)
-			printf("%02x", ((uint8_t *)params[i].mem)[j]);
-		printf("\r\n");
+		char	buf[4];
+
+		for (int j = 0; j < params[i].len; j++) {
+			write(1, buf, snprintf(buf, sizeof(buf),
+				    "%02x", ((uint8_t *)params[i].mem)[j]));
+		}
+		write(1, "\r\n", 2);
 #endif
 	}
 #ifdef DEBUG
-	uint8_t buf[8];
-	os_getDevEui(buf);
+	uint8_t eui[8];
+	char	buf[4];
+	os_getDevEui(eui);
 	for (int j = 0; j < 8; j++)
-		printf("%02x", buf[j]);
-	printf("\r\n");
+		write(1, buf, snprintf(buf, sizeof(buf), "%02x", eui[j]));
+	write(1, "\r\n", 2);
 #endif
 }

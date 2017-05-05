@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <unistd.h>
 
-#include <console.h>
 #include <hw_uart.h>
 #include <resmgmt.h>
 #include <sys_power_mgr.h>
@@ -28,14 +28,14 @@ PRIVILEGED_DATA static OS_TASK lmic_handle;
 void
 vApplicationMallocFailedHook(void)
 {
-	printf("malloc\r\n");
+	write(1, "malloc\r\n", 8);
 	hal_failed();
 }
 
 void
 vApplicationStackOverflowHook(void)
 {
-	printf("stack\r\n");
+	write(1, "stack\r\n", 7);
 	hal_failed();
 }
 

@@ -1,4 +1,4 @@
-#include <stdio.h> //XXX
+#include <unistd.h>
 #include "oslmic.h"
 #include "hal.h"
 
@@ -140,7 +140,7 @@ hal_spi(u1_t outval)
 void
 hal_failed()
 {
-	printf("hal failed\r\n");
+	write(1, "hal failed\r\n", 12);
 	hw_cpm_reboot_system();
 }
 
@@ -153,7 +153,7 @@ hal_handle_event(struct event ev)
 		break;
 	case EV_BTN_PRESS:
 		// XXX
-		printf("button\r\n");
+		write(1, "button\r\n", 8);
 		break;
 	default:
 		hal_failed();

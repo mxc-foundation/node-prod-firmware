@@ -2,8 +2,10 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "lmic/lmic.h"
+#include <unistd.h>
+
 #include "ble.h"
+#include "lmic/lmic.h"
 #include "led.h"
 #include "lora/lora.h"
 #include "lora/param.h"
@@ -14,6 +16,8 @@
 //#define HELLO
 //#define BLE_ALWAYS_ON
 
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
+
 #define STATUS_JOINED		0x01
 PRIVILEGED_DATA static uint8_t	status;
 
@@ -21,7 +25,7 @@ PRIVILEGED_DATA static uint8_t	status;
 static void
 debug_event(int ev)
 {
-	static const char* evnames[] = {
+	static const char	*evnames[] = {
 		[EV_SCAN_TIMEOUT]   = "SCAN_TIMEOUT",
 		[EV_BEACON_FOUND]   = "BEACON_FOUND",
 		[EV_BEACON_MISSED]  = "BEACON_MISSED",
@@ -40,7 +44,11 @@ debug_event(int ev)
 		[EV_SCAN_FOUND]     = "SCAN_FOUND",
 		[EV_TXSTART]        = "EV_TXSTART",
 	};
-	printf("%s\r\n", (ev < sizeof(evnames)/sizeof(evnames[0])) ? evnames[ev] : "EV_UNKNOWN" );
+	const char		*s;
+
+	s = ev < ARRAY_SIZE(evnames) ? evnames[ev] : "EV_UNKNOWN";
+	write(1, s, strlen(s));
+	write(1, "\r\n", 2);
 }
 #else
 #define debug_event(ev)
@@ -58,7 +66,12 @@ onEvent(ev_t ev)
 		break;
 	case EV_JOINED:
 #ifdef DEBUG
-		printf("netid = %lu\r\n", LMIC.netid);
+		{
+			char	buf[32];
+
+			write(1, buf, snprintf(buf, sizeof(buf),
+				    "netid = %lu\r\n", LMIC.netid));
+		}
 #endif
 		status |= STATUS_JOINED;
 		LED_SET(LED_GREEN, LED_BREATH);
@@ -88,10 +101,11 @@ static void
 say_hi(osjob_t *job)
 {
 	PRIVILEGED_DATA static int	n;
+	char				buf[64];
 
 	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
-	printf("Hello #%u @ %u (%ld), %04x\r\n",
-	    n++, os_getTimeSecs(), os_getTime(), *(uint16_t*)0x5000000a);
+	write(1, buf, snprintf(buf, sizeof(buf), "Hello #%u @ %u (%ld)\r\n",
+		    n++, os_getTimeSecs(), os_getTime()));
 }
 #endif
 

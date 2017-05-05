@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "lmic/lmic.h"
 #include "ble.h"
 #include "lora/lora.h"
@@ -118,10 +119,13 @@ set_tx_data(void)
 	ADD_TX(battery);
 	ADD_TX(sensor);
 #ifdef DEBUG
-	printf("set tx data:");
-	for (int i = 0; i < total_len; i++)
-		printf(" %02x", pend_tx_data[i]);
-	printf("\r\n");
+	char	buf[4];
+	write(1, "set tx data:", 12);
+	for (int i = 0; i < total_len; i++) {
+		write(1, buf, snprintf(buf, sizeof(buf), " %02x",
+			    pend_tx_data[i]));
+	}
+	write(1, "\r\n", 2);
 #endif
 	if (total_len) {
 		LMIC_setTxData2(PORT, pend_tx_data, total_len, 0);
@@ -204,10 +208,12 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 	uint8_t	cmd, plen;
 
 #ifdef DEBUG
-	printf("rx:");
+	char	buf[4];
+
+	write(1, "rx:", 3);
 	for (int i = 0; i < len; i++)
-		printf(" %02x", data[i]);
-	printf("\r\n");
+		write(1, buf, snprintf(buf, sizeof(buf), " %02x", data[i]));
+	write(1, "\r\n", 2);
 #endif
 	if (port != PORT)
 		return;
