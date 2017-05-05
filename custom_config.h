@@ -84,7 +84,7 @@
  * FreeRTOS specific config
  */
 #define OS_FREERTOS                              /* Define this to use FreeRTOS */
-#define configTOTAL_HEAP_SIZE                    15244   /* This is the FreeRTOS Total Heap Size */
+#define configTOTAL_HEAP_SIZE                    15232   /* This is the FreeRTOS Total Heap Size */
 //#define OS_BAREMETAL
 
 /*************************************************************************************************\
@@ -97,7 +97,6 @@
 #define dg_configUSE_HW_SPI                     (1)
 #define dg_configUSE_HW_TRNG                    (1)
 
-#define dg_configUSE_HW_TIMER0                  (1)
 #define dg_configUSE_HW_TIMER1                  (1)
 #define dg_configUSE_HW_TIMER2                  (1)
 

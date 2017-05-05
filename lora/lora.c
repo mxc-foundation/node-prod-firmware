@@ -63,7 +63,7 @@ onEvent(ev_t ev)
 	debug_event(ev);
 	switch(ev) {
 	case EV_JOINING:
-		LED_SET(LED_RED, LED_BREATH);
+		led_notify(LED_STATE_JOINING);
 		break;
 	case EV_JOINED:
 #ifdef DEBUG
@@ -75,23 +75,23 @@ onEvent(ev_t ev)
 		}
 #endif
 		status |= STATUS_JOINED;
-		LED_SET(LED_GREEN, LED_BREATH);
+		led_notify(LED_STATE_IDLE);
 		proto_send_periodic_data(&sensor_job);
 		break;
 	case EV_TXSTART:
 		ad_lora_suspend_sleep(sec2osticks(7));
 		proto_txstart();
 		if (status & STATUS_JOINED)
-			LED_SET(LED_GREEN, LED_BLINK);
+			led_notify(LED_STATE_SENDING);
 		else
-			LED_SET(LED_RED, LED_BREATH);
+			led_notify(LED_STATE_JOINING);
 		break;
 	case EV_TXCOMPLETE:
 		if (LMIC.dataLen != 0) {
 			proto_handle(LMIC.frame[LMIC.dataBeg - 1],
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
-		LED_SET(LED_GREEN, LED_BREATH);
+		led_notify(LED_STATE_IDLE);
 		ad_lora_allow_sleep();
 		break;
 	default:
@@ -130,13 +130,14 @@ lora_task_func(void *param)
 #ifdef BLE_ALWAYS_ON
 	ble_on();
 #endif
+	led_notify(LED_STATE_BOOTING);
 	param_init();
 	sensor_init();
 	ad_lora_init();
 	os_init();
 	os_setCallback(&init_job, lora_init);
 #ifdef HELLO
-	os_setCallback(&hello_job, say_hi); // XXX
+	os_setCallback(&hello_job, say_hi);
 #endif
 	os_runloop();
 }
