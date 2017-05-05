@@ -1,3 +1,4 @@
+#include <FreeRTOS.h>
 #include <hw_breath.h>
 #include <hw_led.h>
 #include <hw_timer0.h>
@@ -9,7 +10,7 @@ uint8_t	status;
 static void
 timer0_cb(void)
 {
-	static bool	on;
+	PRIVILEGED_DATA static bool	on;
 
 	on = !on;
 	if (status & LED_ACTION(LED_GREEN, LED_BLINK))

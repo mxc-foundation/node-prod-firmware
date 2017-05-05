@@ -13,8 +13,8 @@ struct event {
 	ostime_t	t;
 };
 
-PRIVILEGED_DATA static int8_t	wdog_id;
-PRIVILEGED_DATA static QueueHandle_t		lora_queue;
+PRIVILEGED_DATA static int8_t		wdog_id;
+PRIVILEGED_DATA static QueueHandle_t	lora_queue;
 
 static void
 wkup_intr_cb(void)

@@ -91,7 +91,7 @@ u1_t radio_rand1 (void);
 //#define os_getRndU1() radio_rand1()
 u1_t os_getRndU1(void);
 
-#define DEFINE_LMIC  struct lmic_t LMIC
+#define DEFINE_LMIC  PRIVILEGED_DATA struct lmic_t LMIC
 #define DECLARE_LMIC extern struct lmic_t LMIC
 
 typedef s4_t  ostime_t;

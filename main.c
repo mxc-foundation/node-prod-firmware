@@ -23,7 +23,7 @@ extern void	retarget_init(void);
 INITIALISED_PRIVILEGED_DATA int8_t	idle_task_wdog_id = -1;
 #endif
 
-static OS_TASK lmic_handle;
+PRIVILEGED_DATA static OS_TASK lmic_handle;
 
 void
 vApplicationMallocFailedHook(void)

@@ -15,7 +15,7 @@
 //#define BLE_ALWAYS_ON
 
 #define STATUS_JOINED		0x01
-static uint8_t	status;
+PRIVILEGED_DATA static uint8_t	status;
 
 #ifdef DEBUG
 static void
@@ -49,7 +49,7 @@ debug_event(int ev)
 void
 onEvent(ev_t ev)
 {
-	static osjob_t	sensor_job;
+	PRIVILEGED_DATA static osjob_t	sensor_job;
 
 	debug_event(ev);
 	switch(ev) {
@@ -87,7 +87,7 @@ onEvent(ev_t ev)
 static void
 say_hi(osjob_t *job)
 {
-	static int	n;
+	PRIVILEGED_DATA static int	n;
 
 	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
 	printf("Hello #%u @ %u (%ld), %04x\r\n",

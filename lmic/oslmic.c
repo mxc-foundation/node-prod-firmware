@@ -30,7 +30,7 @@
 #include <sys_trng.h>
 
 // RUNTIME STATE
-static struct {
+PRIVILEGED_DATA static struct {
     osjob_t* scheduledjobs;
     osjob_t* runnablejobs;
 } OS;

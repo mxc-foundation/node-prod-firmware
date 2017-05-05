@@ -36,7 +36,7 @@ typedef enum {
 
 #define STATUS_TX_PENDING	0x01
 #define STATUS_BLE_ON		0x02
-static uint8_t	status;
+PRIVILEGED_DATA static uint8_t	status;
 
 static const ostime_t	reboot_timeouts[] = {
 	0,
@@ -53,15 +53,15 @@ static const ostime_t	reboot_timeouts[] = {
 #define MAX_SENSOR_DATA_LEN	16
 #define MAX_BATTERY_DATA_LEN	2
 
-static uint8_t	pend_tx_data[MAX_PAYLOAD_LEN];
-static uint8_t	sensor_data[MAX_SENSOR_DATA_LEN];
-static uint8_t	battery_data[MAX_BATTERY_DATA_LEN];
-static uint8_t	pend_tx_len, sensor_len, battery_len;
+PRIVILEGED_DATA static uint8_t	pend_tx_data[MAX_PAYLOAD_LEN];
+PRIVILEGED_DATA static uint8_t	sensor_data[MAX_SENSOR_DATA_LEN];
+PRIVILEGED_DATA static uint8_t	battery_data[MAX_BATTERY_DATA_LEN];
+PRIVILEGED_DATA static uint8_t	pend_tx_len, sensor_len, battery_len;
 
 static void
 do_reboot(osjob_t *job)
 {
-	static uint8_t	cnt;
+	PRIVILEGED_DATA static uint8_t	cnt;
 
 	/* If SUOTA is active, delay reboot, but force it after
 	 * 256 * 5s (21 min 20 sec). */
@@ -167,8 +167,8 @@ handle_params(uint8_t *data, uint8_t len)
 static void
 handle_reboot_upgrade(uint8_t *data, uint8_t len)
 {
-	static osjob_t	reboot_job;
-	uint8_t		tmout;
+	PRIVILEGED_DATA static osjob_t	reboot_job;
+	uint8_t				tmout;
 
 	switch (len) {
 	case 0:
@@ -237,10 +237,10 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 void
 proto_send_periodic_data(osjob_t *job)
 {
-	static uint8_t	last_bat_level;
-	char		buf[MAX_LEN_PAYLOAD];
-	size_t		len;
-	uint8_t		cur_bat_level;
+	PRIVILEGED_DATA static uint8_t	last_bat_level;
+	char				buf[MAX_LEN_PAYLOAD];
+	size_t				len;
+	uint8_t				cur_bat_level;
 
 	os_setTimedCallback(job, hal_ticks() + SENSOR_PERIOD + os_getRndU2(),
 	    proto_send_periodic_data);
