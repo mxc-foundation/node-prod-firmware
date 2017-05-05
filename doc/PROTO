@@ -66,9 +66,34 @@ Number	Name		Length	Description
 				command.  The first byte is the
 				param number, the rest are the
 				value.
-1	Sensor data	>=1	Sensor data, consisting of one or
-				more TLV chunks, where Type is
-				the sensor type, as defined in
-				sensor.c.
+1	Sensor data	>=1	Sensor data.
 2	Battery level	1	Battery level in 10mV steps from
 				2V (0 = 2V, 255 = 4.55V).
+
+Sensor data consists of a byte signifying the sensor type, as
+defined in sensor.c, and zero or more bytes of sensor data.  The
+defined types and corresponding data formats are:
+
+Number	Name	Data length	Description
+------	----	-----------	-----------
+0	Unknown	0		No data.
+1	GPS	9		GOS coordinates.
+
+GPS data format is as follows:
+
+Offset	Length	Description
+------	------	-----------
+0	1	$GPGGA Position Fix Indicator.  Possible values
+		are:
+		0	Fix not available or invalid
+		1	GPS SPS Mode, fix valid
+		2	Differential GPS, SPS Mode, fix valid
+		6	Dead Reckoning Mode, fix valid
+1	4	Lattitude in 1/1000 of minutes, as little-endian
+		int32.  Positive is north, negative is south.  To
+		get the value in degrees, divide by 600000.
+5	4	Longitude in 1/1000 of minutes, as little-endian
+		int32.  Positive is east, negative is west.  To
+		get the value in degrees, divide by 600000.
+
+The format of GPS data is subject to change.
