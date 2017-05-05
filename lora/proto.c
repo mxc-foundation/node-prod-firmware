@@ -36,7 +36,6 @@ typedef enum {
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 #define STATUS_TX_PENDING	0x01
-#define STATUS_BLE_ON		0x02
 PRIVILEGED_DATA static uint8_t	status;
 
 static const ostime_t	reboot_timeouts[] = {
@@ -72,18 +71,6 @@ do_reboot(osjob_t *job)
 		return;
 	}
 	hw_cpm_reboot_system();
-}
-
-static void
-ble_on(void)
-{
-	static OS_TASK	ble_handle;
-
-	if (status & STATUS_BLE_ON)
-		return;
-	OS_TASK_CREATE("BLE & SUOTA", ble_task_func, (void *)0,
-	    1024, OS_TASK_PRIORITY_NORMAL + 1, ble_handle);
-	status |= STATUS_BLE_ON;
 }
 
 #define LEN_LEN(len)	(1 + ((len) >= LEN_MASK))

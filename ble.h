@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-void	ble_task_func(void *params);
+void	ble_on(void);
 bool	ble_is_suota_ongoing(void);
 
 #endif /* __BLE_H__ */

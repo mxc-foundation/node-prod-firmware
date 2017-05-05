@@ -39,7 +39,9 @@ typedef struct {
 	bool		 expired;
 } conn_dev_t;
 
-PRIVILEGED_DATA static bool	 suota_ongoing;
+#define STATUS_BLE_ON		0x01
+#define STATUS_SUOTA_ONGOING	0x02
+PRIVILEGED_DATA static uint8_t	 status;
 PRIVILEGED_DATA static OS_TIMER	 adv_tim;
 PRIVILEGED_DATA static OS_TIMER	 alert_tim;
 PRIVILEGED_DATA static void	*reconnection_list;
@@ -66,13 +68,13 @@ static const char	device_name[] = "MatchStick 123";
 bool
 ble_is_suota_ongoing()
 {
-	return suota_ongoing;
+	return !!(status & STATUS_SUOTA_ONGOING);
 }
 
 static bool
 suota_ready_cb(void)
 {
-	suota_ongoing = true;
+	status |= STATUS_SUOTA_ONGOING;
 	write(1, "suota ongoing\r\n", 15);
 	return true;
 }
@@ -221,7 +223,7 @@ handle_evt_gap_disconnected(ble_evt_gap_disconnected_t *evt)
 static void
 handle_evt_gap_adv_completed(void)
 {
-	if (!suota_ongoing)
+	if (!(status & STATUS_SUOTA_ONGOING))
 		ble_gap_adv_start(GAP_CONN_MODE_UNDIRECTED);
 }
 
@@ -231,7 +233,7 @@ handle_evt_gap_pair_req(ble_evt_gap_pair_req_t *evt)
 	ble_gap_pair_reply(evt->conn_idx, true, evt->bond);
 }
 
-void
+static void
 ble_task_func(void *params)
 {
 	uint8_t		scan_rsp[BLE_SCAN_RSP_LEN_MAX];
@@ -361,4 +363,16 @@ ble_task_func(void *params)
 			}
 		}
 	}
+}
+
+void
+ble_on(void)
+{
+	PRIVILEGED_DATA static OS_TASK	ble_handle;
+
+	if (status & STATUS_BLE_ON)
+		return;
+	OS_TASK_CREATE("BLE & SUOTA", ble_task_func, (void *)0,
+	    1024, OS_TASK_PRIORITY_NORMAL + 1, ble_handle);
+	status |= STATUS_BLE_ON;
 }
