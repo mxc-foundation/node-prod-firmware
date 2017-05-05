@@ -6,10 +6,10 @@
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
 
-#include "hw.h"
-#include "led.h"
-#include "lora/lora.h"
+#include "hw/hw.h"
+#include "hw/led.h"
 #include "lmic/lmic.h"
+#include "lora/lora.h"
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
 

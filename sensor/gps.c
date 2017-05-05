@@ -1,8 +1,8 @@
 #include <string.h>
 #include <hw_gpio.h>
 #include <hw_uart.h>
+#include "hw/hw.h"
 #include "gps.h"
-#include "hw.h"
 
 #include <FreeRTOS.h>
 #include <task.h>

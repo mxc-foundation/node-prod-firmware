@@ -5,8 +5,8 @@
 #include <unistd.h>
 
 #include "ble.h"
+#include "hw/led.h"
 #include "lmic/lmic.h"
-#include "led.h"
 #include "lora/ad_lora.h"
 #include "lora/lora.h"
 #include "lora/param.h"

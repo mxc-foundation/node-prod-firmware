@@ -33,7 +33,7 @@
 #include <osal.h>
 #include <sys_rtc.h>
 
-#include "hw.h"
+#include "hw/hw.h"
 
 /*
  * initialize hardware (IO, SPI, TIMER, IRQ).

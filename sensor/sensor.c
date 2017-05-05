@@ -1,7 +1,7 @@
 #include <sys/types.h>
 #include <hw_gpio.h>
+#include "hw/hw.h"
 #include "gps.h"
-#include "hw.h"
 #include "sensor.h"
 
 #define SENSOR_TYPE_UNKNOWN	0
