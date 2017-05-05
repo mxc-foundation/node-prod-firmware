@@ -7,6 +7,7 @@
 #include "ble.h"
 #include "lmic/lmic.h"
 #include "led.h"
+#include "lora/ad_lora.h"
 #include "lora/lora.h"
 #include "lora/param.h"
 #include "lora/proto.h"
@@ -78,6 +79,7 @@ onEvent(ev_t ev)
 		proto_send_periodic_data(&sensor_job);
 		break;
 	case EV_TXSTART:
+		ad_lora_suspend_sleep(sec2osticks(7));
 		proto_txstart();
 		if (status & STATUS_JOINED)
 			LED_SET(LED_GREEN, LED_BLINK);
@@ -90,6 +92,7 @@ onEvent(ev_t ev)
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
 		LED_SET(LED_GREEN, LED_BREATH);
+		ad_lora_allow_sleep();
 		break;
 	default:
 		break;
@@ -129,6 +132,7 @@ lora_task_func(void *param)
 #endif
 	param_init();
 	sensor_init();
+	ad_lora_init();
 	os_init();
 	os_setCallback(&init_job, lora_init);
 #ifdef HELLO

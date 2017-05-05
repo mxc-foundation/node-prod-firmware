@@ -12,6 +12,7 @@ MAPTARGET=	$(OBJDIR)/$(PROJ).map
 OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/ble.o \
 	$(OBJDIR)/led.o \
+	$(OBJDIR)/lora/ad_lora.o \
 	$(OBJDIR)/lora/lora.o \
 	$(OBJDIR)/lora/param.o \
 	$(OBJDIR)/lora/proto.o \
