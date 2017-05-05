@@ -79,7 +79,7 @@ onEvent(ev_t ev)
 		proto_send_periodic_data(&sensor_job);
 		break;
 	case EV_TXSTART:
-		ad_lora_suspend_sleep(sec2osticks(7));
+		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, sec2osticks(7));
 		proto_txstart();
 		if (status & STATUS_JOINED)
 			led_notify(LED_STATE_SENDING);
@@ -92,7 +92,7 @@ onEvent(ev_t ev)
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
 		led_notify(LED_STATE_IDLE);
-		ad_lora_allow_sleep();
+		ad_lora_allow_sleep(LORA_SUSPEND_LORA);
 		break;
 	default:
 		break;

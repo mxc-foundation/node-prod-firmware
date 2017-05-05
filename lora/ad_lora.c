@@ -6,12 +6,25 @@
 #include "lmic/hal.h"
 #include "lora/ad_lora.h"
 
-PRIVILEGED_DATA static ostime_t	suspended_until;
+PRIVILEGED_DATA static uint8_t	suspends_active;
+PRIVILEGED_DATA static ostime_t	suspended_until[LORA_SUSPENDS];
 
 static bool
 ad_lora_prepare_for_sleep(void)
 {
-	return (int32_t)(hal_ticks() - suspended_until) > 0;
+	ostime_t	now;
+	int		id;
+
+	if (!suspends_active)
+		return true;
+	now = hal_ticks();
+	for (id = 0; id < LORA_SUSPENDS; id++) {
+		if ((suspends_active & (1 << id)) &&
+		    now - suspended_until[id] > 0) {
+			suspends_active &= ~(1 << id);
+		}
+	}
+	return !suspends_active;
 }
 
 static const adapter_call_backs_t	ad_lora_call_backs = {
@@ -19,18 +32,21 @@ static const adapter_call_backs_t	ad_lora_call_backs = {
 };
 
 void
-ad_lora_suspend_sleep(ostime_t period)
+ad_lora_suspend_sleep(int id, ostime_t period)
 {
 	ostime_t	until = hal_ticks() + period;
 
-	if ((int32_t)(until - suspended_until) > 0)
-		suspended_until = until;
+	if (!(suspends_active & (1 << id)) ||
+	    (until - suspended_until[id]) > 0) {
+		suspends_active |= (1 << id);
+		suspended_until[id] = until;
+	}
 }
 
 void
-ad_lora_allow_sleep(void)
+ad_lora_allow_sleep(int id)
 {
-	suspended_until = hal_ticks();
+	suspends_active &= ~(1 << id);
 }
 
 void
