@@ -1,10 +1,12 @@
 #include <unistd.h>
-#include "oslmic.h"
-#include "hal.h"
 
 #include <hw_wkup.h>
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
+
+#include "oslmic.h"
+#include "hal.h"
+#include "hw/button.h"
 
 #define EV_LORA_DIO	0
 #define EV_BTN_PRESS	1
@@ -152,8 +154,7 @@ hal_handle_event(struct event ev)
 		radio_irq_handler(ev.t);
 		break;
 	case EV_BTN_PRESS:
-		// XXX
-		write(1, "button\r\n", 8);
+		button_press(ev.t);
 		break;
 	default:
 		hal_failed();
