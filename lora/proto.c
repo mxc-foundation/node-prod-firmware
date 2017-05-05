@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "lmic/lmic.h"
-#include "ble.h"
 #include "lora/lora.h"
 #include "lora/param.h"
 #include "lora/proto.h"
+#include "lora/upgrade.h"
 #include "sensor/bat.h"
 #include "sensor/sensor.h"
 
@@ -28,10 +28,6 @@ typedef enum {
 	INFO_SENSOR_DATA	= 0x10,
 	INFO_BATTERY		= 0x20,
 } uplink_info;
-
-/* CMD_REBOOT_UPGRADE */
-#define UPGRADE_BIT		0x80
-#define REBOOT_TIMEOUT_MASK	0x07
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
@@ -57,21 +53,6 @@ PRIVILEGED_DATA static uint8_t	pend_tx_data[MAX_PAYLOAD_LEN];
 PRIVILEGED_DATA static uint8_t	sensor_data[MAX_SENSOR_DATA_LEN];
 PRIVILEGED_DATA static uint8_t	battery_data[MAX_BATTERY_DATA_LEN];
 PRIVILEGED_DATA static uint8_t	pend_tx_len, sensor_len, battery_len;
-
-static void
-do_reboot(osjob_t *job)
-{
-	PRIVILEGED_DATA static uint8_t	cnt;
-
-	/* If SUOTA is active, delay reboot, but force it after
-	 * 256 * 5s (21 min 20 sec). */
-	if (ble_is_suota_ongoing() && --cnt) {
-		os_setTimedCallback(job, hal_ticks() + sec2osticks(5),
-		    do_reboot);
-		return;
-	}
-	hw_cpm_reboot_system();
-}
 
 #define LEN_LEN(len)	(1 + ((len) >= LEN_MASK))
 
@@ -158,21 +139,12 @@ handle_params(uint8_t *data, uint8_t len)
 static void
 handle_reboot_upgrade(uint8_t *data, uint8_t len)
 {
-	PRIVILEGED_DATA static osjob_t	reboot_job;
-	uint8_t				tmout;
-
 	switch (len) {
 	case 0:
-		os_setCallback(&reboot_job, do_reboot);
+		upgrade_reboot(0);
 		break;
 	case 1:
-		tmout = data[0] & REBOOT_TIMEOUT_MASK;
-		if (tmout >= ARRAY_SIZE(reboot_timeouts))
-			break; // XXX
-		os_setTimedCallback(&reboot_job,
-		    hal_ticks() + reboot_timeouts[tmout], do_reboot);
-		if (data[0] & UPGRADE_BIT)
-			ble_on();
+		upgrade_reboot(data[0]);
 		break;
 	default:
 		break;

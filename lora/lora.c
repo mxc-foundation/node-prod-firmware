@@ -11,6 +11,7 @@
 #include "lora/lora.h"
 #include "lora/param.h"
 #include "lora/proto.h"
+#include "lora/upgrade.h"
 #include "sensor/sensor.h"
 
 #define DEBUG
@@ -133,6 +134,7 @@ lora_task_func(void *param)
 	sensor_init();
 	ad_lora_init();
 	os_init();
+	upgrade_init();
 	os_setCallback(&init_job, lora_init);
 #ifdef HELLO
 	os_setCallback(&hello_job, say_hi);

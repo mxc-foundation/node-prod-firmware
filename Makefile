@@ -17,6 +17,7 @@ OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/lora/lora.o \
 	$(OBJDIR)/lora/param.o \
 	$(OBJDIR)/lora/proto.o \
+	$(OBJDIR)/lora/upgrade.o \
 	$(OBJDIR)/sensor/bat.o \
 	$(OBJDIR)/sensor/gps.o \
 	$(OBJDIR)/sensor/sensor.o \

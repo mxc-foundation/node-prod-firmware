@@ -25,19 +25,20 @@ INITIALISED_PRIVILEGED_DATA static u1_t	devkey[16] = {
 	0xdf, 0x89, 0xdc, 0x73, 0xd9, 0xf5, 0x2c, 0x06,
 	0x09, 0xed, 0xb2, 0x18, 0x5e, 0xfa, 0x4a, 0x34,
 };
+PRIVILEGED_DATA static uint8_t	suota;
 
 /* NVPARAM "ble_platform" */
-#define PARAM_DEV_EUI		0
 #define PARAM_DEV_EUI_OFF	TAG_BLE_PLATFORM_BD_ADDRESS
 #define PARAM_DEV_EUI_LEN	sizeof(deveui)
 
 /* VES */
-#define PARAM_APP_EUI		1
 #define PARAM_APP_EUI_OFF	0
 #define PARAM_APP_EUI_LEN	sizeof(appeui)
-#define PARAM_DEV_KEY		2
 #define PARAM_DEV_KEY_OFF	(PARAM_APP_EUI_OFF + PARAM_APP_EUI_LEN)
 #define PARAM_DEV_KEY_LEN	sizeof(devkey)
+
+#define PARAM_SUOTA_OFF		(PARAM_DEV_KEY_OFF + PARAM_DEV_KEY_LEN)
+#define PARAM_SUOTA_LEN		sizeof(suota)
 
 #define PARAM_FLAG_BLE_NV	0x01	/* Stored in BLE NVPARAM area */
 #define PARAM_FLAG_REVERSE	0x02	/* Reversed in protocol */
@@ -68,6 +69,11 @@ static const struct param_def	params[] = {
 		.offset	= PARAM_DEV_KEY_OFF,
 		.len	= PARAM_DEV_KEY_LEN,
 		.flags	= PARAM_FLAG_WRITE_ONLY,
+	},
+	[PARAM_SUOTA] = {
+		.mem	= &suota,
+		.offset	= PARAM_SUOTA_OFF,
+		.len	= PARAM_SUOTA_LEN,
 	},
 };
 
