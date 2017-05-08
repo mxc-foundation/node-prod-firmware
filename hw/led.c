@@ -75,6 +75,9 @@ led_update_status()
 	case LED_STATE_JOINING:
 		s = LED_RED | LED_BLINK_NORMAL;
 		break;
+	case LED_STATE_SAMPLING_SENSOR:
+		s = LED_GREEN | LED_BLINK_FAST;
+		break;
 	case LED_STATE_SENDING:
 		s = LED_GREEN | LED_BLINK_NORMAL;
 		break;

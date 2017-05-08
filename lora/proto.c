@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "hw/led.h"
 #include "lmic/lmic.h"
 #include "lora/lora.h"
 #include "lora/param.h"
@@ -237,6 +238,7 @@ proto_send_data(void)
 	PRIVILEGED_DATA static osjob_t	proto_job;
 
 	os_setCallback(&proto_job, proto_prepare_periodic_data);
+	led_notify(LED_STATE_SAMPLING_SENSOR);
 }
 
 void
