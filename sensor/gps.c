@@ -12,8 +12,8 @@
 extern long long	strtonum(const char *numstr, long long minval,
 			    long long maxval, const char **errstrp);
 
-static char	gps_buf[128];
-static int	gps_len;
+PRIVILEGED_DATA static char	gps_buf[128];
+PRIVILEGED_DATA static int	gps_len;
 
 /* $GPGGA,155058.000,,,,,0,0,,,M,,M,,*44 */
 enum {
@@ -45,7 +45,7 @@ struct gps_fix {
 	int32_t	lon;	/* Positive: East */
 } __attribute__((packed));
 
-static struct gps_fix	last_fix;
+PRIVILEGED_DATA static struct gps_fix	last_fix;
 
 static const char	hex[] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',

@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <FreeRTOS.h>
 #include <hw_gpio.h>
 #include "hw/hw.h"
 #include "gps.h"
@@ -6,14 +7,14 @@
 
 #define SENSOR_TYPE_UNKNOWN	0
 #define SENSOR_TYPE_GPS		1
-static uint8_t	sensor_type = SENSOR_TYPE_UNKNOWN;
+PRIVILEGED_DATA static uint8_t	sensor_type;
 
 struct sensor_callbacks {
 	void	(*init)(void);
 	int	(*read)(char *buf, int len);
 };
 
-struct sensor_callbacks	sensor_cb[] = {
+const struct sensor_callbacks	sensor_cb[] = {
 	[SENSOR_TYPE_UNKNOWN]	= { NULL, NULL },
 	[SENSOR_TYPE_GPS]	= { gps_init, gps_read },
 };
