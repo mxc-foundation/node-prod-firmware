@@ -55,11 +55,7 @@ _write(int fd, char *ptr, int len)
 	(void)fd;
 	return len;
 }
-#endif
 
-#ifdef CONFIG_RTT
-#define uart_init()
-#else
 static void
 uart_init(void)
 {
@@ -81,6 +77,8 @@ uart_init(void)
 	    HW_GPIO_FUNC_UART_RX);
 	hw_uart_init(HW_UART1, &uart_cfg);
 }
+#else
+#define uart_init()
 #endif
 
 static void
