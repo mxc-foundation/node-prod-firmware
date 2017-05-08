@@ -7,7 +7,7 @@
 
 #define SENSOR_TYPE_UNKNOWN	0
 #define SENSOR_TYPE_GPS		1
-PRIVILEGED_DATA static uint8_t	sensor_type;
+static uint8_t	sensor_type;
 
 struct sensor_callbacks {
 	void	(*init)(void);

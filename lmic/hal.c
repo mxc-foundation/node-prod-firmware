@@ -7,6 +7,7 @@
 #include "oslmic.h"
 #include "hal.h"
 #include "hw/button.h"
+#include "sensor/sensor.h"
 
 #define EV_LORA_DIO	0
 #define EV_BTN_PRESS	1
@@ -93,6 +94,7 @@ hal_lora_init(void)
 	hw_gpio_set_pin_function(HW_USER_BTN_PORT,     HW_USER_BTN_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	hw_spi_init(HW_LORA_SPI, &cfg);
+	sensor_init();
 }
 
 void

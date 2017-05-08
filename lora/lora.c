@@ -131,7 +131,6 @@ lora_task_func(void *param)
 #endif
 	led_notify(LED_STATE_BOOTING);
 	param_init();
-	sensor_init();
 	ad_lora_init();
 	os_init();
 	upgrade_init();
