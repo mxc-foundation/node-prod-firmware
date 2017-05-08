@@ -50,10 +50,7 @@ sensor_get_data(char *buf, int len)
 		return 0;
 	buf[0] = sensor_type;
 	rlen = 1;
-	switch (sensor_type) {
-	case SENSOR_TYPE_GPS:
-		rlen += gps_read(buf + 1, len - 1);
-		break;
-	}
+	if (sensor_cb[sensor_type].read)
+		rlen += sensor_cb[sensor_type].read(buf + 1, len - 1);
 	return rlen;
 }
