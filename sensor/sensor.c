@@ -2,6 +2,7 @@
 #include <FreeRTOS.h>
 #include <hw_gpio.h>
 #include "hw/hw.h"
+#include "lmic/oslmic.h"
 #include "gps.h"
 #include "sensor.h"
 
@@ -10,21 +11,28 @@
 static uint8_t	sensor_type;
 
 struct sensor_callbacks {
-	void	(*init)(void);
-	int	(*read)(char *buf, int len);
+	void		(*init)(void);
+	ostime_t	(*prepare)(void);
+	int		(*read)(char *buf, int len);
 };
 
 const struct sensor_callbacks	sensor_cb[] = {
 	[SENSOR_TYPE_UNKNOWN]	= { NULL, NULL },
-	[SENSOR_TYPE_GPS]	= { gps_init, gps_read },
+	[SENSOR_TYPE_GPS]	= { gps_init, gps_prepare, gps_read },
 };
 
 static void
 sensor_power_init(void)
 {
-	hw_gpio_set_pin_function(HW_SENSOR_POWER_PORT, HW_SENSOR_POWER_PIN,
+	hw_gpio_set_pin_function(HW_SENSOR_PS_PORT, HW_SENSOR_PS_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_active(HW_SENSOR_POWER_PORT, HW_SENSOR_POWER_PIN);
+	hw_gpio_set_pin_function(HW_SENSOR_EN_PORT, HW_SENSOR_EN_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_pin_function(HW_SM_DIO1_PORT,   HW_SM_DIO1_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
+	hw_gpio_set_active(HW_SENSOR_PS_PORT, HW_SENSOR_PS_PIN);
+	hw_gpio_set_active(HW_SENSOR_EN_PORT, HW_SENSOR_EN_PIN);
+	hw_gpio_set_active(HW_SM_DIO1_PORT,   HW_SM_DIO1_PIN);
 }
 
 static inline void
@@ -40,6 +48,15 @@ sensor_init()
 	detect_sensor();
 	if (sensor_cb[sensor_type].init)
 		sensor_cb[sensor_type].init();
+}
+
+ostime_t
+sensor_prepare()
+{
+	if (sensor_cb[sensor_type].prepare)
+		return sensor_cb[sensor_type].prepare();
+	else
+		return 0;
 }
 
 size_t

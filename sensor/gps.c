@@ -1,11 +1,12 @@
 #include <string.h>
+#include <FreeRTOS.h>
 #include <hw_gpio.h>
 #include <hw_uart.h>
-#include "hw/hw.h"
-#include "gps.h"
-
-#include <FreeRTOS.h>
 #include <task.h>
+#include "hw/hw.h"
+#include "lmic/oslmic.h"
+#include "lora/ad_lora.h"
+#include "gps.h"
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
@@ -203,6 +204,14 @@ gps_init()
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_UART2_RX);
 	hw_uart_init(HW_UART2, &uart2_cfg);
 	rx_callback(NULL, 0);
+}
+
+ostime_t
+gps_prepare()
+{
+	memset(&last_fix, 0, sizeof(last_fix));
+	ad_lora_suspend_sleep(LORA_SUSPEND_NORESET, sec2osticks(1));
+	return sec2osticks(1);
 }
 
 int

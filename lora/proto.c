@@ -199,6 +199,15 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 	set_tx_data();
 }
 
+static void	proto_send_periodic_data(osjob_t *job);
+
+static void
+proto_prepare_periodic_data(osjob_t *job)
+{
+	os_setTimedCallback(job, hal_ticks() + sensor_prepare(),
+	    proto_send_periodic_data);
+}
+
 static void
 proto_send_periodic_data(osjob_t *job)
 {
@@ -208,7 +217,7 @@ proto_send_periodic_data(osjob_t *job)
 	uint8_t				cur_bat_level;
 
 	os_setTimedCallback(job, hal_ticks() + SENSOR_PERIOD + os_getRndU2(),
-	    proto_send_periodic_data);
+	    proto_prepare_periodic_data);
 	if (ARRAY_SIZE(pend_tx_data) - pend_tx_len < 2)
 		return;
 	cur_bat_level = bat_level();
@@ -227,7 +236,7 @@ proto_send_data(void)
 {
 	PRIVILEGED_DATA static osjob_t	proto_job;
 
-	os_setCallback(&proto_job, proto_send_periodic_data);
+	os_setCallback(&proto_job, proto_prepare_periodic_data);
 }
 
 void
