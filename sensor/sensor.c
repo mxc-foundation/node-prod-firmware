@@ -31,7 +31,7 @@ sensor_power_init(void)
 	hw_gpio_set_pin_function(HW_SM_DIO1_PORT,   HW_SM_DIO1_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_active(HW_SENSOR_PS_PORT, HW_SENSOR_PS_PIN);
-	hw_gpio_set_active(HW_SENSOR_EN_PORT, HW_SENSOR_EN_PIN);
+	hw_gpio_set_inactive(HW_SENSOR_EN_PORT, HW_SENSOR_EN_PIN);
 	hw_gpio_set_active(HW_SM_DIO1_PORT,   HW_SM_DIO1_PIN);
 }
 
