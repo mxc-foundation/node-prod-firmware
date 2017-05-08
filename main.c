@@ -112,10 +112,7 @@ sysinit_task_func(void *param)
 	retarget_init();
 #endif
 	pm_set_wakeup_mode(true);
-	//pm_set_sleep_mode(pm_mode_extended_sleep); //XXX
-	pm_set_sleep_mode(pm_mode_idle); //XXX
-	//pm_set_sleep_mode(pm_mode_active); //XXX
-	//pm_stay_alive(); // XXX
+	pm_set_sleep_mode(pm_mode_extended_sleep);
 	cm_sys_clk_set(sysclk_XTAL16M);
 	OS_TASK_CREATE("LoRa & LMiC", lora_task_func, (void *)0,
 	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
