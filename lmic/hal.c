@@ -94,13 +94,13 @@ hal_lora_init(void)
 	hw_gpio_set_pin_function(HW_USER_BTN_PORT,     HW_USER_BTN_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	hw_spi_init(HW_LORA_SPI, &cfg);
-	sensor_init();
 }
 
 void
 hal_periph_init()
 {
 	hal_lora_init();
+	sensor_init();
 }
 
 void
