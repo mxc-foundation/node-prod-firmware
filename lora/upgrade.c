@@ -1,8 +1,9 @@
 /* LoRa MatchX protocol */
 
 #include <stdint.h>
-#include "lmic/lmic.h"
+#include "hw/led.h"
 #include "ble.h"
+#include "lmic/lmic.h"
 #include "lora/param.h"
 
 /* CMD_REBOOT_UPGRADE */
@@ -12,7 +13,7 @@
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 static const ostime_t	reboot_timeouts[] = {
-	0,
+	sec2osticks(2),
 	sec2osticks(5 * 60),	/* UPGRADE_DEFAULT */
 	sec2osticks(15 * 60),
 	sec2osticks(30 * 60),
@@ -58,6 +59,7 @@ upgrade_reboot(uint8_t flags)
 		return; // XXX
 	if (flags & UPGRADE_BIT) {
 		param_set(PARAM_SUOTA, &flags, sizeof(flags));
+		led_notify(LED_STATE_REBOOTING);
 		schedule_reboot(0);
 	} else {
 		schedule_reboot(flags);

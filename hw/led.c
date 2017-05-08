@@ -19,21 +19,23 @@ PRIVILEGED_DATA static uint8_t	sys_status;
 
 PRIVILEGED_DATA static uint8_t	battery_status;
 
-#define LED_FUNC_MASK		0x03
+#define LED_FUNC_MASK		0x07
 #define LED_OFF			0x00
 #define LED_BREATH		0x01
-#define LED_BLINK_FAST		0x02
+#define LED_BLINK_NORMAL	0x02
 #define LED_BLINK_RARE		0x03
+#define LED_BLINK_FAST		0x04
 
-#define LED_COLOUR_MASK		0x0c
-#define LED_GREEN		0x04
-#define LED_RED			0x08
+#define LED_COLOUR_MASK		0x18
+#define LED_GREEN		0x08
+#define LED_RED			0x10
 #define LED_YELLOW		(LED_RED | LED_GREEN)
 
 PRIVILEGED_DATA static uint8_t	led_status;
 
-#define FAST_BLINK_PERIOD	ms2osticks(250)
-#define RARE_BLINK_ON_PERIOD	ms2osticks(62)
+#define NORMAL_BLINK_PERIOD	ms2osticks(250)
+#define FAST_BLINK_PERIOD	ms2osticks(50)
+#define RARE_BLINK_ON_PERIOD	ms2osticks(50)
 #define RARE_BLINK_OFF_PERIOD	sec2osticks(4)
 #define UPDATE_INTERVAL		sec2osticks(10)
 
@@ -55,12 +57,10 @@ led_conf_timers()
 		hw_led_set_led3_src(HW_LED_SRC3_PWM4);
 	}
 
-	if ((led_status & LED_FUNC_MASK) == LED_BLINK_FAST ||
-	    (led_status & LED_FUNC_MASK) == LED_BLINK_RARE) {
+	if ((led_status & LED_FUNC_MASK) >= LED_BLINK_NORMAL)
 		hw_timer2_enable();
-	} else {
+	else
 		hw_timer2_disable();
-	}
 }
 
 static bool
@@ -73,10 +73,13 @@ led_update_status()
 		s = LED_YELLOW | LED_BREATH;
 		break;
 	case LED_STATE_JOINING:
-		s = LED_RED | LED_BLINK_FAST;
+		s = LED_RED | LED_BLINK_NORMAL;
 		break;
 	case LED_STATE_SENDING:
-		s = LED_GREEN | LED_BLINK_FAST;
+		s = LED_GREEN | LED_BLINK_NORMAL;
+		break;
+	case LED_STATE_REBOOTING:
+		s = LED_RED | LED_BLINK_FAST;
 		break;
 	default:
 		switch (battery_status) {
@@ -133,11 +136,18 @@ led_cb(osjob_t *job)
 		break;
 	default:
 		on = updated || !on;
-		if ((led_status & LED_FUNC_MASK) == LED_BLINK_FAST)
+		switch (led_status & LED_FUNC_MASK) {
+		case LED_BLINK_NORMAL:
+			delay = NORMAL_BLINK_PERIOD;
+			break;
+		case LED_BLINK_FAST:
 			delay = FAST_BLINK_PERIOD;
-		else
+			break;
+		default:
 			delay = on ? RARE_BLINK_ON_PERIOD :
 			    RARE_BLINK_OFF_PERIOD;
+			break;
+		}
 		break;
 	}
 	hw_led_enable_led2(on && !!(led_status & LED_GREEN));

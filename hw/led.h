@@ -5,6 +5,7 @@
 #define LED_STATE_BOOTING	0x01
 #define LED_STATE_JOINING	0x02
 #define LED_STATE_SENDING	0x03
+#define LED_STATE_REBOOTING	0x04
 
 void	led_init(void);
 void	led_notify(uint8_t s);
