@@ -15,6 +15,7 @@ extern long long	strtonum(const char *numstr, long long minval,
 
 PRIVILEGED_DATA static char	gps_buf[128];
 PRIVILEGED_DATA static int	gps_len;
+PRIVILEGED_DATA static osjob_t	rxjob;
 
 /* $GPGGA,155058.000,,,,,0,0,,,M,,M,,*44 */
 enum {
@@ -126,15 +127,15 @@ proc_gpgga(char *data[], int sz)
 	}
 }
 
-static void
+static bool
 msgproc(char *msg, int len)
 {
-	char		*data[13];
-	char		*s, *p;
-	int		i;
+	char	*data[13];
+	char	*s, *p;
+	int	 i;
 
 	if (!valid_crc(msg, len))
-		return;
+		return false;
 	len -= 5;
 	msg[len] = '\0';
 	i = 0;
@@ -146,41 +147,40 @@ msgproc(char *msg, int len)
 			break;
 		*p = '\0';
 	}
-	if (i && strcmp(data[0], gpgga) == 0)
+	if (i && strcmp(data[0], gpgga) == 0) {
 		proc_gpgga(data, i);
+		return true;
+	}
+	return false;
 }
 
 static void
-rx_callback(void *data, uint16_t len)
+rx(osjob_t *job)
 {
-	static char	 rxbuf[256];
-	int		 start, i;
+	bool	done = false;
 
-	start = 0;
-	i = 0;
-	while (i < len) {
-		if (rxbuf[i++] == '\n') {
-			if (gps_len + i - start <= sizeof(gps_buf)) {
-				if (gps_len) {
-					memcpy(gps_buf + gps_len, rxbuf + start,
-					    i - start);
-					gps_len += i - start;
-					msgproc(gps_buf, gps_len);
-					gps_len = 0;
-				} else {
-					msgproc(rxbuf + start, i - start);
-				}
-			}
-			start = i;
+	while (!hw_uart_read_buf_empty(HW_UART2)) {
+		if (gps_len >= sizeof(gps_buf)) {
+			gps_len = 0;
+			continue;
+		}
+		if ((gps_buf[gps_len++] = hw_uart_read(HW_UART2)) == '\n') {
+			if (msgproc(gps_buf, gps_len))
+				done = true;
+			gps_len = 0;
 		}
 	}
-	if (gps_len + i - start > sizeof(gps_buf)) {
-		gps_len = 0;
-		return;
-	}
-	memcpy(gps_buf + gps_len, rxbuf + start, i - start);
-	gps_len += i - start;
-	hw_uart_receive(HW_UART2, rxbuf, sizeof(rxbuf), rx_callback, NULL);
+	if (!done)
+		os_setTimedCallback(job, os_getTime() + ms2osticks(10), rx);
+}
+
+static void
+rx_start(void)
+{
+	gps_len = 0;
+	while (!hw_uart_read_buf_empty(HW_UART2))
+		hw_uart_read(HW_UART2);
+	os_setCallback(&rxjob, rx);
 }
 
 void
@@ -194,8 +194,6 @@ gps_init()
 		.auto_flow_control	= 0,
 		.use_dma		= 0,
 		.use_fifo		= 1,
-		.tx_dma_channel		= HW_DMA_CHANNEL_1,
-		.rx_dma_channel		= HW_DMA_CHANNEL_0,
 	};
 
 	hw_gpio_set_pin_function(HW_SENSOR_UART_TX_PORT, HW_SENSOR_UART_TX_PIN,
@@ -203,20 +201,21 @@ gps_init()
 	hw_gpio_set_pin_function(HW_SENSOR_UART_RX_PORT, HW_SENSOR_UART_RX_PIN,
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_UART2_RX);
 	hw_uart_init(HW_UART2, &uart2_cfg);
-	rx_callback(NULL, 0);
 }
 
 ostime_t
 gps_prepare()
 {
 	memset(&last_fix, 0, sizeof(last_fix));
-	ad_lora_suspend_sleep(LORA_SUSPEND_NORESET, sec2osticks(1));
-	return sec2osticks(1);
+	ad_lora_suspend_sleep(LORA_SUSPEND_NORESET, sec2osticks(3));
+	rx_start();
+	return sec2osticks(2);
 }
 
 int
 gps_read(char *buf, int len)
 {
+	os_clearCallback(&rxjob);
 	if (len < sizeof(last_fix))
 		return 0;
 	taskENTER_CRITICAL();
