@@ -106,7 +106,6 @@ hal_periph_init()
 void
 hal_init()
 {
-	cm_wait_lp_clk_ready();
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
 	wkup_init();

@@ -112,10 +112,21 @@ say_hi(osjob_t *job)
 #endif
 
 static void
-lora_init(osjob_t *j)
+lora_start_joining(osjob_t *job)
+{
+	if (!cm_lp_clk_is_avail()) {
+		os_setTimedCallback(job, os_getTime() + sec2osticks(1),
+		    lora_start_joining);
+		return;
+	}
+	LMIC_startJoining();
+}
+
+static void
+lora_init(osjob_t *job)
 {
 	LMIC_reset();
-	LMIC_startJoining();
+	os_setCallback(job, lora_start_joining);
 }
 
 void
