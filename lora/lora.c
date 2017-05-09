@@ -187,14 +187,14 @@ lora_task_func(void *param)
 	osjob_t	hello_job;
 #endif
 
-#ifdef BLE_ALWAYS_ON
-	ble_on();
-#endif
 	param_init();
 	ad_lora_init();
 	os_init();
 	led_notify(LED_STATE_BOOTING);
 	upgrade_init();
+#ifdef BLE_ALWAYS_ON
+	ble_on();
+#endif
 	os_setCallback(&init_job, lora_init);
 #ifdef HELLO
 	os_setCallback(&hello_job, say_hi);

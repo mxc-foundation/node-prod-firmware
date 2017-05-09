@@ -54,16 +54,17 @@ static const uint8_t adv_data[] = {
 	0xF5, 0xFE, // = 0xFEF5 (DIALOG SUOTA UUID)
 };
 
+INITIALISED_PRIVILEGED_DATA static char	device_name[] = "MatchStick 00000";
+INITIALISED_PRIVILEGED_DATA static char	serial_number[] = "00000";
+
 static const dis_device_info_t	dis_info = {
 	.manufacturer	= "MatchX GmbH",
 	.model_number	= "MatchStick",
-	.serial_number	= "123", // XXX
+	.serial_number	= serial_number,
 	.hw_revision	= "Rev.A",
 	.fw_revision	= "1.0",
 	.sw_revision	= BLACKORCA_SW_VERSION,
 };
-
-static const char	device_name[] = "MatchStick 123";
 
 bool
 ble_is_suota_ongoing()
@@ -234,6 +235,20 @@ handle_evt_gap_pair_req(ble_evt_gap_pair_req_t *evt)
 }
 
 static void
+ble_param_init(void)
+{
+	uint8_t	eui[8];
+
+	os_getDevEui(eui);
+	if (snprintf(serial_number, sizeof(serial_number), "%05d",
+		    (eui[1] << 8) | eui[0]) >= sizeof(serial_number)) {
+		return;
+	}
+	memcpy(device_name + sizeof(device_name) - sizeof(serial_number),
+	    serial_number, sizeof(serial_number));
+}
+
+static void
 ble_task_func(void *params)
 {
 	uint8_t		scan_rsp[BLE_SCAN_RSP_LEN_MAX];
@@ -244,6 +259,7 @@ ble_task_func(void *params)
 	wdog_id = sys_watchdog_register(false);
 #endif
 	write(1, "ble init\r\n", 10);
+	ble_param_init();
 	ble_mgr_init();
 	ble_peripheral_start();
 	ble_register_app();
