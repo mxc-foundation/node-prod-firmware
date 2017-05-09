@@ -156,9 +156,7 @@ proc_gpgga(char *data[], int sz)
 		    data[GPGGA_NS][0] == 'S');
 		fix.lon = parse_latlon(data[GPGGA_LON], MAXLON,
 		    data[GPGGA_EW][0] == 'W');
-		taskENTER_CRITICAL();
 		memcpy(&last_fix, &fix, sizeof(fix));
-		taskEXIT_CRITICAL();
 	}
 }
 
@@ -269,9 +267,7 @@ gps_read(char *buf, int len)
 	os_clearCallback(&rxjob);
 	if (len < sizeof(last_fix))
 		return 0;
-	taskENTER_CRITICAL();
 	memcpy(buf, &last_fix, sizeof(last_fix));
-	taskEXIT_CRITICAL();
 	if (((struct gps_fix *)buf)->fix == 0)
 		return 0;
 	return sizeof(last_fix);
