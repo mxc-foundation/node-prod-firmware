@@ -265,10 +265,8 @@ int
 gps_read(char *buf, int len)
 {
 	os_clearCallback(&rxjob);
-	if (len < sizeof(last_fix))
+	if (len < sizeof(last_fix) || last_fix.fix == 0)
 		return 0;
 	memcpy(buf, &last_fix, sizeof(last_fix));
-	if (((struct gps_fix *)buf)->fix == 0)
-		return 0;
 	return sizeof(last_fix);
 }
