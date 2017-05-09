@@ -245,6 +245,7 @@ void
 gps_prepare()
 {
 	gps_len = 0;
+	memset(&last_fix, 0, sizeof(last_fix));
 	fix_found = false;
 	while (!hw_uart_read_buf_empty(HW_UART2))
 		hw_uart_read(HW_UART2);
