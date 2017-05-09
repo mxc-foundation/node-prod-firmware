@@ -8,10 +8,13 @@
 #include "lora/ad_lora.h"
 #include "gps.h"
 
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
+#define DEBUG
 
-extern long long	strtonum(const char *numstr, long long minval,
-			    long long maxval, const char **errstrp);
+#ifdef DEBUG
+#include <unistd.h>
+#endif
+
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 PRIVILEGED_DATA static char	gps_buf[128];
 PRIVILEGED_DATA static int	gps_len;
@@ -83,6 +86,35 @@ valid_crc(char *msg, int len)
 	return ccrc == icrc;
 }
 
+/* A simple ***INSECURE*** implementation of strtonum().  Needed
+ * because strtoll() hangs the system after wake-up. */
+static long long
+strtonum(const char *numstr, long long minval, long long maxval,
+    const char **errstrp)
+{
+	const char	*fail = "fail";
+	long long	 n = 0;
+
+	while (*numstr) {
+		if (*numstr >= '0' && *numstr <= '9') {
+			n = n * 10 + (*numstr - '0');
+			if (n > maxval) {
+				*errstrp = fail;
+				return 0;
+			}
+		} else {
+			*errstrp = fail;
+			return 0;
+		}
+		numstr++;
+	}
+	if (n < minval) {
+		*errstrp = fail;
+		return 0;
+	}
+	return n;
+}
+
 #define MAXLAT	9000
 #define MAXLON	18000
 static int32_t
@@ -112,9 +144,12 @@ parse_latlon(char *s, int max, bool negate)
 static void
 proc_gpgga(char *data[], int sz)
 {
-	struct gps_fix	 fix;
+	struct gps_fix	 fix = {};
 	const char	*errstr;
 
+#ifdef DEBUG
+	write(1, "gga\r\n", 5);
+#endif
 	fix.fix = strtonum(data[GPGGA_FIX], 0, 6, &errstr);
 	if (fix.fix) {
 		fix.lat = parse_latlon(data[GPGGA_LAT], MAXLAT,
@@ -134,6 +169,10 @@ msgproc(char *msg, int len)
 	char	*s, *p;
 	int	 i;
 
+#ifdef DEBUG
+	write(1, "msg: \r\n", 7);
+	write(1, msg, len);
+#endif
 	if (!valid_crc(msg, len))
 		return false;
 	len -= 5;
@@ -157,21 +196,33 @@ msgproc(char *msg, int len)
 static void
 rx(osjob_t *job)
 {
-	bool	done = false;
+	bool	found = false;
 
+#ifdef DEBUG
+	write(1, "rx: ", 4);
+#endif
 	while (!hw_uart_read_buf_empty(HW_UART2)) {
+		uint8_t	c;
+
 		if (gps_len >= sizeof(gps_buf)) {
 			gps_len = 0;
 			continue;
 		}
-		if ((gps_buf[gps_len++] = hw_uart_read(HW_UART2)) == '\n') {
+		c = hw_uart_read(HW_UART2);
+#ifdef DEBUG
+		write(1, &c, 1);
+#endif
+		if ((gps_buf[gps_len++] = c) == '\n') {
 			if (msgproc(gps_buf, gps_len))
-				done = true;
+				found = true;
 			gps_len = 0;
 		}
 	}
-	if (!done)
+	if (!found)
 		os_setTimedCallback(job, os_getTime() + ms2osticks(10), rx);
+#ifdef DEBUG
+	write(1, crlf, 2);
+#endif
 }
 
 static void
