@@ -205,6 +205,7 @@ static void	proto_send_periodic_data(osjob_t *job);
 static void
 proto_prepare_periodic_data(osjob_t *job)
 {
+	led_notify(LED_STATE_SAMPLING_SENSOR);
 	os_setTimedCallback(job, hal_ticks() + sensor_prepare(),
 	    proto_send_periodic_data);
 }
@@ -238,7 +239,6 @@ proto_send_data(void)
 	PRIVILEGED_DATA static osjob_t	proto_job;
 
 	os_setCallback(&proto_job, proto_prepare_periodic_data);
-	led_notify(LED_STATE_SAMPLING_SENSOR);
 }
 
 void
