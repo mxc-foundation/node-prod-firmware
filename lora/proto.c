@@ -22,8 +22,6 @@
 
 #define LONG_LEN_MASK	0x3f
 
-#define SENSOR_PERIOD	sec2osticks(60)
-
 typedef enum {
 	INFO_PARAM		= 0x00,
 	INFO_SENSOR_DATA	= 0x10,
@@ -200,26 +198,14 @@ proto_handle(uint8_t port, uint8_t *data, uint8_t len)
 	set_tx_data();
 }
 
-static void	proto_send_periodic_data(osjob_t *job);
-
-static void
-proto_prepare_periodic_data(osjob_t *job)
-{
-	led_notify(LED_STATE_SAMPLING_SENSOR);
-	os_setTimedCallback(job, hal_ticks() + sensor_prepare(),
-	    proto_send_periodic_data);
-}
-
-static void
-proto_send_periodic_data(osjob_t *job)
+void
+proto_send_data(void)
 {
 	PRIVILEGED_DATA static uint8_t	last_bat_level;
 	char				buf[MAX_LEN_PAYLOAD];
 	size_t				len;
 	uint8_t				cur_bat_level;
 
-	os_setTimedCallback(job, hal_ticks() + SENSOR_PERIOD + os_getRndU2(),
-	    proto_prepare_periodic_data);
 	cur_bat_level = bat_level();
 	if (cur_bat_level != last_bat_level) {
 		last_bat_level = cur_bat_level;
@@ -229,14 +215,6 @@ proto_send_periodic_data(osjob_t *job)
 	if (len != 0)
 		TX_SET(sensor, INFO_SENSOR_DATA, len, buf);
 	set_tx_data();
-}
-
-void
-proto_send_data(void)
-{
-	PRIVILEGED_DATA static osjob_t	proto_job;
-
-	os_setCallback(&proto_job, proto_prepare_periodic_data);
 }
 
 void

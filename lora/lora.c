@@ -20,8 +20,15 @@
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
-#define STATUS_JOINED		0x01
-PRIVILEGED_DATA static uint8_t	status;
+#define STATE_JOINING		0
+#define STATE_JOINED		1
+#define STATE_SAMPLING_SENSOR	2
+#define STATE_WAITING_TO_SEND	3
+#define STATE_SENDING		4
+PRIVILEGED_DATA static uint8_t	state;
+
+#define MAX_SENSOR_SAMPLE_TIME	sec2osticks(2)
+PRIVILEGED_DATA static ostime_t	sampling_since;
 
 #ifdef DEBUG
 static void
@@ -56,6 +63,47 @@ debug_event(int ev)
 #define debug_event(ev)
 #endif
 
+static void	lora_prepare_sensor_data(osjob_t *job);
+
+static void
+lora_wait_for_sensor_data(osjob_t *job)
+{
+	ostime_t	delay;
+
+	if (os_getTime() < sampling_since + MAX_SENSOR_SAMPLE_TIME &&
+	    (delay = sensor_data_ready()) != 0) {
+		os_setTimedCallback(job, os_getTime() + delay,
+		    lora_wait_for_sensor_data);
+		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, delay + 64);
+	} else {
+		state = STATE_WAITING_TO_SEND;
+		led_notify(LED_STATE_IDLE);
+		proto_send_data();
+		os_setTimedCallback(job, os_getTime() + sensor_period(),
+		    lora_prepare_sensor_data);
+	}
+}
+
+static void
+lora_prepare_sensor_data(osjob_t *job)
+{
+	if (state != STATE_JOINED)
+		return;
+	state = STATE_SAMPLING_SENSOR;
+	sampling_since = os_getTime();
+	led_notify(LED_STATE_SAMPLING_SENSOR);
+	sensor_prepare();
+	lora_wait_for_sensor_data(job);
+}
+
+void
+lora_send_data(void)
+{
+	PRIVILEGED_DATA static osjob_t	sensor_job;
+
+	lora_prepare_sensor_data(&sensor_job);
+}
+
 void
 onEvent(ev_t ev)
 {
@@ -73,23 +121,25 @@ onEvent(ev_t ev)
 				    "netid = %lu\r\n", LMIC.netid));
 		}
 #endif
-		status |= STATUS_JOINED;
-		led_notify(LED_STATE_IDLE);
-		proto_send_data();
+		state = STATE_JOINED;
+		lora_send_data();
 		break;
 	case EV_TXSTART:
 		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, sec2osticks(7));
 		proto_txstart();
-		if (status & STATUS_JOINED)
-			led_notify(LED_STATE_SENDING);
-		else
+		if (state == STATE_JOINING) {
 			led_notify(LED_STATE_JOINING);
+		} else {
+			state = STATE_SENDING;
+			led_notify(LED_STATE_SENDING);
+		}
 		break;
 	case EV_TXCOMPLETE:
 		if (LMIC.dataLen != 0) {
 			proto_handle(LMIC.frame[LMIC.dataBeg - 1],
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
+		state = STATE_JOINED;
 		led_notify(LED_STATE_IDLE);
 		ad_lora_allow_sleep(LORA_SUSPEND_LORA);
 		break;

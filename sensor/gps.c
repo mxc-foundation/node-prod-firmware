@@ -5,7 +5,6 @@
 #include <task.h>
 #include "hw/hw.h"
 #include "lmic/oslmic.h"
-#include "lora/ad_lora.h"
 #include "gps.h"
 
 //#define DEBUG
@@ -51,6 +50,7 @@ struct gps_fix {
 } __attribute__((packed));
 
 PRIVILEGED_DATA static struct gps_fix	last_fix;
+PRIVILEGED_DATA static bool		fix_found;
 
 static const char	hex[] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',
@@ -194,8 +194,6 @@ msgproc(char *msg, int len)
 static void
 rx(osjob_t *job)
 {
-	bool	found = false;
-
 #ifdef DEBUG
 	write(1, "rx: ", 4);
 #endif
@@ -212,24 +210,15 @@ rx(osjob_t *job)
 #endif
 		if ((gps_buf[gps_len++] = c) == '\n') {
 			if (msgproc(gps_buf, gps_len))
-				found = true;
+				fix_found = true;
 			gps_len = 0;
 		}
 	}
-	if (!found)
+	if (!fix_found)
 		os_setTimedCallback(job, os_getTime() + ms2osticks(10), rx);
 #ifdef DEBUG
 	write(1, crlf, 2);
 #endif
-}
-
-static void
-rx_start(void)
-{
-	gps_len = 0;
-	while (!hw_uart_read_buf_empty(HW_UART2))
-		hw_uart_read(HW_UART2);
-	os_setCallback(&rxjob, rx);
 }
 
 void
@@ -252,13 +241,20 @@ gps_init()
 	hw_uart_init(HW_UART2, &uart2_cfg);
 }
 
-ostime_t
+void
 gps_prepare()
 {
-	memset(&last_fix, 0, sizeof(last_fix));
-	ad_lora_suspend_sleep(LORA_SUSPEND_NORESET, sec2osticks(3));
-	rx_start();
-	return sec2osticks(2);
+	gps_len = 0;
+	fix_found = false;
+	while (!hw_uart_read_buf_empty(HW_UART2))
+		hw_uart_read(HW_UART2);
+	os_setCallback(&rxjob, rx);
+}
+
+ostime_t
+gps_data_ready()
+{
+	return fix_found ? 0 : ms2osticks(100);
 }
 
 int

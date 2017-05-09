@@ -12,13 +12,20 @@ static uint8_t	sensor_type;
 
 struct sensor_callbacks {
 	void		(*init)(void);
-	ostime_t	(*prepare)(void);
+	void		(*prepare)(void);
+	ostime_t	(*data_ready)(void);
 	int		(*read)(char *buf, int len);
 };
 
 const struct sensor_callbacks	sensor_cb[] = {
-	[SENSOR_TYPE_UNKNOWN]	= { NULL, NULL },
-	[SENSOR_TYPE_GPS]	= { gps_init, gps_prepare, gps_read },
+	[SENSOR_TYPE_UNKNOWN]	= {
+	},
+	[SENSOR_TYPE_GPS]	= {
+		.init		= gps_init,
+		.prepare	= gps_prepare,
+		.data_ready	= gps_data_ready,
+		.read		= gps_read,
+	},
 };
 
 static void
@@ -50,11 +57,18 @@ sensor_init()
 		sensor_cb[sensor_type].init();
 }
 
-ostime_t
+void
 sensor_prepare()
 {
 	if (sensor_cb[sensor_type].prepare)
-		return sensor_cb[sensor_type].prepare();
+		sensor_cb[sensor_type].prepare();
+}
+
+ostime_t
+sensor_data_ready()
+{
+	if (sensor_cb[sensor_type].data_ready)
+		return sensor_cb[sensor_type].data_ready();
 	else
 		return 0;
 }
@@ -71,4 +85,10 @@ sensor_get_data(char *buf, int len)
 	if (sensor_cb[sensor_type].read)
 		rlen += sensor_cb[sensor_type].read(buf + 1, len - 1);
 	return rlen;
+}
+
+ostime_t
+sensor_period(void)
+{
+	return sec2osticks(60);
 }
