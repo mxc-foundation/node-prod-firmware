@@ -8,7 +8,7 @@
 #include "lora/ad_lora.h"
 #include "gps.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #include <unistd.h>
