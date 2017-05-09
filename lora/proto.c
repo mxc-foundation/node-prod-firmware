@@ -220,8 +220,6 @@ proto_send_periodic_data(osjob_t *job)
 
 	os_setTimedCallback(job, hal_ticks() + SENSOR_PERIOD + os_getRndU2(),
 	    proto_prepare_periodic_data);
-	if (ARRAY_SIZE(pend_tx_data) - pend_tx_len < 2)
-		return;
 	cur_bat_level = bat_level();
 	if (cur_bat_level != last_bat_level) {
 		last_bat_level = cur_bat_level;
