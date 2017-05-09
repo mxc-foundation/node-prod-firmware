@@ -140,10 +140,10 @@ lora_task_func(void *param)
 #ifdef BLE_ALWAYS_ON
 	ble_on();
 #endif
-	led_notify(LED_STATE_BOOTING);
 	param_init();
 	ad_lora_init();
 	os_init();
+	led_notify(LED_STATE_BOOTING);
 	upgrade_init();
 	os_setCallback(&init_job, lora_init);
 #ifdef HELLO

@@ -25,6 +25,7 @@ PRIVILEGED_DATA static uint8_t	battery_status;
 #define LED_BLINK_NORMAL	0x02
 #define LED_BLINK_RARE		0x03
 #define LED_BLINK_FAST		0x04
+#define LED_BLINK_ALTERNATE	0x05
 
 #define LED_COLOUR_MASK		0x18
 #define LED_GREEN		0x08
@@ -70,13 +71,13 @@ led_update_status()
 
 	switch (sys_status) {
 	case LED_STATE_BOOTING:
-		s = LED_YELLOW | LED_BREATH;
+		s = LED_YELLOW | LED_BLINK_NORMAL;
 		break;
 	case LED_STATE_JOINING:
 		s = LED_RED | LED_BLINK_NORMAL;
 		break;
 	case LED_STATE_SAMPLING_SENSOR:
-		s = LED_GREEN | LED_BLINK_FAST;
+		s = LED_RED | LED_GREEN | LED_BLINK_ALTERNATE;
 		break;
 	case LED_STATE_SENDING:
 		s = LED_GREEN | LED_BLINK_NORMAL;
@@ -127,6 +128,7 @@ led_cb(osjob_t *job)
 {
 	PRIVILEGED_DATA static bool	on;
 	ostime_t			delay = UPDATE_INTERVAL;
+	bool				red_inverted = false;
 	bool				updated;
 
 	updated = led_update_battery() || !job;
@@ -140,6 +142,9 @@ led_cb(osjob_t *job)
 	default:
 		on = updated || !on;
 		switch (led_status & LED_FUNC_MASK) {
+		case LED_BLINK_ALTERNATE:
+			red_inverted = true;
+			/* FALLTHROUGH */
 		case LED_BLINK_NORMAL:
 			delay = NORMAL_BLINK_PERIOD;
 			break;
@@ -154,9 +159,9 @@ led_cb(osjob_t *job)
 		break;
 	}
 	hw_led_enable_led2(on && !!(led_status & LED_GREEN));
-	hw_led_enable_led3(on && !!(led_status & LED_RED));
+	hw_led_enable_led3((on ^ red_inverted) && !!(led_status & LED_RED));
 	os_setTimedCallback(&led_job, hal_ticks() + delay, led_cb);
-	if (on)
+	if (on || red_inverted)
 		ad_lora_suspend_sleep(LORA_SUSPEND_NORESET, delay);
 }
 
