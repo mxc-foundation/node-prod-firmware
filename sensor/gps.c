@@ -19,8 +19,8 @@
 extern long long	strtonum(const char *numstr, long long minval,
     long long maxval, const char **errstrp);
 
-PRIVILEGED_DATA static char	gps_buf[128];
-PRIVILEGED_DATA static int	gps_len;
+PRIVILEGED_DATA static char	rxbuf[128];
+PRIVILEGED_DATA static int	rxlen;
 PRIVILEGED_DATA static osjob_t	rxjob;
 
 /* $GPGGA,155058.000,,,,,0,0,,,M,,M,,*44 */
@@ -172,18 +172,18 @@ rx(osjob_t *job)
 	while (!hw_uart_read_buf_empty(HW_UART2)) {
 		uint8_t	c;
 
-		if (gps_len >= sizeof(gps_buf)) {
-			gps_len = 0;
+		if (rxlen >= sizeof(rxbuf)) {
+			rxlen = 0;
 			continue;
 		}
 		c = hw_uart_read(HW_UART2);
 #ifdef DEBUG
 		printf("%c", c);
 #endif
-		if ((gps_buf[gps_len++] = c) == '\n') {
-			if (msgproc(gps_buf, gps_len))
+		if ((rxbuf[rxlen++] = c) == '\n') {
+			if (msgproc(rxbuf, rxlen))
 				fix_found = true;
-			gps_len = 0;
+			rxlen = 0;
 		}
 	}
 	if (!fix_found)
@@ -216,7 +216,7 @@ gps_init()
 void
 gps_prepare()
 {
-	gps_len = 0;
+	rxlen = 0;
 	memset(&last_fix, 0, sizeof(last_fix));
 	fix_found = false;
 	while (!hw_uart_read_buf_empty(HW_UART2))
