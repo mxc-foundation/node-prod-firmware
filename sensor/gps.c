@@ -15,6 +15,9 @@
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
+extern long long	strtonum(const char *numstr, long long minval,
+    long long maxval, const char **errstrp);
+
 PRIVILEGED_DATA static char	gps_buf[128];
 PRIVILEGED_DATA static int	gps_len;
 PRIVILEGED_DATA static osjob_t	rxjob;
@@ -84,35 +87,6 @@ valid_crc(char *msg, int len)
 		ccrc ^= *p;
 	}
 	return ccrc == icrc;
-}
-
-/* A simple ***INSECURE*** implementation of strtonum().  Needed
- * because strtoll() hangs the system after wake-up. */
-static long long
-strtonum(const char *numstr, long long minval, long long maxval,
-    const char **errstrp)
-{
-	const char	*fail = "fail";
-	long long	 n = 0;
-
-	while (*numstr) {
-		if (*numstr >= '0' && *numstr <= '9') {
-			n = n * 10 + (*numstr - '0');
-			if (n > maxval) {
-				*errstrp = fail;
-				return 0;
-			}
-		} else {
-			*errstrp = fail;
-			return 0;
-		}
-		numstr++;
-	}
-	if (n < minval) {
-		*errstrp = fail;
-		return 0;
-	}
-	return n;
 }
 
 #define MAXLAT	9000

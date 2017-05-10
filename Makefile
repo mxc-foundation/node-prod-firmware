@@ -20,7 +20,8 @@ OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/lora/upgrade.o \
 	$(OBJDIR)/sensor/bat.o \
 	$(OBJDIR)/sensor/gps.o \
-	$(OBJDIR)/sensor/sensor.o
+	$(OBJDIR)/sensor/sensor.o \
+	$(OBJDIR)/strtonum.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o \
 	$(OBJDIR)/lmic/hal.o \
