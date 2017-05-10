@@ -41,6 +41,7 @@ enum {
 	GPGGA_AGE_DIFF,		/* Age of Diff. Corr. */
 	GPGGA_STATION_ID,	/* Diff. Ref. Station ID */
 };
+#define MAX_FIELDS	(GPGGA_STATION_ID + 1)
 
 struct datapart {
 	char	*s;
@@ -138,7 +139,7 @@ proc_gpgga(char *data[], int sz)
 static bool
 msgproc(char *msg, int len)
 {
-	char	*data[13];
+	char	*data[MAX_FIELDS];
 	char	*s, *p;
 	int	 i;
 
