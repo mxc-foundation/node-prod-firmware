@@ -10,6 +10,7 @@
 //#define DEBUG
 
 #ifdef DEBUG
+#include <stdio.h>
 #include <unistd.h>
 #endif
 
@@ -122,7 +123,7 @@ proc_gpgga(char *data[], int sz)
 	const char	*errstr;
 
 #ifdef DEBUG
-	write(1, "gga\r\n", 5);
+	printf("gga\r\n");
 #endif
 	fix.fix = strtonum(data[GPGGA_FIX], 0, 6, &errstr);
 	if (fix.fix) {
@@ -142,7 +143,7 @@ msgproc(char *msg, int len)
 	int	 i;
 
 #ifdef DEBUG
-	write(1, "msg: \r\n", 7);
+	printf("msg: ");
 	write(1, msg, len);
 #endif
 	if (!valid_crc(msg, len))
@@ -169,7 +170,7 @@ static void
 rx(osjob_t *job)
 {
 #ifdef DEBUG
-	write(1, "rx: ", 4);
+	printf("rx: ");
 #endif
 	while (!hw_uart_read_buf_empty(HW_UART2)) {
 		uint8_t	c;
@@ -180,7 +181,7 @@ rx(osjob_t *job)
 		}
 		c = hw_uart_read(HW_UART2);
 #ifdef DEBUG
-		write(1, &c, 1);
+		printf("%c", c);
 #endif
 		if ((gps_buf[gps_len++] = c) == '\n') {
 			if (msgproc(gps_buf, gps_len))
@@ -191,7 +192,7 @@ rx(osjob_t *job)
 	if (!fix_found)
 		os_setTimedCallback(job, os_getTime() + ms2osticks(10), rx);
 #ifdef DEBUG
-	write(1, crlf, 2);
+	printf("\r\n");
 #endif
 }
 

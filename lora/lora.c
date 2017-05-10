@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include "ble.h"
 #include "hw/led.h"
@@ -53,11 +52,8 @@ debug_event(int ev)
 		[EV_SCAN_FOUND]     = "SCAN_FOUND",
 		[EV_TXSTART]        = "EV_TXSTART",
 	};
-	const char		*s;
 
-	s = ev < ARRAY_SIZE(evnames) ? evnames[ev] : "EV_UNKNOWN";
-	write(1, s, strlen(s));
-	write(1, "\r\n", 2);
+	printf("%s\r\n", ev < ARRAY_SIZE(evnames) ? evnames[ev] : "EV_UNKNOWN");
 }
 #else
 #define debug_event(ev)
@@ -114,12 +110,7 @@ onEvent(ev_t ev)
 		break;
 	case EV_JOINED:
 #ifdef DEBUG
-		{
-			char	buf[32];
-
-			write(1, buf, snprintf(buf, sizeof(buf),
-				    "netid = %lu\r\n", LMIC.netid));
-		}
+		printf("netid = %lu\r\n", LMIC.netid);
 #endif
 		state = STATE_JOINED;
 		lora_send_data();
@@ -156,8 +147,7 @@ say_hi(osjob_t *job)
 	char				buf[64];
 
 	os_setTimedCallback(job, os_getTime() + sec2osticks(1), say_hi);
-	write(1, buf, snprintf(buf, sizeof(buf), "Hello #%u @ %u (%ld)\r\n",
-		    n++, os_getTimeSecs(), os_getTime()));
+	printf("Hello #%u @ %u (%ld)\r\n", n++, os_getTimeSecs(), os_getTime());
 }
 #endif
 

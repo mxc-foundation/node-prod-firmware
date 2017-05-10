@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <unistd.h>
 
 #include <ad_gpadc.h>
 #include <ad_ble.h>
@@ -76,17 +75,14 @@ static bool
 suota_ready_cb(void)
 {
 	status |= STATUS_SUOTA_ONGOING;
-	write(1, "suota ongoing\r\n", 15);
+	printf("suota ongoing\r\n");
 	return true;
 }
 
 static void
 suota_status_cb(uint8_t status, uint8_t error_code)
 {
-	char	buf[32];
-
-	write(1, buf, snprintf(buf, sizeof(buf), "suota status %d\r\n",
-		    status));
+	printf("suota status %d\r\n", status);
 	if (status != SUOTA_ERROR)
 		return;
 }
@@ -115,19 +111,13 @@ adv_tim_cb(OS_TIMER timer)
 static void
 ias_alert_cb(uint16_t conn_idx, uint8_t level)
 {
-	char	buf[64];
-
-	write(1, buf, snprintf(buf, sizeof(buf),
-		    "ias alert %d for conn %d\r\n", level, conn_idx));
+	printf("ias alert %d for conn %d\r\n", level, conn_idx);
 }
 
 static void
 lls_alert_cb(uint16_t conn_idx, const bd_address_t *address, uint8_t level)
 {
-	char	buf[64];
-
-	write(1, buf, snprintf(buf, sizeof(buf),
-		    "lls alert %d for conn %d\r\n", level, conn_idx));
+	printf("lls alert %d for conn %d\r\n", level, conn_idx);
 	if (level == 0)
 		return;
 	//XXX list_add
@@ -141,9 +131,7 @@ lls_alert_cb(uint16_t conn_idx, const bd_address_t *address, uint8_t level)
 static void
 do_alert(uint8_t level)
 {
-	char	buf[32];
-
-	write(1, buf, snprintf(buf, sizeof(buf), "do_alert %d\r\n", level));
+	printf("do_alert %d\r\n", level);
 }
 
 static bool
@@ -258,7 +246,7 @@ ble_task_func(void *params)
 
 	wdog_id = sys_watchdog_register(false);
 #endif
-	write(1, "ble init\r\n", 10);
+	printf("ble init\r\n");
 	ble_param_init();
 	ble_mgr_init();
 	ble_peripheral_start();
@@ -289,57 +277,46 @@ ble_task_func(void *params)
 	ble_gap_adv_start(GAP_CONN_MODE_UNDIRECTED);
 	OS_TIMER_START(adv_tim, OS_TIMER_FOREVER);
 	for (;;) {
-		char		buf[32];
 		uint32_t	notif;
 
-		write(1, "loop\r\n", 6);
+		printf("loop\r\n");
 		sys_watchdog_notify(wdog_id);
 		sys_watchdog_suspend(wdog_id);
 		OS_TASK_NOTIFY_WAIT(0, OS_TASK_NOTIFY_ALL_BITS, &notif,
 		    OS_TASK_NOTIFY_FOREVER);
 		sys_watchdog_notify_and_resume(wdog_id);
-		write(1, buf, snprintf(buf, sizeof(buf), "notif %#lx\r\n",
-			    notif));
+		printf("notif %#lx\r\n", notif);
 		if (notif & BLE_APP_NOTIFY_MASK) {
 			ble_evt_hdr_t	*hdr;
 
 			if ((hdr = ble_get_event(false)) != NULL) {
 				if (!ble_service_handle_event(hdr)) {
-					write(1, buf, snprintf(buf, sizeof(buf),
-						    "evt %#x\r\n",
-						    hdr->evt_code));
+					printf("evt %#x\r\n", hdr->evt_code);
 					switch (hdr->evt_code) {
 					case BLE_EVT_GAP_CONNECTED:
-						write(1, "gap connected\r\n",
-						    15);
+						printf("gap connected\r\n");
 						handle_evt_gap_connected((ble_evt_gap_connected_t *)hdr);
 						break;
 					case BLE_EVT_GAP_DISCONNECTED:
-						write(1, "gap disconnected\r\n",
-						    18);
+						printf("gap disconnected\r\n");
 						handle_evt_gap_disconnected((ble_evt_gap_disconnected_t *)hdr);
 						break;
 					case BLE_EVT_GAP_ADV_COMPLETED:
-						write(1,
-						    "gap adv completed\r\n",
-						    19);
+						printf("gap adv completed\r\n");
 						handle_evt_gap_adv_completed();
 						break;
 					case BLE_EVT_GAP_PAIR_REQ:
-						write(1, "gap pair req\r\n",
-						    14);
+						printf("gap pair req\r\n");
 						handle_evt_gap_pair_req((ble_evt_gap_pair_req_t *)hdr);
 						break;
 					case BLE_EVT_L2CAP_CONNECTED:
 					case BLE_EVT_L2CAP_DISCONNECTED:
 					case BLE_EVT_L2CAP_DATA_IND:
-						write(1, buf, printf(buf, sizeof(buf),
-							    "l2cap %d\r\n", hdr->evt_code & 0xff));
+						printf("l2cap %d\r\n", hdr->evt_code & 0xff);
 						suota_l2cap_event(suota, hdr);
 						break;
 					default:
-						write(1, "default event\r\n",
-						    15);
+						printf("default event\r\n");
 						ble_handle_event_default(hdr);
 						break;
 					}
@@ -347,18 +324,18 @@ ble_task_func(void *params)
 				OS_FREE(hdr);
 			}
 			if (ble_has_event()) {
-				write(1, "has event\r\n", 11);
+				printf("has event\r\n");
 				OS_TASK_NOTIFY(OS_GET_CURRENT_TASK(),
 				    BLE_APP_NOTIFY_MASK, OS_NOTIFY_SET_BITS);
 			}
 		}
 		if (notif & ALERT_TMO_NOTIF) {
-			write(1, "alert tmo\r\n", 11);
+			printf("alert tmo\r\n");
 			do_alert(0);
 			//XXX list_free
 		}
 		if (notif & ADV_TMO_NOTIF) {
-			write(1, "adv tmo\r\n", 9);
+			printf("adv tmo\r\n");
 			ble_gap_adv_intv_set(BLE_ADV_INTERVAL_FROM_MS(1000),
 			    BLE_ADV_INTERVAL_FROM_MS(1500));
 			ble_gap_adv_stop();
