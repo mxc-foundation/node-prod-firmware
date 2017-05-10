@@ -144,19 +144,15 @@ msgproc(char *msg, int len)
 	int	 i;
 
 #ifdef DEBUG
-	printf("msg: ");
 	write(1, msg, len);
 #endif
 	if (!valid_crc(msg, len))
 		return false;
-	len -= 5;
-	msg[len] = '\0';
+	msg[len - 5] = '\0';
 	i = 0;
-	for (s = msg; len > 0; s = p + 1) {
-		p = strchr(s, ',');
-		data[i] = s;
-		i++;
-		if (!p || i == ARRAY_SIZE(data))
+	for (s = msg; *s != '\0'; s = p + 1) {
+		data[i++] = s;
+		if (i == ARRAY_SIZE(data) || (p = strchr(s, ',')) == NULL)
 			break;
 		*p = '\0';
 	}
