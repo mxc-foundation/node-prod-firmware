@@ -206,7 +206,7 @@ SECTIONS
 
                 *(vtable)
 #if (dg_configEXEC_MODE == MODE_IS_CACHED)
-                *(EXCLUDE_FILE(*\libg_nano.a:* *\libnosys.a:*) .data*)
+                *(EXCLUDE_FILE(*\libc_nano.a:* *\libg_nano.a:* *\libnosys.a:*) .data*)
 #else
                 *(retention_mem_init)
                 *(retention_mem_const)
@@ -230,7 +230,7 @@ SECTIONS
                 __bss_start__ = .;
                 *(.bss.ecc_buffer)
 #if (dg_configEXEC_MODE == MODE_IS_CACHED)
-                *(EXCLUDE_FILE(*\libg_nano.a:* *\libnosys.a:*) .bss*)
+                *(EXCLUDE_FILE(*\libc_nano.a:* *\libg_nano.a:* *\libnosys.a:*) .bss*)
 #else
                 *(.bss*)
 #endif
@@ -299,6 +299,7 @@ SECTIONS
                 *(retention_mem_const)
                 *(privileged_data_init)
                 *(.retention)
+                *\libc_nano.a:* (.data*)
                 *\libg_nano.a:* (.data*)
                 *\libnosys.a:* (.data*)
                 . = ALIGN(16);
@@ -319,6 +320,7 @@ SECTIONS
 
                 __RetRAM0_data_start = .;
 #if (dg_configEXEC_MODE == MODE_IS_CACHED)
+                *\libc_nano.a:* (.bss*)
                 *\libg_nano.a:* (.bss*)
                 *\libnosys.a:* (.bss*)
 #endif
