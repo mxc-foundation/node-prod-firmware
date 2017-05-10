@@ -24,6 +24,7 @@ PRIVILEGED_DATA static int	rxlen;
 PRIVILEGED_DATA static osjob_t	rxjob;
 
 /* $GPGGA,155058.000,,,,,0,0,,,M,,M,,*44 */
+/* $GPGGA,135704.000,5231.1618,N,01324.2888,E,1,3,5.64,105.3,M,44.7,M,,*59 */
 enum {
 	GPGGA_MSGID,		/* Message ID */
 	GPGGA_TIME,		/* UTC time */
