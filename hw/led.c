@@ -10,6 +10,8 @@
 #include "lora/ad_lora.h"
 #include "led.h"
 
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
+
 PRIVILEGED_DATA static uint8_t	sys_status;
 
 #define LED_BATTERY_OK		0x00
@@ -40,10 +42,21 @@ PRIVILEGED_DATA static uint8_t	led_status;
 #define RARE_BLINK_OFF_PERIOD	sec2osticks(4)
 #define UPDATE_INTERVAL		sec2osticks(10)
 
-PRIVILEGED_DATA static osjob_t	led_job;
+static const uint8_t	led_sys_stati[] = {
+	[LED_STATE_IDLE]		= LED_OFF,
+	[LED_STATE_BOOTING]		= LED_YELLOW | LED_BLINK_NORMAL,
+	[LED_STATE_JOINING]		= LED_RED    | LED_BLINK_NORMAL,
+	[LED_STATE_SAMPLING_SENSOR]	= LED_YELLOW | LED_BLINK_ALTERNATE,
+	[LED_STATE_SENDING]		= LED_GREEN  | LED_BLINK_NORMAL,
+	[LED_STATE_REBOOTING]		= LED_RED    | LED_BLINK_FAST,
+};
 
-void	led_init(void);
-void	led_set_status(uint8_t s);
+static const uint8_t	led_battery_stati[] = {
+	[LED_BATTERY_OK]		= LED_OFF,
+	[LED_BATTERY_LOW]		= LED_RED   | LED_BLINK_RARE,
+	[LED_BATTERY_CHARGING]		= LED_RED   | LED_BREATH,
+	[LED_BATTERY_CHARGED]		= LED_GREEN | LED_BREATH,
+};
 
 static void
 led_conf_timers()
@@ -67,36 +80,14 @@ led_conf_timers()
 static bool
 led_update_status()
 {
-	uint8_t	s = 0;
+	uint8_t	s = LED_OFF;
 
-	switch (sys_status) {
-	case LED_STATE_BOOTING:
-		s = LED_YELLOW | LED_BLINK_NORMAL;
-		break;
-	case LED_STATE_JOINING:
-		s = LED_RED | LED_BLINK_NORMAL;
-		break;
-	case LED_STATE_SAMPLING_SENSOR:
-		s = LED_RED | LED_GREEN | LED_BLINK_ALTERNATE;
-		break;
-	case LED_STATE_SENDING:
-		s = LED_GREEN | LED_BLINK_NORMAL;
-		break;
-	case LED_STATE_REBOOTING:
-		s = LED_RED | LED_BLINK_FAST;
-		break;
-	default:
-		switch (battery_status) {
-		case LED_BATTERY_LOW:
-			s = LED_RED | LED_BLINK_RARE;
-			break;
-		case LED_BATTERY_CHARGING:
-			s = LED_RED | LED_BREATH;
-			break;
-		case LED_BATTERY_CHARGED:
-			s = LED_GREEN | LED_BREATH;
-			break;
-		}
+	if (sys_status != LED_STATE_IDLE) {
+		if (sys_status < ARRAY_SIZE(led_sys_stati))
+			s = led_sys_stati[sys_status];
+	} else {
+		if (battery_status < ARRAY_SIZE(led_battery_stati))
+			s = led_battery_stati[battery_status];
 	}
 	if (s == led_status)
 		return false;
@@ -126,6 +117,7 @@ led_update_battery(void)
 static void
 led_cb(osjob_t *job)
 {
+	PRIVILEGED_DATA static osjob_t	led_job;
 	PRIVILEGED_DATA static bool	on;
 	ostime_t			delay = UPDATE_INTERVAL;
 	bool				red_inverted = false;
