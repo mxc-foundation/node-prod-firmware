@@ -162,7 +162,9 @@ hal_handle_event(struct event ev)
 	}
 }
 
-#define LONGSLEEP (2 * (s4_t)(configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ))
+#define TIMER_PRECISION	((s4_t)(configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ))
+#define MIN_SLEEP	(2 * TIMER_PRECISION)
+#define MAX_WDOG_SLEEP	sec2osticks(2)
 
 static u4_t	waituntil;
 
@@ -206,17 +208,16 @@ hal_sleep()
 {
 	s4_t	dt = waituntil - hal_ticks();
 
-	if (dt > LONGSLEEP) {
+	if (dt > MIN_SLEEP) {
 		BaseType_t	ret;
 		struct event	ev;
 
-		if (dt >= 0x10000)
+		if (dt >= MAX_WDOG_SLEEP)
 			sys_watchdog_suspend(wdog_id);
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
-		ret = xQueueReceive(lora_queue, &ev,
-		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
+		ret = xQueueReceive(lora_queue, &ev, dt / TIMER_PRECISION - 1);
 		sys_watchdog_notify_and_resume(wdog_id);
 		if (ret)
 			hal_handle_event(ev);
