@@ -81,6 +81,9 @@ lora_reset(osjob_t *job)
 {
 	PRIVILEGED_DATA static uint8_t	reset_count;
 
+#ifdef DEBUG
+	printf("lora reset #%d\r\n", reset_count);
+#endif
 	if (++reset_count > MAX_RESETS)
 		hal_failed();
 	LMIC_reset();
