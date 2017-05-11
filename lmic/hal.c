@@ -170,9 +170,6 @@ void
 hal_resetWatchdog(void)
 {
 	sys_watchdog_notify_and_resume(wdog_id);
-#ifdef CLOCK_DEBUG
-	sys_watchdog_suspend(wdog_id);
-#endif
 }
 
 void
@@ -220,9 +217,7 @@ hal_sleep()
 		// Wait for timer or WKUP_GPIO interrupt
 		ret = xQueueReceive(lora_queue, &ev,
 		    dt / (configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ) - 1);
-#ifndef CLOCK_DEBUG
 		sys_watchdog_notify_and_resume(wdog_id);
-#endif
 		if (ret)
 			hal_handle_event(ev);
 	} else {
