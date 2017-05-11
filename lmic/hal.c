@@ -176,13 +176,6 @@ hal_resetWatchdog(void)
 	sys_watchdog_notify_and_resume(wdog_id);
 }
 
-void
-hal_suspendWatchdog(void)
-{
-	sys_watchdog_notify(wdog_id);
-	sys_watchdog_suspend(wdog_id);
-}
-
 u1_t
 hal_checkTimer(u4_t targettime)
 {
