@@ -162,7 +162,9 @@ led_cb(osjob_t *job)
 	hw_led_enable_led3((on ^ red_inverted) && !!(led_status & LED_RED));
 	os_setTimedCallback(&led_job, hal_ticks() + delay, led_cb);
 	if (on || red_inverted)
-		ad_lora_suspend_sleep(LORA_SUSPEND_NORESET, delay);
+		ad_lora_suspend_sleep(LORA_SUSPEND_LED, delay);
+	else
+		ad_lora_allow_sleep(LORA_SUSPEND_LED);
 }
 
 void

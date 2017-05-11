@@ -1,7 +1,7 @@
 #ifndef __AD_LORA_H__
 #define __AD_LORA_H__
 
-#define LORA_SUSPEND_NORESET	0 /* Tasks not calling ad_lora_allow_sleep() */
+#define LORA_SUSPEND_LED	0 /* LED task */
 #define LORA_SUSPEND_LORA	1 /* LoRa main task */
 #define LORA_SUSPENDS		2
 
