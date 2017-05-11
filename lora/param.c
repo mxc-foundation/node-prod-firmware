@@ -162,6 +162,7 @@ write_param(const struct param_def *param, void *data)
 		param_len = ad_nvparam_get_length(nvparam, param->offset, NULL);
 		OS_ASSERT(param_len == param->len + 1);
 		OS_ASSERT(param_len <= sizeof(buf));
+		(void)param_len;
 		buf[param->len] = 0x00;
 		ad_nvparam_write(nvparam, param->offset, param->len + 1, buf);
 		//ad_nvms_flush(ad_nvms_open(NVMS_PARAM_PART), 0);
