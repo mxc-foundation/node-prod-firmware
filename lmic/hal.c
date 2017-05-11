@@ -170,12 +170,6 @@ hal_handle_event(struct event ev)
 
 static u4_t	waituntil;
 
-void
-hal_resetWatchdog(void)
-{
-	sys_watchdog_notify_and_resume(wdog_id);
-}
-
 u1_t
 hal_checkTimer(u4_t targettime)
 {

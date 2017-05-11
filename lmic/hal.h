@@ -109,8 +109,6 @@ void hal_sleep (void);
 //u4_t hal_ticks (void);
 #define hal_ticks()	((u4_t)rtc_get())
 
-void hal_resetWatchdog(void);
-
 /*
  * busy-wait until specified timestamp (in ticks) is reached.
  */
