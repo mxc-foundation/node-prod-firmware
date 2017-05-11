@@ -1,8 +1,11 @@
 #include <string.h>
+#include <limits.h>
+
 #include <FreeRTOS.h>
 #include <hw_gpio.h>
 #include <hw_uart.h>
 #include <task.h>
+
 #include "hw/hw.h"
 #include "lmic/oslmic.h"
 #include "gps.h"
@@ -53,6 +56,7 @@ struct gps_fix {
 	uint8_t	fix;
 	int32_t	lat;	/* Positive: North */
 	int32_t	lon;	/* Positive: East */
+	int16_t	alt;	/* MSL altitude */
 } __attribute__((packed));
 
 PRIVILEGED_DATA static struct gps_fix	last_fix;
@@ -118,6 +122,30 @@ parse_latlon(char *s, int max, bool negate)
 	return ((d * 60 + m) * 10000 + f) * (negate ? -1 : 1);
 }
 
+static int16_t
+parse_alt(char *s)
+{
+	const char	*errstr;
+	char		*frac;
+	int16_t		 m, dm;
+	bool		 negate = false;
+
+	if (*s == '-') {
+		negate = true;
+		s++;
+	}
+	if ((frac = strchr(s, '.')) == NULL)
+		return 0;
+	*frac++ = '\0';
+	m = strtonum(s, 0, SHRT_MAX / 10 - 1, &errstr);
+	if (errstr)
+		return 0;
+	dm = strtonum(frac, 0, 9, &errstr);
+	if (errstr)
+		return 0;
+	return (m * 10 + dm) * (negate ? -1 : 1);
+}
+
 static void
 proc_gpgga(char *data[], int sz)
 {
@@ -133,6 +161,7 @@ proc_gpgga(char *data[], int sz)
 		    data[GPGGA_NS][0] == 'S');
 		fix.lon = parse_latlon(data[GPGGA_LON], MAXLON,
 		    data[GPGGA_EW][0] == 'W');
+		fix.alt = parse_alt(data[GPGGA_MSL_ALT]);
 		memcpy(&last_fix, &fix, sizeof(fix));
 	}
 }
