@@ -195,7 +195,7 @@ hal_checkTimer(u4_t targettime)
 void
 hal_setShortSleep()
 {
-	waituntil = hal_ticks() + sec2osticks(1);
+	waituntil = hal_ticks() + MAX_WDOG_SLEEP;
 }
 
 void
