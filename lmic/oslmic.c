@@ -29,6 +29,12 @@
 
 #include <sys_trng.h>
 
+//#define DEBUG_SCHEDULER
+
+#ifdef DEBUG_SCHEDULER
+#include <stdio.h> //XXX
+#endif
+
 // RUNTIME STATE
 PRIVILEGED_DATA static struct {
     osjob_t* scheduledjobs;
@@ -117,8 +123,14 @@ void os_runloop () {
         }
         hal_enableIRQs();
         if(j) { // run job callback
+#ifdef DEBUG_SCHEDULER
+            printf("call %p\r\n", (void *)j->func);
+#endif
             j->func(j);
         } else {
+#ifdef DEBUG_SCHEDULER
+            printf("sleep\r\n");
+#endif
             hal_sleep(); // wake by timer or irq (timer already restarted)
         }
     }
