@@ -29,6 +29,12 @@ PRIVILEGED_DATA static uint8_t	state;
 #define MAX_SENSOR_SAMPLE_TIME	sec2osticks(2)
 PRIVILEGED_DATA static ostime_t	sampling_since;
 
+#define JOIN_TIMEOUT		sec2osticks(30 * 60)
+#define TX_TIMEOUT		sec2osticks(7)
+#define TX_PERIOD_TIMEOUT	sec2osticks(10 * 60)
+
+#define MAX_RESETS		8
+
 #ifdef DEBUG
 static void
 debug_event(int ev)
@@ -70,19 +76,26 @@ lora_start_joining(osjob_t *job)
 	LMIC_startJoining();
 }
 
-#define MAX_RESETS	8
-
 static void
-lora_reset(void)
+lora_reset(osjob_t *job)
 {
-	PRIVILEGED_DATA static osjob_t	reset_job;
 	PRIVILEGED_DATA static uint8_t	reset_count;
 
 	if (++reset_count > MAX_RESETS)
 		hal_failed();
 	LMIC_reset();
-	os_setCallback(&reset_job, lora_start_joining);
+	os_setCallback(job, lora_start_joining);
 }
+
+static void
+lora_reset_after(ostime_t delay)
+{
+	PRIVILEGED_DATA static osjob_t	reset_job;
+
+	os_setTimedCallback(&reset_job, os_getTime() + delay, lora_reset);
+}
+
+#define lora_init()	lora_reset_after(0)
 
 static void	lora_prepare_sensor_data(osjob_t *job);
 
@@ -132,16 +145,19 @@ onEvent(ev_t ev)
 	switch(ev) {
 	case EV_JOINING:
 		led_notify(LED_STATE_JOINING);
+		lora_reset_after(JOIN_TIMEOUT);
 		break;
 	case EV_JOINED:
 #ifdef DEBUG
 		printf("netid = %lu\r\n", LMIC.netid);
 #endif
 		state = STATE_JOINED;
+		lora_reset_after(TX_PERIOD_TIMEOUT);
 		lora_send_data();
 		break;
 	case EV_TXSTART:
-		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, sec2osticks(7));
+		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, TX_TIMEOUT);
+		lora_reset_after(TX_TIMEOUT);
 		proto_txstart();
 		if (state == STATE_JOINING) {
 			led_notify(LED_STATE_JOINING);
@@ -151,6 +167,14 @@ onEvent(ev_t ev)
 		}
 		break;
 	case EV_TXCOMPLETE:
+		{
+			ostime_t	delay;
+
+			delay = sensor_period() + sec2osticks(5);
+			if (delay < TX_PERIOD_TIMEOUT)
+				delay = TX_PERIOD_TIMEOUT;
+			lora_reset_after(delay);
+		}
 		if (LMIC.dataLen != 0) {
 			proto_handle(LMIC.frame[LMIC.dataBeg - 1],
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
@@ -194,6 +218,6 @@ lora_task_func(void *param)
 #ifdef HELLO
 	os_setCallback(&hello_job, say_hi);
 #endif
-	lora_reset();
+	lora_init();
 	os_runloop();
 }
