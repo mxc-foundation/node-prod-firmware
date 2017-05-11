@@ -117,9 +117,9 @@
 
 #define HW_UART_ENABLE_USER_ISR
 
-//#define CONFIG_CUSTOM_PRINT
-//#define CONFIG_RETARGET
-#define CONFIG_RTT
+#define CONFIG_CUSTOM_PRINT
+//#define CONFIG_NO_PRINT
+//#define CONFIG_RTT
 
 #ifdef CONFIG_CUSTOM_PRINT
 #define __HEAP_SIZE                             0x600
