@@ -9,6 +9,8 @@
 #include "hw/button.h"
 #include "sensor/sensor.h"
 
+//#define WATCHDOG_ALWAYS_ON
+
 #define EV_LORA_DIO	0
 #define EV_BTN_PRESS	1
 struct event {
@@ -212,8 +214,13 @@ hal_sleep()
 		BaseType_t	ret;
 		struct event	ev;
 
-		if (dt >= MAX_WDOG_SLEEP)
+		if (dt >= MAX_WDOG_SLEEP) {
+#ifdef WATCHDOG_ALWAYS_ON
+			dt = MAX_WDOG_SLEEP;
+#else
 			sys_watchdog_suspend(wdog_id);
+#endif
+		}
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
