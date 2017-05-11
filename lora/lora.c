@@ -59,6 +59,31 @@ debug_event(int ev)
 #define debug_event(ev)
 #endif
 
+static void
+lora_start_joining(osjob_t *job)
+{
+	if (!cm_lp_clk_is_avail()) {
+		os_setTimedCallback(job, os_getTime() + sec2osticks(1),
+		    lora_start_joining);
+		return;
+	}
+	LMIC_startJoining();
+}
+
+#define MAX_RESETS	8
+
+static void
+lora_reset(void)
+{
+	PRIVILEGED_DATA static osjob_t	reset_job;
+	PRIVILEGED_DATA static uint8_t	reset_count;
+
+	if (++reset_count > MAX_RESETS)
+		hal_failed();
+	LMIC_reset();
+	os_setCallback(&reset_job, lora_start_joining);
+}
+
 static void	lora_prepare_sensor_data(osjob_t *job);
 
 static void
@@ -151,28 +176,9 @@ say_hi(osjob_t *job)
 }
 #endif
 
-static void
-lora_start_joining(osjob_t *job)
-{
-	if (!cm_lp_clk_is_avail()) {
-		os_setTimedCallback(job, os_getTime() + sec2osticks(1),
-		    lora_start_joining);
-		return;
-	}
-	LMIC_startJoining();
-}
-
-static void
-lora_init(osjob_t *job)
-{
-	LMIC_reset();
-	os_setCallback(job, lora_start_joining);
-}
-
 void
 lora_task_func(void *param)
 {
-	osjob_t	init_job;
 #ifdef HELLO
 	osjob_t	hello_job;
 #endif
@@ -185,9 +191,9 @@ lora_task_func(void *param)
 #ifdef BLE_ALWAYS_ON
 	ble_on();
 #endif
-	os_setCallback(&init_job, lora_init);
 #ifdef HELLO
 	os_setCallback(&hello_job, say_hi);
 #endif
+	lora_reset();
 	os_runloop();
 }
