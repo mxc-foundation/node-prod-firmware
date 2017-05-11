@@ -9,7 +9,7 @@
 #include "hw/button.h"
 #include "sensor/sensor.h"
 
-//#define WATCHDOG_ALWAYS_ON
+#define WATCHDOG_ALWAYS_ON
 
 #define EV_LORA_DIO	0
 #define EV_BTN_PRESS	1
