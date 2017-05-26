@@ -30,7 +30,7 @@ PRIVILEGED_DATA static uint8_t	state;
 PRIVILEGED_DATA static ostime_t	sampling_since;
 
 #define JOIN_TIMEOUT		sec2osticks(30 * 60)
-#define TX_TIMEOUT		sec2osticks(7)
+#define TX_TIMEOUT		sec2osticks(8)
 #define TX_PERIOD_TIMEOUT	sec2osticks(10 * 60)
 
 #define MAX_RESETS		8
