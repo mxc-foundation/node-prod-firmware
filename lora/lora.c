@@ -147,6 +147,7 @@ onEvent(ev_t ev)
 	debug_event(ev);
 	switch(ev) {
 	case EV_JOINING:
+		state = STATE_JOINING;
 		led_notify(LED_STATE_JOINING);
 		lora_reset_after(JOIN_TIMEOUT);
 		break;
