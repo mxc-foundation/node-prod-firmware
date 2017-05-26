@@ -160,13 +160,13 @@ onEvent(ev_t ev)
 		break;
 	case EV_TXSTART:
 		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, TX_TIMEOUT);
-		lora_reset_after(TX_TIMEOUT);
 		proto_txstart();
 		if (state == STATE_JOINING) {
 			led_notify(LED_STATE_JOINING);
 		} else {
 			state = STATE_SENDING;
 			led_notify(LED_STATE_SENDING);
+			lora_reset_after(TX_TIMEOUT);
 		}
 		break;
 	case EV_TXCOMPLETE:
