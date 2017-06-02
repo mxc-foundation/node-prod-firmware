@@ -29,7 +29,7 @@ PRIVILEGED_DATA static uint8_t	state;
 #define MAX_SENSOR_SAMPLE_TIME	sec2osticks(2)
 PRIVILEGED_DATA static ostime_t	sampling_since;
 
-#define JOIN_TIMEOUT		sec2osticks(30 * 60)
+#define JOIN_TIMEOUT		sec2osticks(2 * 60 * 60)
 #define TX_TIMEOUT		sec2osticks(8)
 #define TX_PERIOD_TIMEOUT	sec2osticks(10 * 60)
 
