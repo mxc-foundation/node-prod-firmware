@@ -56,10 +56,10 @@ debug_event(int ev)
 		[EV_LINK_DEAD]      = "LINK_DEAD",
 		[EV_LINK_ALIVE]     = "LINK_ALIVE",
 		[EV_SCAN_FOUND]     = "SCAN_FOUND",
-		[EV_TXSTART]        = "EV_TXSTART",
+		[EV_TXSTART]        = "TXSTART",
 	};
 
-	printf("%s\r\n", ev < ARRAY_SIZE(evnames) ? evnames[ev] : "EV_UNKNOWN");
+	printf("%s\r\n", ev < ARRAY_SIZE(evnames) ? evnames[ev] : "UNKNOWN");
 }
 #else
 #define debug_event(ev)
