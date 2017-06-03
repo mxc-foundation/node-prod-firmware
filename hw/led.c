@@ -100,14 +100,14 @@ led_update_status()
 static bool
 led_update_battery(void)
 {
-	uint8_t	s = 0;
+	uint8_t	s = LED_BATTERY_OK;
 
 	if (hw_charger_is_charging())
-		s |= LED_BATTERY_CHARGING;
+		s = LED_BATTERY_CHARGING;
 	else if (hw_charger_check_vbus())
-		s |= LED_BATTERY_CHARGED;
+		s = LED_BATTERY_CHARGED;
 	else if (usb_charger_is_battery_low())
-		s |= LED_BATTERY_LOW;
+		s = LED_BATTERY_LOW;
 	if (s == battery_status)
 		return false;
 	battery_status = s;
