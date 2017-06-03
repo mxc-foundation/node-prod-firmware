@@ -14,6 +14,7 @@
 #include "sensor/sensor.h"
 
 #define DEBUG
+#define DEBUG_TIME
 //#define HELLO
 //#define BLE_ALWAYS_ON
 
@@ -58,7 +59,12 @@ debug_event(int ev)
 		[EV_SCAN_FOUND]		= "SCAN_FOUND",
 		[EV_TXSTART]		= "TXSTART",
 	};
+#ifdef DEBUG_TIME
+	uint32_t	now = os_getTime();
 
+	printf("%lu:%02lu.%05lu ", now / (60 * OSTICKS_PER_SEC),
+	    now / OSTICKS_PER_SEC % 60, now % OSTICKS_PER_SEC);
+#endif
 	printf("%s\r\n", ev < ARRAY_SIZE(evnames) ? evnames[ev] : "UNKNOWN");
 }
 #else
