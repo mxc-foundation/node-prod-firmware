@@ -147,6 +147,7 @@ onEvent(ev_t ev)
 	debug_event(ev);
 	switch(ev) {
 	case EV_JOINING:
+	case EV_LINK_DEAD:
 		state = STATE_JOINING;
 		led_notify(LED_STATE_JOINING);
 		lora_reset_after(JOIN_TIMEOUT);
@@ -155,6 +156,8 @@ onEvent(ev_t ev)
 #ifdef DEBUG
 		printf("netid = %lu\r\n", LMIC.netid);
 #endif
+		/* FALLTHROUGH */
+	case EV_LINK_ALIVE:
 		state = STATE_JOINED;
 		lora_reset_after(TX_PERIOD_TIMEOUT);
 		lora_send_data();
