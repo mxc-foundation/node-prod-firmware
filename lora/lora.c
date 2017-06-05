@@ -20,19 +20,26 @@
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
-#define STATE_JOINING		0
-#define STATE_JOINED		1
-#define STATE_SAMPLING_SENSOR	2
-#define STATE_WAITING_TO_SEND	3
-#define STATE_SENDING		4
+/* State of the sampling/sending state machine */
+#define STATE_IDLE		0
+#define STATE_SAMPLING_SENSOR	1
+#define STATE_WAITING_TO_SEND	2
+#define STATE_SENDING		3
 PRIVILEGED_DATA static uint8_t	state;
+
+/* Link status */
+#define STATUS_JOINED		0x01
+#define STATUS_LINK_UP		0x02
+PRIVILEGED_DATA static uint8_t	status;
 
 #define MAX_SENSOR_SAMPLE_TIME	sec2osticks(2)
 PRIVILEGED_DATA static ostime_t	sampling_since;
 
 #define JOIN_TIMEOUT		sec2osticks(2 * 60 * 60)
+#define REJOIN_TIMEOUT		sec2osticks(15 * 60)
 #define TX_TIMEOUT		sec2osticks(8)
 #define TX_PERIOD_TIMEOUT	sec2osticks(10 * 60)
+#define ALIVE_TX_PERIOD		sec2osticks(60)
 
 #define MAX_RESETS		8
 
@@ -106,45 +113,56 @@ lora_reset_after(ostime_t delay)
 
 #define lora_init()	lora_reset_after(0)
 
-static void	lora_prepare_sensor_data(osjob_t *job);
+static void	lora_send_init(osjob_t *job);
 
 static void
-lora_wait_for_sensor_data(osjob_t *job)
+lora_schedule_next_send(osjob_t *job, ostime_t delay)
+{
+	os_setTimedCallback(job, os_getTime() + delay + os_getRndU2(),
+	    lora_send_init);
+}
+
+static void
+lora_send_wait(osjob_t *job)
 {
 	ostime_t	delay;
 
 	if (os_getTime() < sampling_since + MAX_SENSOR_SAMPLE_TIME &&
 	    (delay = sensor_data_ready()) != 0) {
 		os_setTimedCallback(job, os_getTime() + delay,
-		    lora_wait_for_sensor_data);
+		    lora_send_wait);
 		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, delay + 64);
 	} else {
 		state = STATE_WAITING_TO_SEND;
 		led_notify(LED_STATE_IDLE);
 		proto_send_data();
-		os_setTimedCallback(job, os_getTime() + sensor_period(),
-		    lora_prepare_sensor_data);
+		lora_schedule_next_send(job, sensor_period());
 	}
 }
 
 static void
-lora_prepare_sensor_data(osjob_t *job)
+lora_send_init(osjob_t *job)
 {
-	if (state != STATE_JOINED)
+	if (!(status & STATUS_JOINED) || state != STATE_IDLE)
 		return;
+	if (!(status & STATUS_LINK_UP)) {
+		LMIC_sendAlive();
+		lora_schedule_next_send(job, ALIVE_TX_PERIOD);
+		return;
+	}
 	state = STATE_SAMPLING_SENSOR;
 	sampling_since = os_getTime();
 	led_notify(LED_STATE_SAMPLING_SENSOR);
 	sensor_prepare();
-	lora_wait_for_sensor_data(job);
+	lora_send_wait(job);
 }
 
 void
-lora_send_data(void)
+lora_send(void)
 {
 	PRIVILEGED_DATA static osjob_t	sensor_job;
 
-	lora_prepare_sensor_data(&sensor_job);
+	lora_send_init(&sensor_job);
 }
 
 void
@@ -152,9 +170,11 @@ onEvent(ev_t ev)
 {
 	debug_event(ev);
 	switch(ev) {
-	case EV_JOINING:
 	case EV_LINK_DEAD:
-		state = STATE_JOINING;
+		status &= ~STATUS_LINK_UP;
+		lora_send();
+		/* FALLTHROUGH */
+	case EV_JOINING:
 		led_notify(LED_STATE_JOINING);
 		lora_reset_after(JOIN_TIMEOUT);
 		break;
@@ -164,36 +184,44 @@ onEvent(ev_t ev)
 #endif
 		/* FALLTHROUGH */
 	case EV_LINK_ALIVE:
-		state = STATE_JOINED;
+		status |= STATUS_JOINED | STATUS_LINK_UP;
+		state = STATE_IDLE;
 		lora_reset_after(TX_PERIOD_TIMEOUT);
-		lora_send_data();
+		lora_send();
+		break;
+	case EV_JOIN_FAILED:
+		lora_init();
+		break;
+	case EV_REJOIN_FAILED:
+		lora_reset_after(REJOIN_TIMEOUT);
+		ad_lora_allow_sleep(LORA_SUSPEND_LORA);
 		break;
 	case EV_TXSTART:
 		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, TX_TIMEOUT);
 		proto_txstart();
-		if (state == STATE_JOINING) {
-			led_notify(LED_STATE_JOINING);
-		} else {
+		if (status & STATUS_LINK_UP) {
 			state = STATE_SENDING;
 			led_notify(LED_STATE_SENDING);
 			lora_reset_after(TX_TIMEOUT);
+		} else {
+			led_notify(LED_STATE_JOINING);
 		}
 		break;
 	case EV_TXCOMPLETE:
-		{
+		if (status & STATUS_LINK_UP) {
 			ostime_t	delay;
 
 			delay = sensor_period() + sec2osticks(5);
 			if (delay < TX_PERIOD_TIMEOUT)
 				delay = TX_PERIOD_TIMEOUT;
 			lora_reset_after(delay);
+			led_notify(LED_STATE_IDLE);
 		}
 		if (LMIC.dataLen != 0) {
 			proto_handle(LMIC.frame[LMIC.dataBeg - 1],
 			    LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
 		}
-		state = STATE_JOINED;
-		led_notify(LED_STATE_IDLE);
+		state = STATE_IDLE;
 		ad_lora_allow_sleep(LORA_SUSPEND_LORA);
 		break;
 	default:
