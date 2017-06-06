@@ -110,6 +110,7 @@ lora_reset(osjob_t *job)
 #endif
 	if (++reset_count > MAX_RESETS)
 		hal_failed();
+	status = 0;
 	LMIC_reset();
 	os_setCallback(job, lora_start_joining);
 }
@@ -190,6 +191,7 @@ onEvent(ev_t ev)
 		lora_send();
 		/* FALLTHROUGH */
 	case EV_JOINING:
+		state = STATE_IDLE;
 		led_notify(LED_STATE_JOINING);
 		lora_reset_after(JOIN_TIMEOUT);
 		break;
