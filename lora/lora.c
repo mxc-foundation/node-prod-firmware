@@ -44,6 +44,20 @@ PRIVILEGED_DATA static ostime_t	sampling_since;
 #define MAX_RESETS		8
 
 #ifdef DEBUG
+
+#ifdef DEBUG_TIME
+static void
+debug_time(void)
+{
+	uint32_t	now = os_getTime();
+
+	printf("%lu:%02lu.%05lu ", now / (60 * OSTICKS_PER_SEC),
+	    now / OSTICKS_PER_SEC % 60, now % OSTICKS_PER_SEC);
+}
+#else
+#define debug_time()
+#endif
+
 static void
 debug_event(int ev)
 {
@@ -66,17 +80,13 @@ debug_event(int ev)
 		[EV_SCAN_FOUND]		= "SCAN_FOUND",
 		[EV_TXSTART]		= "TXSTART",
 	};
-#ifdef DEBUG_TIME
-	uint32_t	now = os_getTime();
 
-	printf("%lu:%02lu.%05lu ", now / (60 * OSTICKS_PER_SEC),
-	    now / OSTICKS_PER_SEC % 60, now % OSTICKS_PER_SEC);
-#endif
+	debug_time();
 	printf("%s\r\n", ev < ARRAY_SIZE(evnames) ? evnames[ev] : "UNKNOWN");
 }
-#else
+#else /* !DEBUG */
 #define debug_event(ev)
-#endif
+#endif /* DEBUG */
 
 static void
 lora_start_joining(osjob_t *job)
@@ -95,6 +105,7 @@ lora_reset(osjob_t *job)
 	PRIVILEGED_DATA static uint8_t	reset_count;
 
 #ifdef DEBUG
+	debug_time();
 	printf("lora reset #%d\r\n", reset_count);
 #endif
 	if (++reset_count > MAX_RESETS)
@@ -143,6 +154,10 @@ lora_send_wait(osjob_t *job)
 static void
 lora_send_init(osjob_t *job)
 {
+#ifdef DEBUG
+	debug_time();
+	printf("lora_send_init\r\n");
+#endif
 	if (!(status & STATUS_JOINED) || state != STATE_IDLE)
 		return;
 	if (!(status & STATUS_LINK_UP)) {
