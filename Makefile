@@ -21,6 +21,7 @@ OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/sensor/bat.o \
 	$(OBJDIR)/sensor/gps.o \
 	$(OBJDIR)/sensor/sensor.o \
+	$(OBJDIR)/sensor/temp.o \
 	$(OBJDIR)/strtonum.o
 
 OBJS+=	$(OBJDIR)/lmic/aes.o \

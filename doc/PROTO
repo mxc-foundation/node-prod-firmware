@@ -78,6 +78,7 @@ Number	Name	Data length	Description
 ------	----	-----------	-----------
 0	Unknown	0		No data.
 1	GPS	9		GPS coordinates.
+2	Temp	1		Temperature.
 
 GPS data format is as follows:
 
@@ -97,3 +98,11 @@ Offset	Length	Description
 		get the value in degrees, divide by 600000.
 
 The format of GPS data is subject to change.
+
+Temperature data format is as follows:
+
+Offset	Length	Description
+------	------	-----------
+0	1	Temperature in degrees Celsius as a signed
+		int8_t, giving the range between -128 and +127.
+		Temperatures outside this range are not sent.

@@ -5,9 +5,11 @@
 #include "lmic/oslmic.h"
 #include "gps.h"
 #include "sensor.h"
+#include "temp.h"
 
 #define SENSOR_TYPE_UNKNOWN	0
 #define SENSOR_TYPE_GPS		1
+#define SENSOR_TYPE_TEMP	2
 static uint8_t	sensor_type;
 
 struct sensor_callbacks {
@@ -25,6 +27,9 @@ const struct sensor_callbacks	sensor_cb[] = {
 		.prepare	= gps_prepare,
 		.data_ready	= gps_data_ready,
 		.read		= gps_read,
+	},
+	[SENSOR_TYPE_TEMP]	= {
+		.read		= temp_read,
 	},
 };
 
