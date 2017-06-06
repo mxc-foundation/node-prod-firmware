@@ -159,18 +159,19 @@ lora_send_init(osjob_t *job)
 	debug_time();
 	printf("lora_send_init\r\n");
 #endif
-	if (!(status & STATUS_JOINED) || state != STATE_IDLE)
-		return;
-	if (!(status & STATUS_LINK_UP)) {
-		LMIC_sendAlive();
-		lora_schedule_next_send(job, ALIVE_TX_PERIOD);
-		return;
+	if (state == STATE_IDLE) {
+		if (status & STATUS_LINK_UP) {
+			state = STATE_SAMPLING_SENSOR;
+			sampling_since = os_getTime();
+			led_notify(LED_STATE_SAMPLING_SENSOR);
+			sensor_prepare();
+			lora_send_wait(job);
+			return;
+		} else if (status & STATUS_JOINED) {
+			LMIC_sendAlive();
+		}
 	}
-	state = STATE_SAMPLING_SENSOR;
-	sampling_since = os_getTime();
-	led_notify(LED_STATE_SAMPLING_SENSOR);
-	sensor_prepare();
-	lora_send_wait(job);
+	lora_schedule_next_send(job, ALIVE_TX_PERIOD);
 }
 
 void
