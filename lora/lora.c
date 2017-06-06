@@ -37,7 +37,7 @@ PRIVILEGED_DATA static ostime_t	sampling_since;
 
 #define JOIN_TIMEOUT		sec2osticks(2 * 60 * 60)
 #define REJOIN_TIMEOUT		sec2osticks(15 * 60)
-#define TX_TIMEOUT		sec2osticks(8)
+#define TX_TIMEOUT		sec2osticks(12)
 #define TX_PERIOD_TIMEOUT	sec2osticks(10 * 60)
 #define ALIVE_TX_PERIOD		sec2osticks(60)
 
