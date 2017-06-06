@@ -159,7 +159,7 @@ lora_send_init(osjob_t *job)
 	debug_time();
 	printf("lora_send_init\r\n");
 #endif
-	if (state == STATE_IDLE) {
+	if (state == STATE_IDLE || state == STATE_WAITING_TO_SEND) {
 		if (status & STATUS_LINK_UP) {
 			state = STATE_SAMPLING_SENSOR;
 			sampling_since = os_getTime();
