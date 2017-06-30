@@ -186,7 +186,7 @@ param_get(int idx, uint8_t *data, uint8_t len)
 		else
 			memcpy(data, params[idx].mem, params[idx].len);
 	}
-	return len;
+	return params[idx].len;
 }
 
 void
