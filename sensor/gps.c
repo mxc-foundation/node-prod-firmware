@@ -8,6 +8,7 @@
 
 #include "hw/hw.h"
 #include "lmic/oslmic.h"
+#include "accel.h"
 #include "gps.h"
 
 //#define DEBUG
@@ -60,7 +61,11 @@ struct gps_fix {
 } __attribute__((packed));
 
 PRIVILEGED_DATA static struct gps_fix	last_fix;
-PRIVILEGED_DATA static bool		fix_found;
+
+#define STATUS_CONNECTED		0x01
+#define STATUS_GPS_INFO_RECEIVED	0x02
+#define STATUS_GPS_FIX_FOUND		0x04
+PRIVILEGED_DATA static uint8_t	status;
 
 static const char	hex[] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',
@@ -212,11 +217,11 @@ rx(osjob_t *job)
 #endif
 		if ((rxbuf[rxlen++] = c) == '\n') {
 			if (msgproc(rxbuf, rxlen))
-				fix_found = true;
+				status |= STATUS_GPS_INFO_RECEIVED;
 			rxlen = 0;
 		}
 	}
-	if (!fix_found)
+	if (!(status & STATUS_GPS_INFO_RECEIVED))
 		os_setTimedCallback(job, os_getTime() + ms2osticks(10), rx);
 #ifdef DEBUG
 	printf("\r\n");
@@ -241,14 +246,28 @@ gps_init()
 	hw_gpio_set_pin_function(HW_SENSOR_UART_RX_PORT, HW_SENSOR_UART_RX_PIN,
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_UART2_RX);
 	hw_uart_init(HW_UART2, &uart2_cfg);
+	accel_init();
 }
 
 void
 gps_prepare()
 {
+	int	as;
+
+	as = accel_status();
+	if (as == -1) {
+		status = 0;
+	} else {
+		status |= STATUS_CONNECTED;
+		if (as)
+			status &= ~STATUS_GPS_FIX_FOUND;
+	}
+#ifdef DEBUG
+	printf("accel status %02x, sensor status %02x\r\n", as, status);
+#endif
 	rxlen = 0;
 	memset(&last_fix, 0, sizeof(last_fix));
-	fix_found = false;
+	status &= ~STATUS_GPS_INFO_RECEIVED;
 	while (!hw_uart_read_buf_empty(HW_UART2))
 		hw_uart_read(HW_UART2);
 	os_setCallback(&rxjob, rx);
@@ -257,15 +276,20 @@ gps_prepare()
 ostime_t
 gps_data_ready()
 {
-	return fix_found ? 0 : ms2osticks(100);
+	return status & (STATUS_GPS_FIX_FOUND | STATUS_GPS_INFO_RECEIVED) ?
+	    0 : ms2osticks(100);
 }
 
 int
 gps_read(char *buf, int len)
 {
 	os_clearCallback(&rxjob);
-	if (len < sizeof(last_fix) || last_fix.fix == 0)
-		return 0;
+	if (len < sizeof(last_fix) || last_fix.fix == 0) {
+		if (len < 1 || !(status & STATUS_CONNECTED))
+			return 0;
+		buf[0] = !(status & STATUS_GPS_FIX_FOUND) || last_fix.fix == 0;
+		return 1;
+	}
 	memcpy(buf, &last_fix, sizeof(last_fix));
 	return sizeof(last_fix);
 }

@@ -77,10 +77,22 @@ defined types and corresponding data formats are:
 Number	Name	Data length	Description
 ------	----	-----------	-----------
 0	Unknown	0		No data.
-1	GPS	9		GPS coordinates.
+1	GPS	1 or 9		Node moved or GPS coordinates.
 2	Temp	1		Temperature.
 
 GPS data format is as follows:
+
+When data length is 1:
+
+Offset	Length	Description
+------	------	-----------
+0	1	Indicates whether the node has moved since last
+		GPS fix.  Possible values are:
+		0	Node is stable since last GPS fix
+		1	Node has moved, or has not received a GPS
+			fix since boot; waiting for GPS fix
+
+When data length is 9:
 
 Offset	Length	Description
 ------	------	-----------

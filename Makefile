@@ -18,6 +18,7 @@ OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/lora/param.o \
 	$(OBJDIR)/lora/proto.o \
 	$(OBJDIR)/lora/upgrade.o \
+	$(OBJDIR)/sensor/accel.o \
 	$(OBJDIR)/sensor/bat.o \
 	$(OBJDIR)/sensor/gps.o \
 	$(OBJDIR)/sensor/sensor.o \
@@ -62,6 +63,7 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_gpio.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_gpadc.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_hard_fault.o \
+	$(OBJDIR)/sdk/bsp/peripherals/src/hw_i2c.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_otpc.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_qspi.o \
 	$(OBJDIR)/sdk/bsp/peripherals/src/hw_rf.o \
