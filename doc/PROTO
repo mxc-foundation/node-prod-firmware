@@ -77,7 +77,7 @@ defined types and corresponding data formats are:
 Number	Name	Data length	Description
 ------	----	-----------	-----------
 0	Unknown	0		No data.
-1	GPS	1 or 9		Node moved or GPS coordinates.
+1	GPS	1 or 11		Node moved or GPS coordinates.
 2	Temp	1		Temperature.
 
 GPS data format is as follows:
@@ -92,7 +92,7 @@ Offset	Length	Description
 		1	Node has moved, or has not received a GPS
 			fix since boot; waiting for GPS fix
 
-When data length is 9:
+When data length is 11:
 
 Offset	Length	Description
 ------	------	-----------
@@ -108,6 +108,8 @@ Offset	Length	Description
 5	4	Longitude in 1/1000 of minutes, as little-endian
 		int32.  Positive is east, negative is west.  To
 		get the value in degrees, divide by 600000.
+9	2	Altitude above geoid mean sea level in decimetres
+		(0.1m), as little-endian int16.
 
 The format of GPS data is subject to change.
 
