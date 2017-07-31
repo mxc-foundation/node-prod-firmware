@@ -16,7 +16,7 @@ struct sensor_callbacks {
 	void		(*init)(void);
 	void		(*prepare)(void);
 	ostime_t	(*data_ready)(void);
-	int		(*read)(char *buf, int len);
+	int		(*read)(char *, int);
 };
 
 const struct sensor_callbacks	sensor_cb[] = {
