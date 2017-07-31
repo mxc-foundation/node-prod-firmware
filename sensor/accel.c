@@ -166,8 +166,11 @@ int
 accel_status()
 {
 	int	status;
+	bool	level;
 
 	mpu_reg_init();
+	level = hw_gpio_get_pin_status(HW_SENSOR_MPU_INT_PORT,
+	    HW_SENSOR_MPU_INT_PIN);
 	status = mpu_read_reg(MPU_INT_STATUS);
-	return status == -1 ? -1 : !!(status & MPU_WOM_INT);
+	return status == -1 ? -1 : !level;
 }
