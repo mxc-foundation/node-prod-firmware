@@ -293,3 +293,10 @@ gps_read(char *buf, int len)
 	memcpy(buf, &last_fix, sizeof(last_fix));
 	return sizeof(last_fix);
 }
+
+void
+gps_txstart()
+{
+	if (status & STATUS_GPS_INFO_RECEIVED && last_fix.fix != 0)
+		status |= STATUS_GPS_FIX_FOUND;
+}

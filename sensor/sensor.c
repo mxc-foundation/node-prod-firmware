@@ -17,6 +17,7 @@ struct sensor_callbacks {
 	void		(*prepare)(void);
 	ostime_t	(*data_ready)(void);
 	int		(*read)(char *, int);
+	void		(*txstart)(void);
 };
 
 const struct sensor_callbacks	sensor_cb[] = {
@@ -27,6 +28,7 @@ const struct sensor_callbacks	sensor_cb[] = {
 		.prepare	= gps_prepare,
 		.data_ready	= gps_data_ready,
 		.read		= gps_read,
+		.txstart	= gps_txstart,
 	},
 	[SENSOR_TYPE_TEMP]	= {
 		.read		= temp_read,
@@ -96,4 +98,11 @@ ostime_t
 sensor_period(void)
 {
 	return sec2osticks(60);
+}
+
+void
+sensor_txstart(void)
+{
+	if (sensor_cb[sensor_type].txstart)
+		return sensor_cb[sensor_type].txstart();
 }

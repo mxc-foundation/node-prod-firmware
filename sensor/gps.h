@@ -5,5 +5,6 @@ void		gps_init(void);
 void		gps_prepare(void);
 ostime_t	gps_data_ready(void);
 int		gps_read(char *, int);
+void		gps_txstart(void);
 
 #endif /* __GPS_H__ */

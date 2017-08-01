@@ -218,4 +218,5 @@ proto_txstart(void)
 	TX_CLEAR(pend_tx);
 	TX_CLEAR(sensor);
 	TX_CLEAR(battery);
+	sensor_txstart();
 }
