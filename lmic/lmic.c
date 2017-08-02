@@ -550,19 +550,19 @@ void LMIC_setPingable (u1_t intvExp) {
 #define NUM_DEFAULT_CHANNELS	3
 static const u4_t iniChannelFreq[6] = {
     // Join frequencies and duty cycle limit (0.1%)
-    EU868_F1|BAND_MILLI,
-    EU868_F2|BAND_MILLI,
-    EU868_F3|BAND_MILLI,
+    EU868_F1|BAND_MILLI_1,
+    EU868_F2|BAND_MILLI_1,
+    EU868_F3|BAND_MILLI_1,
     // Default operational frequencies
-    EU868_F1|BAND_CENTI, EU868_F2|BAND_CENTI, EU868_F3|BAND_CENTI,
+    EU868_F1|BAND_CENTI_1, EU868_F2|BAND_CENTI_1, EU868_F3|BAND_CENTI_1,
 };
 #else
-#define NUM_DEFAULT_CHANNELS	6
+#define NUM_DEFAULT_CHANNELS	8
 static const u4_t iniChannelFreq[12] = {
     // Default operational frequencies
-    EU868_F1|BAND_CENTI, EU868_F2|BAND_CENTI, EU868_F3|BAND_CENTI,
-    EU868_F4|BAND_MILLI, EU868_F5|BAND_MILLI, EU868_F6|BAND_MILLI,
-    EU868_F7|BAND_CENTI_LOW, EU868_F8|BAND_CENTI_LOW
+    EU868_F1|BAND_CENTI_1, EU868_F2|BAND_CENTI_1, EU868_F3|BAND_CENTI_1,
+    EU868_F4|BAND_MILLI_1, EU868_F5|BAND_MILLI_2, EU868_F6|BAND_MILLI_2,
+    EU868_F7|BAND_CENTI_2, EU868_F8|BAND_CENTI_2
 };
 #endif
 
@@ -588,22 +588,26 @@ static void initDefaultChannels (bit_t join) {
     }
 #endif
 
-    LMIC.bands[BAND_MILLI].txcap    = 1000;  // 0.1%
-    LMIC.bands[BAND_MILLI].txpow    = 14;
-    LMIC.bands[BAND_MILLI].lastchnl = os_getRndU1() % MAX_CHANNELS;
-    LMIC.bands[BAND_CENTI].txcap    = 100;   // 1%
-    LMIC.bands[BAND_CENTI].txpow    = 14;
-    LMIC.bands[BAND_CENTI].lastchnl = os_getRndU1() % MAX_CHANNELS;
-    LMIC.bands[BAND_DECI ].txcap    = 10;    // 10%
-    LMIC.bands[BAND_DECI ].txpow    = 27;
-    LMIC.bands[BAND_CENTI].lastchnl = os_getRndU1() % MAX_CHANNELS;
-    LMIC.bands[BAND_CENTI_LOW].txcap    = 100;   // 1%
-    LMIC.bands[BAND_CENTI_LOW].txpow    = 6;
-    LMIC.bands[BAND_CENTI_LOW].lastchnl = os_getRndU1() % MAX_CHANNELS;
-    LMIC.bands[BAND_MILLI].avail = 
-    LMIC.bands[BAND_CENTI].avail =
-    LMIC.bands[BAND_CENTI_LOW].avail =
-    LMIC.bands[BAND_DECI ].avail = os_getTime();
+    LMIC.bands[BAND_MILLI_1].txcap    = 1000;  // 0.1%
+    LMIC.bands[BAND_MILLI_1].txpow    = 14;
+    LMIC.bands[BAND_MILLI_1].lastchnl = os_getRndU1() % MAX_CHANNELS;
+    LMIC.bands[BAND_CENTI_1].txcap    = 100;   // 1%
+    LMIC.bands[BAND_CENTI_1].txpow    = 14;
+    LMIC.bands[BAND_CENTI_1].lastchnl = os_getRndU1() % MAX_CHANNELS;
+    LMIC.bands[BAND_DECI   ].txcap    = 10;    // 10%
+    LMIC.bands[BAND_DECI   ].txpow    = 27;
+    LMIC.bands[BAND_DECI   ].lastchnl = os_getRndU1() % MAX_CHANNELS;
+    LMIC.bands[BAND_MILLI_2].txcap    = 1000;  // 0.1%
+    LMIC.bands[BAND_MILLI_2].txpow    = 14;
+    LMIC.bands[BAND_MILLI_2].lastchnl = os_getRndU1() % MAX_CHANNELS;
+    LMIC.bands[BAND_CENTI_2].txcap    = 100;   // 1%
+    LMIC.bands[BAND_CENTI_2].txpow    = 6;
+    LMIC.bands[BAND_CENTI_2].lastchnl = os_getRndU1() % MAX_CHANNELS;
+    LMIC.bands[BAND_MILLI_1].avail =
+    LMIC.bands[BAND_CENTI_1].avail =
+    LMIC.bands[BAND_DECI   ].avail =
+    LMIC.bands[BAND_MILLI_2].avail =
+    LMIC.bands[BAND_CENTI_2].avail = os_getTime();
 }
 
 bit_t LMIC_setupBand (u1_t bandidx, s1_t txpow, u2_t txcap) {
@@ -625,12 +629,16 @@ bit_t LMIC_setupChannel (u1_t chidx, u4_t freq, u2_t drmap, s1_t band) {
             freq |= BAND_DECI;   // 10% 27dBm
         else if( (freq >= 868000000 && freq <= 868600000) ||
                  (freq >= 869700000 && freq <= 870000000)  )
-            freq |= BAND_CENTI;  // 1% 14dBm 
-        else 
-            freq |= BAND_MILLI;  // 0.1% 14dBm
+            freq |= BAND_CENTI_1;  // 1% 14dBm
+        else if( freq >= 865000000 && freq <= 868000000 )
+            freq |= BAND_CENTI_2;  // 1% 6.4dBm
+        else if( freq >= 863000000 && freq <= 865000000 )
+            freq |= BAND_MILLI_2;  // 0.1% 14dBm
+        else
+            freq |= BAND_MILLI_1;  // 0.1% 14dBm
     } else {
         if( band > BAND_AUX ) return 0;
-        freq = (freq&~3) | band;
+        freq = (freq&~7) | band;
     }
     LMIC.channelFreq [chidx] = freq;
     LMIC.channelDrMap[chidx] = drmap==0 ? DR_RANGE_MAP(DR_SF12,DR_SF7) : drmap;
@@ -669,8 +677,8 @@ static void updateTx (ostime_t txbeg) {
     // Update global/band specific duty cycle stats
     ostime_t airtime = calcAirTime(LMIC.rps, LMIC.dataLen);
     // Update channel/global duty cycle stats
-    xref2band_t band = &LMIC.bands[freq & 0x3];
-    LMIC.freq  = freq & ~(u4_t)3;
+    xref2band_t band = &LMIC.bands[freq & 0x7];
+    LMIC.freq  = freq & ~(u4_t)7;
     LMIC.txpow = band->txpow;
     band->avail = txbeg + airtime * band->txcap;
     if( LMIC.globalDutyRate != 0 )
@@ -708,7 +716,7 @@ static ostime_t nextTx (ostime_t now) {
 
 static void setBcnRxParams (void) {
     LMIC.dataLen = 0;
-    LMIC.freq = LMIC.channelFreq[LMIC.bcnChnl] & ~(u4_t)3;
+    LMIC.freq = LMIC.channelFreq[LMIC.bcnChnl] & ~(u4_t)7;
     LMIC.rps  = setIh(setNocrc(dndr2rps((dr_t)DR_BCN),1),LEN_BCN);
 }
 
@@ -724,7 +732,7 @@ static void initJoinLoop (void) {
     setDrJoin(DRCHG_SET, DR_SF7);
     initDefaultChannels(1);
     ASSERT((LMIC.opmode & OP_NEXTCHNL)==0);
-    LMIC.txend = LMIC.bands[BAND_MILLI].avail + rndDelay(8);
+    LMIC.txend = LMIC.bands[BAND_MILLI_1].avail + rndDelay(8);
 }
 
 
@@ -747,8 +755,8 @@ static ostime_t nextJoinState (void) {
     // Move txend to randomize synchronized concurrent joins.
     // Duty cycle is based on txend.
     ostime_t time = os_getTime();
-    if( time - LMIC.bands[BAND_MILLI].avail < 0 )
-        time = LMIC.bands[BAND_MILLI].avail;
+    if( time - LMIC.bands[BAND_MILLI_1].avail < 0 )
+        time = LMIC.bands[BAND_MILLI_1].avail;
     LMIC.txend = time +
         (isTESTMODE()
          // Avoid collision with JOIN ACCEPT @ SF12 being sent by GW (but we missed it)
