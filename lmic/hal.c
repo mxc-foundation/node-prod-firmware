@@ -7,6 +7,7 @@
 #include "oslmic.h"
 #include "hal.h"
 #include "hw/button.h"
+#include "hw/power.h"
 #include "sensor/sensor.h"
 
 #define WATCHDOG_ALWAYS_ON
@@ -101,6 +102,7 @@ hal_lora_init(void)
 void
 hal_periph_init()
 {
+	power_init();
 	hal_lora_init();
 	sensor_init();
 }

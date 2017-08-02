@@ -7,6 +7,7 @@
 #include <task.h>
 
 #include "hw/hw.h"
+#include "hw/power.h"
 #include "lmic/oslmic.h"
 #include "accel.h"
 #include "gps.h"
@@ -254,6 +255,7 @@ gps_prepare()
 {
 	int	as;
 
+	power(POWER_SENSOR, true);
 	as = accel_status();
 	if (as == -1) {
 		status = 0;
@@ -262,6 +264,7 @@ gps_prepare()
 		if (as)
 			status &= ~STATUS_GPS_FIX_FOUND;
 	}
+	power(POWER_SENSOR, !(status & STATUS_GPS_FIX_FOUND));
 #ifdef DEBUG
 	printf("accel status %02x, sensor status %02x\r\n", as, status);
 #endif
@@ -297,6 +300,8 @@ gps_read(char *buf, int len)
 void
 gps_txstart()
 {
-	if (status & STATUS_GPS_INFO_RECEIVED && last_fix.fix != 0)
+	if (status & STATUS_GPS_INFO_RECEIVED && last_fix.fix != 0) {
 		status |= STATUS_GPS_FIX_FOUND;
+		power(POWER_SENSOR, false);
+	}
 }

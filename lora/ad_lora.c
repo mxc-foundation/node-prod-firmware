@@ -2,6 +2,7 @@
 #include <hw_wkup.h>
 #include <sys_power_mgr.h>
 
+#include "hw/power.h"
 #include "lmic/oslmic.h"
 #include "lmic/hal.h"
 #include "lora/ad_lora.h"
@@ -26,11 +27,27 @@ ad_lora_prepare_for_sleep(void)
 		}
 	}
 	taskEXIT_CRITICAL();
+	if (!suspends_active)
+		power(POWER_LORA, false);
 	return !suspends_active;
+}
+
+static void
+ad_lora_sleep_canceled(void)
+{
+	power(POWER_LORA, true);
+}
+
+static void
+ad_lora_wake_up_ind(bool arg)
+{
+	power(POWER_LORA, true);
 }
 
 static const adapter_call_backs_t	ad_lora_call_backs = {
 	.ad_prepare_for_sleep		= ad_lora_prepare_for_sleep,
+	.ad_sleep_canceled		= ad_lora_sleep_canceled,
+	.ad_wake_up_ind			= ad_lora_wake_up_ind,
 };
 
 void

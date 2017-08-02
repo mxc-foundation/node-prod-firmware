@@ -35,20 +35,6 @@ const struct sensor_callbacks	sensor_cb[] = {
 	},
 };
 
-static void
-sensor_power_init(void)
-{
-	hw_gpio_set_pin_function(HW_SENSOR_PS_PORT,  HW_SENSOR_PS_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HW_SENSOR_EN_PORT,  HW_SENSOR_EN_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_pin_function(HW_IMU_BACKUP_PORT, HW_IMU_BACKUP_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-	hw_gpio_set_active(HW_SENSOR_PS_PORT,  HW_SENSOR_PS_PIN);
-	hw_gpio_set_active(HW_SENSOR_EN_PORT,  HW_SENSOR_EN_PIN);
-	hw_gpio_set_active(HW_IMU_BACKUP_PORT, HW_IMU_BACKUP_PIN);
-}
-
 static inline void
 detect_sensor(void)
 {
@@ -58,7 +44,6 @@ detect_sensor(void)
 void
 sensor_init()
 {
-	sensor_power_init();
 	detect_sensor();
 	if (sensor_cb[sensor_type].init)
 		sensor_cb[sensor_type].init();
