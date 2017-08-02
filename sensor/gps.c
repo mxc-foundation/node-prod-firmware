@@ -290,7 +290,7 @@ gps_read(char *buf, int len)
 	if (len < sizeof(last_fix) || last_fix.fix == 0) {
 		if (len < 1 || !(status & STATUS_CONNECTED))
 			return 0;
-		buf[0] = !(status & STATUS_GPS_FIX_FOUND) || last_fix.fix == 0;
+		buf[0] = !(status & STATUS_GPS_FIX_FOUND);
 		return 1;
 	}
 	memcpy(buf, &last_fix, sizeof(last_fix));
