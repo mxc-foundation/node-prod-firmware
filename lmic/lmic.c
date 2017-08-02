@@ -545,7 +545,7 @@ void LMIC_setPingable (u1_t intvExp) {
 // BEG: EU868 related stuff
 //
 //enum { NUM_DEFAULT_CHANNELS=6 };
-#define LMIC_THREE_CHANNELS
+//#define LMIC_THREE_CHANNELS
 #ifdef LMIC_THREE_CHANNELS
 #define NUM_DEFAULT_CHANNELS	3
 static const u4_t iniChannelFreq[6] = {
@@ -559,13 +559,10 @@ static const u4_t iniChannelFreq[6] = {
 #else
 #define NUM_DEFAULT_CHANNELS	6
 static const u4_t iniChannelFreq[12] = {
-    // Join frequencies and duty cycle limit (0.1%)
-    EU868_F1|BAND_MILLI, EU868_J4|BAND_MILLI,
-    EU868_F2|BAND_MILLI, EU868_J5|BAND_MILLI,
-    EU868_F3|BAND_MILLI, EU868_J6|BAND_MILLI,
     // Default operational frequencies
     EU868_F1|BAND_CENTI, EU868_F2|BAND_CENTI, EU868_F3|BAND_CENTI,
-    EU868_F4|BAND_MILLI, EU868_F5|BAND_MILLI, EU868_F6|BAND_DECI
+    EU868_F4|BAND_MILLI, EU868_F5|BAND_MILLI, EU868_F6|BAND_MILLI,
+    EU868_F7|BAND_CENTI_LOW, EU868_F8|BAND_CENTI_LOW
 };
 #endif
 
@@ -575,14 +572,18 @@ static void initDefaultChannels (bit_t join) {
     os_clearMem(&LMIC.bands, sizeof(LMIC.bands));
 
     LMIC.channelMap = 0x3F;
+#ifdef LMIC_THREE_CHANNELS
     u1_t su = join ? 0 : NUM_DEFAULT_CHANNELS;
+#else
+    u1_t su = 0;
+#endif
     for( u1_t fu=0; fu<NUM_DEFAULT_CHANNELS; fu++,su++ ) {
         LMIC.channelFreq[fu]  = iniChannelFreq[su];
         LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12,DR_SF7);
     }
 #ifndef LMIC_THREE_CHANNELS
     if( !join ) {
-        LMIC.channelDrMap[5] = DR_RANGE_MAP(DR_SF12,DR_SF7);
+        //LMIC.channelDrMap[5] = DR_RANGE_MAP(DR_SF12,DR_SF7);
         LMIC.channelDrMap[1] = DR_RANGE_MAP(DR_SF12,DR_FSK);
     }
 #endif
@@ -596,8 +597,12 @@ static void initDefaultChannels (bit_t join) {
     LMIC.bands[BAND_DECI ].txcap    = 10;    // 10%
     LMIC.bands[BAND_DECI ].txpow    = 27;
     LMIC.bands[BAND_CENTI].lastchnl = os_getRndU1() % MAX_CHANNELS;
+    LMIC.bands[BAND_CENTI_LOW].txcap    = 100;   // 1%
+    LMIC.bands[BAND_CENTI_LOW].txpow    = 6;
+    LMIC.bands[BAND_CENTI_LOW].lastchnl = os_getRndU1() % MAX_CHANNELS;
     LMIC.bands[BAND_MILLI].avail = 
     LMIC.bands[BAND_CENTI].avail =
+    LMIC.bands[BAND_CENTI_LOW].avail =
     LMIC.bands[BAND_DECI ].avail = os_getTime();
 }
 

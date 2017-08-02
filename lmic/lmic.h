@@ -252,7 +252,7 @@ DECLARE_LMIC; //!< \internal
 //! Construct a bit map of allowed datarates from drlo to drhi (both included). 
 #define DR_RANGE_MAP(drlo,drhi) (((u2_t)0xFFFF<<(drlo)) & ((u2_t)0xFFFF>>(15-(drhi))))
 #if defined(CFG_eu868)
-enum { BAND_MILLI=0, BAND_CENTI=1, BAND_DECI=2, BAND_AUX=3 };
+enum { BAND_MILLI=0, BAND_CENTI=1, BAND_DECI=2, BAND_CENTI_LOW=3, BAND_AUX=4 };
 bit_t LMIC_setupBand (u1_t bandidx, s1_t txpow, u2_t txcap);
 #endif
 bit_t LMIC_setupChannel (u1_t channel, u4_t freq, u2_t drmap, s1_t band);
