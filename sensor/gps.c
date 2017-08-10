@@ -243,7 +243,11 @@ gps_init()
 	};
 
 	hw_gpio_set_pin_function(HW_SENSOR_UART_TX_PORT, HW_SENSOR_UART_TX_PIN,
+	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
+#if 0
+	hw_gpio_set_pin_function(HW_SENSOR_UART_TX_PORT, HW_SENSOR_UART_TX_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_UART2_TX);
+#endif
 	hw_gpio_set_pin_function(HW_SENSOR_UART_RX_PORT, HW_SENSOR_UART_RX_PIN,
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_UART2_RX);
 	hw_uart_init(HW_UART2, &uart2_cfg);
