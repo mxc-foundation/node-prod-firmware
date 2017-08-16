@@ -170,8 +170,8 @@ lora_send_init(osjob_t *job)
 		} else if (status & STATUS_JOINED) {
 			LMIC_sendAlive();
 		}
+		lora_schedule_next_send(job, ALIVE_TX_PERIOD);
 	}
-	lora_schedule_next_send(job, ALIVE_TX_PERIOD);
 }
 
 void
