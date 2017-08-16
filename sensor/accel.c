@@ -47,6 +47,8 @@ mpu_write_reg(uint8_t reg, uint8_t val)
 
 #ifdef DEBUG
 	printf("write %02x: %02x\r\n", reg, val);
+#else
+	hw_cpm_delay_usec(4000);
 #endif
 	hw_i2c_write_byte(HW_I2C1, reg);
 	status = hw_i2c_write_buffer_sync(HW_I2C1, &val, 1, &abort_src,
