@@ -23,8 +23,7 @@
 /* State of the sampling/sending state machine */
 #define STATE_IDLE		0
 #define STATE_SAMPLING_SENSOR	1
-#define STATE_WAITING_TO_SEND	2
-#define STATE_SENDING		3
+#define STATE_SENDING		2
 PRIVILEGED_DATA static uint8_t	state;
 
 /* Link status */
@@ -40,6 +39,7 @@ PRIVILEGED_DATA static ostime_t	sampling_since;
 #define TX_TIMEOUT		sec2osticks(12)
 #define TX_PERIOD_TIMEOUT	sec2osticks(10 * 60)
 #define ALIVE_TX_PERIOD		sec2osticks(60)
+#define SEND_RETRY_TIME		sec2osticks(10)
 
 #define MAX_RESETS		8
 
@@ -145,7 +145,7 @@ lora_send_wait(osjob_t *job)
 		    lora_send_wait);
 		ad_lora_suspend_sleep(LORA_SUSPEND_LORA, delay + 64);
 	} else {
-		state = STATE_WAITING_TO_SEND;
+		state = STATE_IDLE;
 		led_notify(LED_STATE_IDLE);
 		proto_send_data();
 		lora_schedule_next_send(job, sensor_period());
@@ -157,9 +157,10 @@ lora_send_init(osjob_t *job)
 {
 #ifdef DEBUG
 	debug_time();
-	printf("lora_send_init\r\n");
+	printf("lora_send_init: state %d\r\n", state);
 #endif
-	if (state == STATE_IDLE || state == STATE_WAITING_TO_SEND) {
+	switch (state) {
+	case STATE_IDLE:
 		if (status & STATUS_LINK_UP) {
 			state = STATE_SAMPLING_SENSOR;
 			sampling_since = os_getTime();
@@ -171,6 +172,12 @@ lora_send_init(osjob_t *job)
 			LMIC_sendAlive();
 		}
 		lora_schedule_next_send(job, ALIVE_TX_PERIOD);
+		break;
+	case STATE_SAMPLING_SENSOR:
+		break;
+	case STATE_SENDING:
+		lora_schedule_next_send(job, SEND_RETRY_TIME);
+		break;
 	}
 }
 
