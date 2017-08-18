@@ -1,19 +1,17 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <hw_uart.h>
 #include <resmgmt.h>
 #include <sys_power_mgr.h>
 #include <sys_watchdog.h>
 
+#include "hw/cons.h"
 #include "hw/hw.h"
 #include "hw/led.h"
 #include "lmic/lmic.h"
 #include "lora/lora.h"
 
 #define BARRIER()   __asm__ __volatile__ ("":::"memory")
-
-extern int	_write(int fd, char *ptr, int len);
 
 #ifdef CONFIG_RETARGET
 extern void	retarget_init(void);
@@ -47,44 +45,9 @@ vApplicationIdleHook(void)
 }
 #endif
 
-#ifdef CONFIG_CUSTOM_PRINT
-int
-_write(int fd, char *ptr, int len)
-{
-	hw_uart_write_buffer(HW_UART1, ptr, len);
-	(void)fd;
-	return len;
-}
-
-static void
-uart_init(void)
-{
-	uart_config	uart_cfg = {
-		HW_UART_BAUDRATE_115200,
-		HW_UART_DATABITS_8,
-		HW_UART_PARITY_NONE,
-		HW_UART_STOPBITS_1,
-		0,
-		0,
-		1,
-		HW_DMA_CHANNEL_1,
-		HW_DMA_CHANNEL_0,
-	};
-
-	hw_gpio_set_pin_function(HW_CONSOLE_UART_TX_PORT,
-	    HW_CONSOLE_UART_TX_PIN, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_UART_TX);
-	hw_gpio_set_pin_function(HW_CONSOLE_UART_RX_PORT,
-	    HW_CONSOLE_UART_RX_PIN, HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_UART_RX);
-	hw_uart_init(HW_UART1, &uart_cfg);
-}
-#else
-#define uart_init()
-#endif
-
 static void
 periph_setup(void)
 {
-	uart_init();
 	led_init();
 	hal_periph_init();
 }
@@ -104,6 +67,7 @@ sysinit_task_func(void *param)
 	ASSERT_WARNING(idle_task_wdog_id != -1);
 	sys_watchdog_configure_idle_id(idle_task_wdog_id);
 #endif
+	cons_init();
 	pm_system_init(periph_setup);
 	printf("*** FreeRTOS ***\r\n");
 	resource_init();

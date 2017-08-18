@@ -7,6 +7,7 @@
 #include "oslmic.h"
 #include "hal.h"
 #include "hw/button.h"
+#include "hw/cons.h"
 #include "hw/power.h"
 #include "sensor/sensor.h"
 
@@ -14,13 +15,29 @@
 
 #define EV_LORA_DIO	0
 #define EV_BTN_PRESS	1
+#define EV_CONS_RX	2
 struct event {
 	uint8_t		ev;
-	ostime_t	t;
+	uint32_t	data;
 };
 
 PRIVILEGED_DATA static int8_t		wdog_id;
 PRIVILEGED_DATA static QueueHandle_t	lora_queue;
+
+void
+hal_uart_rx(char c)
+{
+	BaseType_t	woken = 0;
+	struct event	ev = {
+		.ev	= EV_CONS_RX,
+		.data	= (uint8_t)c,
+	};
+
+	if (lora_queue) {
+		xQueueSendFromISR(lora_queue, &ev, &woken);
+		portYIELD_FROM_ISR(woken);
+	}
+}
 
 static void
 wkup_intr_cb(void)
@@ -28,7 +45,7 @@ wkup_intr_cb(void)
 	BaseType_t	woken = 0;
 	struct event	ev;
 
-	ev.t = hal_ticks();
+	ev.data = hal_ticks();
 	if (hw_gpio_get_pin_status(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN) ||
 	    hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN)) {
 		ev.ev = EV_LORA_DIO;
@@ -103,6 +120,7 @@ void
 hal_periph_init()
 {
 	power_init();
+	cons_reinit();
 	hal_lora_init();
 	sensor_init();
 }
@@ -113,7 +131,7 @@ hal_init()
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
 	wkup_init();
-	lora_queue = xQueueCreate(2, sizeof(struct event));
+	lora_queue = xQueueCreate(8, sizeof(struct event));
 }
 
 void
@@ -156,10 +174,13 @@ hal_handle_event(struct event ev)
 {
 	switch (ev.ev) {
 	case EV_LORA_DIO:
-		radio_irq_handler(ev.t);
+		radio_irq_handler(ev.data);
 		break;
 	case EV_BTN_PRESS:
-		button_press(ev.t);
+		button_press(ev.data);
+		break;
+	case EV_CONS_RX:
+		cons_rx(ev.data);
 		break;
 	default:
 		hal_failed();
