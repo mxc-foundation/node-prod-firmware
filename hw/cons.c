@@ -167,8 +167,8 @@ cons_init()
 	hw_uart_init(HW_UART1, &uart_cfg);
 #ifdef CONSOLE_INPUT
 	hw_uart_set_isr(HW_UART1, uart_isr);
-#endif
 	uart_enable_rx_int();
+#endif
 }
 
 void
@@ -176,7 +176,9 @@ cons_reinit()
 {
 	uart_pin_init();
 	hw_uart_reinit(HW_UART1, &uart_cfg);
+#ifdef CONSOLE_INPUT
 	uart_enable_rx_int();
+#endif
 }
 
 #else /* !CONFIG_CUSTOM_PRINT */
