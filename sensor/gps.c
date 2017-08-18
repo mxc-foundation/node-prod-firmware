@@ -123,7 +123,7 @@ parse_latlon(char *s, int max, bool negate)
 	f = strtonum(frac, 0, 9999, &errstr);
 	if (errstr)
 		return 0;
-	for (i = 0; i < 4 - strlen(frac); i++)
+	for (i = 0; i < 4 - (int)strlen(frac); i++)
 		f *= 10;
 	return ((d * 60 + m) * 10000 + f) * (negate ? -1 : 1);
 }
@@ -153,7 +153,7 @@ parse_alt(char *s)
 }
 
 static void
-proc_gpgga(char *data[], int sz)
+proc_gpgga(char *data[])
 {
 	struct gps_fix	 fix = {};
 	const char	*errstr;
@@ -193,7 +193,7 @@ msgproc(char *msg, int len)
 		*p = '\0';
 	}
 	if (i && strcmp(data[0], gpgga) == 0) {
-		proc_gpgga(data, i);
+		proc_gpgga(data);
 		return true;
 	}
 	return false;
@@ -208,7 +208,7 @@ rx(osjob_t *job)
 	while (!hw_uart_read_buf_empty(HW_UART2)) {
 		uint8_t	c;
 
-		if (rxlen >= sizeof(rxbuf)) {
+		if (rxlen >= (int)sizeof(rxbuf)) {
 			rxlen = 0;
 			continue;
 		}
@@ -291,7 +291,7 @@ int
 gps_read(char *buf, int len)
 {
 	os_clearCallback(&rxjob);
-	if (len < sizeof(last_fix) || last_fix.fix == 0) {
+	if (len < (int)sizeof(last_fix) || last_fix.fix == 0) {
 		if (len < 1 || !(status & STATUS_CONNECTED))
 			return 0;
 		buf[0] = !(status & STATUS_GPS_FIX_FOUND);

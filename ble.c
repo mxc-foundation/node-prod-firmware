@@ -82,6 +82,7 @@ suota_ready_cb(void)
 static void
 suota_status_cb(uint8_t status, uint8_t error_code)
 {
+	(void)error_code;
 	printf("suota status %d\r\n", status);
 	if (status != SUOTA_ERROR)
 		return;
@@ -117,6 +118,7 @@ ias_alert_cb(uint16_t conn_idx, uint8_t level)
 static void
 lls_alert_cb(uint16_t conn_idx, const bd_address_t *address, uint8_t level)
 {
+	(void)address;
 	printf("lls alert %d for conn %d\r\n", level, conn_idx);
 	if (level == 0)
 		return;
@@ -229,7 +231,7 @@ ble_param_init(void)
 
 	os_getDevEui(eui);
 	if (snprintf(serial_number, sizeof(serial_number), "%05d",
-		    (eui[1] << 8) | eui[0]) >= sizeof(serial_number)) {
+		    (eui[1] << 8) | eui[0]) >= (int)sizeof(serial_number)) {
 		return;
 	}
 	memcpy(device_name + sizeof(device_name) - sizeof(serial_number),
@@ -244,6 +246,7 @@ ble_task_func(void *params)
 #if dg_configUSE_WDOG
 	int8_t		wdog_id;
 
+	(void)params;
 	wdog_id = sys_watchdog_register(false);
 #endif
 	printf("ble init\r\n");

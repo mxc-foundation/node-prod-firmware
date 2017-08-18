@@ -177,7 +177,7 @@ write_param(const struct param_def *param, void *data)
 int
 param_get(int idx, uint8_t *data, uint8_t len)
 {
-	if (idx >= ARRAY_SIZE(params) || params[idx].len > len ||
+	if (idx >= (int)ARRAY_SIZE(params) || params[idx].len > len ||
 	    (params[idx].flags & PARAM_FLAG_WRITE_ONLY))
 		return 0;
 	if (!(params[idx].flags & PARAM_FLAG_WRITE_ONLY)) {
@@ -192,7 +192,7 @@ param_get(int idx, uint8_t *data, uint8_t len)
 void
 param_set(int idx, uint8_t *data, uint8_t len)
 {
-	if (idx >= ARRAY_SIZE(params) || params[idx].len != len)
+	if (idx >= (int)ARRAY_SIZE(params) || params[idx].len != len)
 		return;
 	write_param(params + idx, data);
 }
@@ -202,7 +202,7 @@ param_init(void)
 {
 	int	i;
 
-	for (i = 0; i < ARRAY_SIZE(params); i++) {
+	for (i = 0; i < (int)ARRAY_SIZE(params); i++) {
 		read_param(params + i);
 #ifdef DEBUG
 		for (int j = 0; j < params[i].len; j++)

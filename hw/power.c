@@ -29,7 +29,7 @@ power_init()
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, true);
 	hw_gpio_configure_pin(HW_PS_EN_PORT,         HW_PS_EN_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, status);
-	for (i = 0; i < ARRAY_SIZE(ps); i++) {
+	for (i = 0; i < (int)ARRAY_SIZE(ps); i++) {
 		hw_gpio_configure_pin(ps[i].port, ps[i].pin,
 		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, status & (1 << i));
 	}

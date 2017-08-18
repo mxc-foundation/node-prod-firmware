@@ -92,6 +92,7 @@ periph_setup(void)
 static void
 sysinit_task_func(void *param)
 {
+	(void)param;
 	cm_sys_clk_init(sysclk_XTAL16M);
 	cm_apb_set_clock_divider(apb_div1);
 	cm_ahb_set_clock_divider(ahb_div1);

@@ -128,7 +128,6 @@ LDSCRIPTS=	obj/mem.ld obj/sections.ld
 LDSCRIPTFLAGS=	$(LDSCRIPTS:%=-T%)
 
 CC=		arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb
-#CFLAGS+=	-Wall -Wextra -Werror
 CFLAGS+=	-std=gnu11 -Wall -Werror
 CFLAGS+=	-g -Os -fsigned-char -ffunction-sections -fdata-sections
 CFLAGS+=	-Ddg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A \
@@ -192,6 +191,7 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/middleware/segger_tools/SEGGER \
 		-I$(SDKDIR)/sdk/bsp/free_rtos/include
 CFLAGS+=	-include$(CONFIG_H)
+WARNFLAGS=	-Wextra
 LDFLAGS=	-Os -Xlinker --gc-sections -Xlinker -Map=$(MAPTARGET) \
 		-fmessage-length=0 -fsigned-char -ffunction-sections \
 		-fdata-sections -Wall \
@@ -224,7 +224,7 @@ $(OBJS) $(LDSCRIPTS): $(CONFIG_H)
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p `dirname $@`
-	$(CC) $(CFLAGS) -c -MMD -MP -MF"$(@:%.o=%.d)" -o $@ $<
+	$(CC) $(CFLAGS) $(WARNFLAGS) -c -MMD -MP -MF"$(@:%.o=%.d)" -o $@ $<
 
 $(OBJDIR)/%.o: $(SDKDIR)/%.c
 	mkdir -p `dirname $@`

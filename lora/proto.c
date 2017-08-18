@@ -71,7 +71,7 @@ tx_enqueue(uint8_t *dest, uint8_t *dlen, uint8_t maxlen,
 }
 
 #define ADD_TX(x)	do {						\
-	if (total_len + x ## _len <= ARRAY_SIZE(pend_tx_data)) {	\
+	if (total_len + x ## _len <= (int)ARRAY_SIZE(pend_tx_data)) {	\
 		memcpy(pend_tx_data + total_len, x ## _data, x ## _len);\
 		total_len += x ## _len;					\
 	}								\

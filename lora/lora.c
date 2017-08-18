@@ -82,7 +82,8 @@ debug_event(int ev)
 	};
 
 	debug_time();
-	printf("%s\r\n", ev < ARRAY_SIZE(evnames) ? evnames[ev] : "UNKNOWN");
+	printf("%s\r\n",
+	    ev < (int)ARRAY_SIZE(evnames) ? evnames[ev] : "UNKNOWN");
 }
 #else /* !DEBUG */
 #define debug_event(ev)
@@ -273,6 +274,7 @@ lora_task_func(void *param)
 	osjob_t	hello_job;
 #endif
 
+	(void)param;
 	param_init();
 	ad_lora_init();
 	os_init();
