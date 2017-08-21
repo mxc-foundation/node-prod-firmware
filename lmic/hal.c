@@ -45,7 +45,7 @@ wkup_intr_cb(void)
 	BaseType_t	woken = 0;
 	struct event	ev;
 
-	ev.data = hal_ticks();
+	ev.data = hal_ticks_fromISR();
 	if (hw_gpio_get_pin_status(HW_LORA_DIO0_PORT, HW_LORA_DIO0_PIN) ||
 	    hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN)) {
 		ev.ev = EV_LORA_DIO;

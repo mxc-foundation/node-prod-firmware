@@ -107,7 +107,8 @@ void hal_sleep (void);
  * return 32-bit system time in ticks.
  */
 //u4_t hal_ticks (void);
-#define hal_ticks()	((u4_t)rtc_get())
+#define hal_ticks()		((u4_t)rtc_get())
+#define hal_ticks_fromISR()	((u4_t)rtc_get_fromISR())
 
 /*
  * busy-wait until specified timestamp (in ticks) is reached.
