@@ -41,6 +41,7 @@ ad_lora_sleep_canceled(void)
 static void
 ad_lora_wake_up_ind(bool arg)
 {
+	(void)arg;
 	power(POWER_LORA, true);
 }
 
