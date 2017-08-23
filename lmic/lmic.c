@@ -560,7 +560,7 @@ static const u4_t iniChannelFreq[6] = {
 };
 #else
 #define NUM_DEFAULT_CHANNELS	8
-static const u4_t iniChannelFreq[12] = {
+static const u4_t iniChannelFreq[8] = {
     // Default operational frequencies
     EU868_F1|BAND_CENTI_1, EU868_F2|BAND_CENTI_1, EU868_F3|BAND_CENTI_1,
     EU868_F4|BAND_MILLI_1, EU868_F5|BAND_MILLI_2, EU868_F6|BAND_MILLI_2,
