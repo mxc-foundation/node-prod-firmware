@@ -51,8 +51,9 @@ debug_time(void)
 {
 	uint32_t	now = os_getTime();
 
-	printf("%lu:%02lu.%05lu ", now / (60 * OSTICKS_PER_SEC),
-	    now / OSTICKS_PER_SEC % 60, now % OSTICKS_PER_SEC);
+	printf("%lu:%02lu.%03lu+%02lu ", osticks2ms(now) / 60000,
+	    osticks2ms(now) / 1000 % 60, osticks2ms(now) % 1000,
+	    now - ms2osticks(osticks2ms(now)));
 }
 #else
 #define debug_time()
