@@ -7,12 +7,17 @@
 
 #include "hw/hw.h"
 #include "hw/cons.h"
-#include "lmic/oslmic.h"
+#include "lmic/lmic.h"
 #include "lora/ad_lora.h"
+#include "lora/lora.h"
 
 #define CONSOLE_INPUT
 
-extern void	hal_uart_rx(char c);
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
+
+extern void		hal_uart_rx(char c);
+extern long long	strtonum(const char *numstr, long long minval,
+    long long maxval, const char **errstrp);
 
 #ifdef CONFIG_CUSTOM_PRINT
 
@@ -53,12 +58,89 @@ backspace()
 }
 
 static void
+cmd_reset(int argc, char **argv)
+{
+	(void)argv;
+	(void)argc;
+	printf("Rebooting...\r\n");
+	hw_cpm_reboot_system();
+}
+
+struct command {
+	const char	*cmd;
+	const char	 minargs, maxargs;
+	void		(*handler)(int, char **);
+};
+
+static const struct command	cmd[] = {
+	{ "reset", 1, 1, cmd_reset },
+};
+
+static int
+tokenise(char **tokv, int toklen)
+{
+	char	*s;
+	int	 tokc;
+
+	if (cons_len >= sizeof(cons_buf))
+		return -1;
+	cons_buf[cons_len] = '\0';
+	tokc = 0;
+	for (s = cons_buf; *s != '\0' && isasciispace(*s); s++)
+		;
+	while (*s != '\0') {
+		tokv[tokc++] = s;
+		if (tokc == toklen)
+			break;
+		while (*s != '\0' && !isasciispace(*s))
+			s++;
+		while (*s != '\0' && isasciispace(*s))
+			*s++ = '\0';
+	}
+	return tokc;
+}
+
+static void
+runcmd(const struct command *c, int tokc, char **tokv) {
+	if (tokc < c->minargs || tokc > c->maxargs) {
+		printf("%s: needs between %d and %d args\r\n",
+		    c->cmd, c->minargs - 1,
+		    c->maxargs - 1);
+		return;
+	}
+	c->handler(tokc, tokv);
+}
+static void
 handle_line()
 {
-	// XXX
-	_write(1, "rx: ", 4);
-	_write(1, cons_buf, cons_len);
-	_write(1, CRLF, sizeof(CRLF));
+	char	*tokv[8];
+	int	 tokc, i, cand;
+
+	tokc = tokenise(tokv, (int)ARRAY_SIZE(tokv));
+	if (tokc <= 0)
+		return;
+	cand = -1;
+	for (i = 0; i < (int)ARRAY_SIZE(cmd); i++) {
+		if (strcmp(cmd[i].cmd, tokv[0]) == 0) {
+			runcmd(cmd + i, tokc, tokv);
+			return;
+		}
+		if (strncmp(cmd[i].cmd, tokv[0], strlen(tokv[0])) == 0) {
+			switch (cand) {
+			case -1:
+				cand = i;
+				break;
+			default:
+				cand = -2;
+				break;
+			}
+		}
+	}
+	if (cand >= 0) {
+		runcmd(cmd + cand, tokc, tokv);
+		return;
+	}
+	printf("%s: command not found\r\n", tokv[0]);
 }
 
 void
@@ -93,7 +175,7 @@ cons_rx(uint8_t c)
 	default:
 		if (c < 0x20 || c >= 0x80)
 			break;
-		if (cons_len >= sizeof(cons_buf)) {
+		if (cons_len >= sizeof(cons_buf) - 1) {
 			_write(1, BELL, sizeof(BELL));
 			break;
 		}
