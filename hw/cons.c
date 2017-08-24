@@ -111,6 +111,7 @@ runcmd(const struct command *c, int tokc, char **tokv) {
 	}
 	c->handler(tokc, tokv);
 }
+
 static void
 handle_line()
 {
@@ -193,13 +194,11 @@ cons_rx(uint8_t c)
 static void
 uart_isr()
 {
-	//UART_Handler
 	HW_UART_INT	int_id;
 
 	int_id = hw_uart_get_interrupt_id(HW_UART1);
 	switch (int_id) {
 	case HW_UART_INT_RECEIVED_AVAILABLE:
-		//hw_uart_rx_isr(uart);
 		while (hw_uart_is_data_ready(HW_UART1)) {
 			hal_uart_rx(hw_uart_rxdata_getf(HW_UART1));
 		}
