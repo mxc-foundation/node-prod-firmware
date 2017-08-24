@@ -141,15 +141,8 @@ hal_pin_rst(u1_t val)
 		hw_gpio_set_pin_function(HW_LORA_REST_PORT, HW_LORA_REST_PIN,
 		    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 	} else {
-		hw_gpio_set_pin_function(HW_LORA_REST_PORT, HW_LORA_REST_PIN,
-		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
-		if (val) {
-			hw_gpio_set_active(HW_LORA_REST_PORT,
-			    HW_LORA_REST_PIN);
-		} else {
-			hw_gpio_set_inactive(HW_LORA_REST_PORT,
-			    HW_LORA_REST_PIN);
-		}
+		hw_gpio_configure_pin(HW_LORA_REST_PORT, HW_LORA_REST_PIN,
+		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, val);
 	}
 }
 
