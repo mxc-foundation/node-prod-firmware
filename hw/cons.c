@@ -240,10 +240,16 @@ static inline void uart_enable_rx_int(void)
 static void
 uart_pin_init()
 {
+	/* Pull RX up momentarily; otherwise the board hangs if there's
+	 * no UART adapter connected to it.  */
+	hw_gpio_configure_pin(HW_CONSOLE_UART_RX_PORT,
+	    HW_CONSOLE_UART_RX_PIN, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, 1);
 	hw_gpio_set_pin_function(HW_CONSOLE_UART_TX_PORT,
 	    HW_CONSOLE_UART_TX_PIN, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_UART_TX);
+#ifdef CONSOLE_INPUT
 	hw_gpio_set_pin_function(HW_CONSOLE_UART_RX_PORT,
 	    HW_CONSOLE_UART_RX_PIN, HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_UART_RX);
+#endif
 }
 
 void
