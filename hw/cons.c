@@ -44,6 +44,7 @@ _write(int fd, const void *ptr, int len)
 static const char	BELL[]		= { '\a' };
 static const char	BACKSPACE[]	= { '\b', ' ', '\b' };
 static const char	CRLF[]		= { '\r', '\n' };
+static const char	CTRL_C_CRLF[]	= { '^', 'C', '\r', '\n' };
 static const char	CTRL_R_CRLF[]	= { '^', 'R', '\r', '\n' };
 static const char	CR_ERASE_LINE[]	= { '\r', ESC, '[', '2', 'K' };
 
@@ -147,6 +148,10 @@ void
 cons_rx(uint8_t c)
 {
 	switch (c) {
+	case CTRL('C'):
+		_write(1, CTRL_C_CRLF, sizeof(CTRL_C_CRLF));
+		cons_len = 0;
+		break;
 	case CTRL('H'):
 	case CTRL('?'):
 		if (cons_len)
