@@ -25,12 +25,12 @@ PRIVILEGED_DATA static int8_t		wdog_id;
 PRIVILEGED_DATA static QueueHandle_t	lora_queue;
 
 void
-hal_uart_rx(char c)
+hal_uart_rx(void)
 {
 	BaseType_t	woken = 0;
 	struct event	ev = {
 		.ev	= EV_CONS_RX,
-		.data	= (uint8_t)c,
+		.data	= 0,
 	};
 
 	if (lora_queue) {
@@ -131,7 +131,7 @@ hal_init()
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
 	wkup_init();
-	lora_queue = xQueueCreate(8, sizeof(struct event));
+	lora_queue = xQueueCreate(4, sizeof(struct event));
 }
 
 void
@@ -180,7 +180,7 @@ hal_handle_event(struct event ev)
 		button_press(ev.data);
 		break;
 	case EV_CONS_RX:
-		cons_rx(ev.data);
+		cons_rx();
 		break;
 	default:
 		hal_failed();

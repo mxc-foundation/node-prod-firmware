@@ -3,6 +3,6 @@
 
 void	cons_init(void);
 void	cons_reinit(void);
-void	cons_rx(uint8_t);
+void	cons_rx(void);
 
 #endif /* __CONS_H__ */

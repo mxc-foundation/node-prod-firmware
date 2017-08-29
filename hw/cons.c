@@ -13,9 +13,10 @@
 
 #define CONSOLE_INPUT
 
+#define BARRIER()	asm ("":::"memory")
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
-extern void		hal_uart_rx(char c);
+extern void		hal_uart_rx(void);
 extern long long	strtonum(const char *numstr, long long minval,
     long long maxval, const char **errstrp);
 
@@ -48,8 +49,18 @@ static const char	CTRL_C_CRLF[]	= { '^', 'C', '\r', '\n' };
 static const char	CTRL_R_CRLF[]	= { '^', 'R', '\r', '\n' };
 static const char	CR_ERASE_LINE[]	= { '\r', ESC, '[', '2', 'K' };
 
-static PRIVILEGED_DATA char	cons_buf[128];
-static PRIVILEGED_DATA uint8_t	cons_len;
+static PRIVILEGED_DATA char	cons_line[128];	/* input line */
+static PRIVILEGED_DATA uint8_t	cons_len;	/* line length */
+
+/* Circular input buffer.  Size MUST be a power of two, <= 128 */
+static PRIVILEGED_DATA char	cons_cbuf[16];
+/* Read and write indices into cons_cbuf[].  The write index is written only
+ * from uart_isr(); the read index only from cons_rx().  The indices are used
+ * for accessing cons_cbuf modulo sizeof(cons_cbuf); thus allowing to
+ * distinguish between empty and full buffer. */
+static PRIVILEGED_DATA volatile uint8_t	cons_ridx, cons_widx;
+static PRIVILEGED_DATA volatile uint8_t	cons_pending;	/* input pending */
+#define CBUF_IDX(i)	((i) & (sizeof(cons_cbuf) - 1))
 
 static inline void
 backspace()
@@ -83,11 +94,11 @@ tokenise(char **tokv, int toklen)
 	char	*s;
 	int	 tokc;
 
-	if (cons_len >= sizeof(cons_buf))
+	if (cons_len >= sizeof(cons_line))
 		return -1;
-	cons_buf[cons_len] = '\0';
+	cons_line[cons_len] = '\0';
 	tokc = 0;
-	for (s = cons_buf; *s != '\0' && isasciispace(*s); s++)
+	for (s = cons_line; *s != '\0' && isasciispace(*s); s++)
 		;
 	while (*s != '\0') {
 		tokv[tokc++] = s;
@@ -145,8 +156,8 @@ handle_line()
 	printf("%s: command not found\r\n", tokv[0]);
 }
 
-void
-cons_rx(uint8_t c)
+static void
+proc_char(uint8_t c)
 {
 	switch (c) {
 	case CTRL('C'):
@@ -163,14 +174,14 @@ cons_rx(uint8_t c)
 		cons_len = 0;
 		break;
 	case CTRL('W'):
-		while (cons_len && isasciispace(cons_buf[cons_len - 1]))
+		while (cons_len && isasciispace(cons_line[cons_len - 1]))
 			backspace();
-		while (cons_len && !isasciispace(cons_buf[cons_len - 1]))
+		while (cons_len && !isasciispace(cons_line[cons_len - 1]))
 			backspace();
 		break;
 	case CTRL('R'):
 		_write(1, CTRL_R_CRLF, sizeof(CTRL_R_CRLF));
-		_write(1, cons_buf, cons_len);
+		_write(1, cons_line, cons_len);
 		break;
 	case '\r':
 	case '\n':
@@ -181,12 +192,22 @@ cons_rx(uint8_t c)
 	default:
 		if (c < 0x20 || c >= 0x80)
 			break;
-		if (cons_len >= sizeof(cons_buf) - 1) {
+		if (cons_len >= sizeof(cons_line) - 1) {
 			_write(1, BELL, sizeof(BELL));
 			break;
 		}
-		cons_buf[cons_len++] = c;
+		cons_line[cons_len++] = c;
 		_write(1, &c, 1);
+	}
+}
+
+void
+cons_rx()
+{
+	while (cons_pending) {
+		cons_pending = 0;
+		while (cons_ridx != cons_widx)
+			proc_char(cons_cbuf[CBUF_IDX(cons_ridx++)]);
 	}
 	ad_lora_suspend_sleep(LORA_SUSPEND_CONSOLE, sec2osticks(2));
 }
@@ -194,13 +215,24 @@ cons_rx(uint8_t c)
 static void
 uart_isr()
 {
-	HW_UART_INT	int_id;
+	uint8_t		c, w;
 
-	int_id = hw_uart_get_interrupt_id(HW_UART1);
-	switch (int_id) {
+	switch (hw_uart_get_interrupt_id(HW_UART1)) {
 	case HW_UART_INT_RECEIVED_AVAILABLE:
+		if (!hw_uart_is_data_ready(HW_UART1))
+			break;
 		while (hw_uart_is_data_ready(HW_UART1)) {
-			hal_uart_rx(hw_uart_rxdata_getf(HW_UART1));
+			c = hw_uart_rxdata_getf(HW_UART1);
+			if (cons_widx - cons_ridx < (int)sizeof(cons_cbuf)) {
+				w = cons_widx;
+				cons_cbuf[CBUF_IDX(w)] = c;
+				BARRIER();
+				cons_widx = w + 1;
+			}
+		}
+		if (!cons_pending) {
+			cons_pending = 1;
+			hal_uart_rx();
 		}
 		break;
 	default:
@@ -211,9 +243,8 @@ uart_isr()
 #else /* !CONSOLE_INPUT */
 
 void
-cons_rx(uint8_t c)
+cons_rx()
 {
-	(void)c;
 }
 
 #endif /* CONSOLE_INPUT */
@@ -277,6 +308,6 @@ cons_reinit()
 
 void	cons_init() {}
 void	cons_reinit() {}
-void	cons_rx(uint8_t c) { (void)c; }
+void	cons_rx() {}
 
 #endif /* CONFIG_CUSTOM_PRINT */
