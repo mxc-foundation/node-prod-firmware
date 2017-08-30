@@ -32,11 +32,6 @@ _write(int fd, const void *ptr, int len)
 
 #ifdef CONSOLE_INPUT
 
-#define writech(c)	do {	\
-	char	buf = c;	\
-	_write(1, &buf, 1);	\
-} while (0)
-
 #define isasciispace(c)	((uint8_t)(c) <= ' ')
 
 #define CTRL(x)	((x) ^ 0x40)
