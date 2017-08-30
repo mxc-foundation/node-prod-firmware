@@ -262,11 +262,6 @@
 #define RF_IMAGECAL_IMAGECAL_DONE                   0x00  // Default
 
 
-// RADIO STATE
-// (initialized by radio_init(), used by radio_rand1())
-static u1_t randbuf[16];
-
-
 #ifdef CFG_sx1276_radio
 #define LNA_RX_GAIN (0x20|0x1)
 #elif CFG_sx1272_radio
@@ -690,57 +685,8 @@ void radio_init () {
 #else
 #error Missing CFG_sx1272_radio/CFG_sx1276_radio
 #endif
-    // seed 15-byte randomness via noise rssi
-    rxlora(RXMODE_RSSI);
-    while( (readReg(RegOpMode) & OPMODE_MASK) != OPMODE_RX ); // continuous rx
-    for(int i=1; i<16; i++) {
-        for(int j=0; j<8; j++) {
-            u1_t b; // wait for two non-identical subsequent least-significant bits
-            while( (b = readReg(LORARegRssiWideband) & 0x01) == (readReg(LORARegRssiWideband) & 0x01) );
-            randbuf[i] = (randbuf[i] << 1) | b;
-        }
-    }
-    randbuf[0] = 16; // set initial index
-  
-#ifdef CFG_sx1276mb1_board
-    // chain calibration
-    writeReg(RegPaConfig, 0);
-    
-    // Launch Rx chain calibration for LF band
-    writeReg(FSKRegImageCal, (readReg(FSKRegImageCal) & RF_IMAGECAL_IMAGECAL_MASK)|RF_IMAGECAL_IMAGECAL_START);
-    while((readReg(FSKRegImageCal)&RF_IMAGECAL_IMAGECAL_RUNNING) == RF_IMAGECAL_IMAGECAL_RUNNING){ ; }
-
-    // Sets a Frequency in HF band
-    u4_t frf = 868000000;
-    writeReg(RegFrfMsb, (u1_t)(frf>>16));
-    writeReg(RegFrfMid, (u1_t)(frf>> 8));
-    writeReg(RegFrfLsb, (u1_t)(frf>> 0));
-
-    // Launch Rx chain calibration for HF band 
-    writeReg(FSKRegImageCal, (readReg(FSKRegImageCal) & RF_IMAGECAL_IMAGECAL_MASK)|RF_IMAGECAL_IMAGECAL_START);
-    while((readReg(FSKRegImageCal) & RF_IMAGECAL_IMAGECAL_RUNNING) == RF_IMAGECAL_IMAGECAL_RUNNING) { ; }
-#endif /* CFG_sx1276mb1_board */
-
-    opmode(OPMODE_SLEEP);
-
     hal_enableIRQs();
 }
-
-#if 0
-// return next random byte derived from seed buffer
-// (buf[0] holds index of next byte to be returned)
-u1_t radio_rand1 () {
-    u1_t i = randbuf[0];
-    ASSERT( i != 0 );
-    if( i==16 ) {
-        os_aes(AES_ENC, randbuf, 16); // encrypt seed with any key
-        i = 0;
-    }
-    u1_t v = randbuf[i++];
-    randbuf[0] = i;
-    return v;
-}
-#endif
 
 u1_t radio_rssi () {
     u1_t r;
