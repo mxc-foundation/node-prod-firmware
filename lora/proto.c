@@ -32,17 +32,6 @@ typedef enum {
 #define STATUS_TX_PENDING	0x01
 PRIVILEGED_DATA static uint8_t	status;
 
-static const ostime_t	reboot_timeouts[] = {
-	0,
-	sec2osticks(5 * 60),
-	sec2osticks(15 * 60),
-	sec2osticks(30 * 60),
-	sec2osticks(60 * 60),
-	sec2osticks(2 * 60 * 60),
-	sec2osticks(4 * 60 * 60),
-	/* TBD */
-};
-
 #define MAX_PAYLOAD_LEN		51
 #define MAX_SENSOR_DATA_LEN	16
 #define MAX_BATTERY_DATA_LEN	2
