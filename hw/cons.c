@@ -223,8 +223,8 @@ uart_isr()
 			break;
 		while (hw_uart_is_data_ready(HW_UART1)) {
 			c = hw_uart_rxdata_getf(HW_UART1);
-			if (cons_widx - cons_ridx < (int)sizeof(cons_cbuf)) {
-				w = cons_widx;
+			w = cons_widx;
+			if ((uint8_t)(w - cons_ridx) < sizeof(cons_cbuf)) {
 				cons_cbuf[CBUF_IDX(w)] = c;
 				BARRIER();
 				cons_widx = w + 1;
