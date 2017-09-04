@@ -248,6 +248,10 @@ flash install: all
 firstflash: all
 	$(SDKDIR)/utilities/scripts/suota/v11/initial_flash.sh $(TARGET)
 
+erase:
+	JLinkGDBServer -if swd -device Cortex-M0 -endian little -speed 4000 &
+	$(SDKDIR)/binaries/cli_programmer gdbserver chip_erase_qspi
+
 debug:
 	JLinkGDBServer -if swd -device Cortex-M0 -endian little -speed 8000 \
 		-port 2331 -swoport 2332 -telnetport 2333 -vd -ir \
