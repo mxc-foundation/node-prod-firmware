@@ -13,7 +13,7 @@
 
 #define CONSOLE_INPUT
 
-#define BARRIER()	asm ("":::"memory")
+#define BARRIER()	asm volatile ("":::"memory")
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 extern void		hal_uart_rx(void);
