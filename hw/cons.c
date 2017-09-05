@@ -199,10 +199,15 @@ proc_char(uint8_t c)
 void
 cons_rx()
 {
+	uint8_t	r;
+
 	while (cons_pending) {
 		cons_pending = 0;
-		while (cons_ridx != cons_widx)
-			proc_char(cons_cbuf[CBUF_IDX(cons_ridx++)]);
+		r = cons_ridx;
+		while (r != cons_widx) {
+			proc_char(cons_cbuf[CBUF_IDX(r++)]);
+			cons_ridx = r;
+		}
 	}
 	ad_lora_suspend_sleep(LORA_SUSPEND_CONSOLE, sec2osticks(2));
 }
