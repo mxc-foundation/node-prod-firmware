@@ -123,7 +123,7 @@ parse_latlon(char *s, int max, bool negate)
 	f = strtonum(frac, 0, 9999, &errstr);
 	if (errstr)
 		return 0;
-	for (i = 0; i < 4 - (int)strlen(frac); i++)
+	for (i = 4 - (int)strlen(frac); i > 0; i--)
 		f *= 10;
 	return ((d * 60 + m) * 10000 + f) * (negate ? -1 : 1);
 }
