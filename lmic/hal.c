@@ -134,18 +134,6 @@ hal_init()
 	lora_queue = xQueueCreate(4, sizeof(struct event));
 }
 
-void
-hal_pin_rst(u1_t val)
-{
-	if (val == 2) {
-		hw_gpio_set_pin_function(HW_LORA_REST_PORT, HW_LORA_REST_PIN,
-		    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
-	} else {
-		hw_gpio_configure_pin(HW_LORA_REST_PORT, HW_LORA_REST_PIN,
-		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, val);
-	}
-}
-
 u1_t
 hal_spi(u1_t outval)
 {

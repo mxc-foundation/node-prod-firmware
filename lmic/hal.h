@@ -55,7 +55,6 @@ void hal_periph_init (void);
 /*
  * drive radio RX/TX pins (0=rx, 1=tx).
  */
-//void hal_pin_rxtx (u1_t val);
 #define hal_pin_rxtx(tx)	do {			\
 	if (tx) {					\
 		hw_gpio_set_inactive(HW_LORA_RX_PORT, HW_LORA_RX_PIN); \
@@ -69,7 +68,15 @@ void hal_periph_init (void);
 /*
  * control radio RST pin (0=low, 1=high, 2=floating)
  */
-void hal_pin_rst (u1_t val);
+#define hal_pin_rst(val)	do {					\
+	if (val == 2) {							\
+		hw_gpio_set_pin_function(HW_LORA_REST_PORT, HW_LORA_REST_PIN, \
+		    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);		\
+	} else {							\
+		hw_gpio_configure_pin(HW_LORA_REST_PORT, HW_LORA_REST_PIN, \
+		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, val);	\
+	}								\
+} while (0)
 
 /*
  * perform 8-bit SPI transaction with radio.
