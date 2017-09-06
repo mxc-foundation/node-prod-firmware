@@ -134,7 +134,7 @@ mpu_reg_init()
 		return;
 	val &= ~(MPU_SLEEP | MPU_CYCLE | MPU_GYRO_STANDBY);
 	mpu_write_reg(MPU_PWR_MGMT_1, val);
-	mpu_write_reg(MPU_PWR_MGMT_2, MPU_DIS_XG | MPU_DIS_YG | MPU_DIS_XG);
+	mpu_write_reg(MPU_PWR_MGMT_2, MPU_DIS_XG | MPU_DIS_YG | MPU_DIS_ZG);
 	mpu_write_reg(MPU_ACCEL_CONFIG_2, mpu_read_reg(MPU_ACCEL_CONFIG_2) |
 	    (1 << MPU_ACCEL_FCHOICE_B_SHIFT) | (1 << MPU_A_DLPF_CFG_SHIFT));
 	mpu_write_reg(MPU_INT_ENABLE, MPU_WOM_EN);
