@@ -10,6 +10,7 @@
 #include "lmic/lmic.h"
 #include "lora/ad_lora.h"
 #include "lora/lora.h"
+#include "lora/param.h"
 
 #define CONSOLE_INPUT
 
@@ -43,6 +44,10 @@ static const char	CRLF[]		= { '\r', '\n' };
 static const char	CTRL_C_CRLF[]	= { '^', 'C', '\r', '\n' };
 static const char	CTRL_R_CRLF[]	= { '^', 'R', '\r', '\n' };
 static const char	CR_ERASE_LINE[]	= { '\r', ESC, '[', '2', 'K' };
+static const char	hex[] = {
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+};
 
 static PRIVILEGED_DATA char	cons_line[128];	/* input line */
 static PRIVILEGED_DATA uint8_t	cons_len;	/* line length */
@@ -65,6 +70,46 @@ backspace()
 }
 
 static void
+cmd_param(int argc, char **argv)
+{
+	uint8_t		 buf[PARAM_MAX_LEN];
+	const char	*errstr, *p;
+	uint8_t		 idx, len, i;
+
+	idx = strtonum(argv[1], 0, 255, &errstr);
+	if (errstr) {
+		printf("%s: %s\r\n", argv[1], errstr);
+		return;
+	}
+	len = param_get(idx, buf, sizeof(buf));
+	if (len == 0) {
+		printf("param not found\r\n");
+		return;
+	}
+	if (argc > 2) {
+		if (strlen(argv[2]) != len * 2) {
+invalid:
+			printf("%s: invalid\r\n", argv[2]);
+			return;
+		}
+		for (i = 0; i < len; i++) {
+			if (!(p = memchr(hex, argv[2][i<<1], sizeof(hex))))
+				goto invalid;
+			buf[i] = (p - hex) << 4;
+			if (!(p = memchr(hex, argv[2][(i<<1)+1], sizeof(hex))))
+				goto invalid;
+			buf[i] |= p - hex;
+		}
+		if (param_set(idx, buf, len) == -1)
+			goto invalid;
+	} else {
+		for (i = 0; i < len; i++)
+			printf("%02x", buf[i]);
+		printf("\r\n");
+	}
+}
+
+static void
 cmd_reset(int argc, char **argv)
 {
 	(void)argv;
@@ -80,6 +125,7 @@ struct command {
 };
 
 static const struct command	cmd[] = {
+	{ "param", 2, 3, cmd_param },
 	{ "reset", 1, 1, cmd_reset },
 };
 

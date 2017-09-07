@@ -206,12 +206,13 @@ param_get(int idx, uint8_t *data, uint8_t len)
 	return params[idx].len;
 }
 
-void
+int
 param_set(int idx, uint8_t *data, uint8_t len)
 {
 	if (idx >= (int)ARRAY_SIZE(params) || params[idx].len != len)
-		return;
+		return -1;
 	write_param(params + idx, data);
+	return 0;
 }
 
 void

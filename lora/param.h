@@ -12,6 +12,6 @@
 
 void	param_init(void);
 int	param_get(int idx, uint8_t *data, uint8_t len);
-void	param_set(int idx, uint8_t *data, uint8_t len);
+int	param_set(int idx, uint8_t *data, uint8_t len);
 
 #endif /* __PARAM_H__ */
