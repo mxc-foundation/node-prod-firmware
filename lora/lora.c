@@ -207,7 +207,7 @@ onEvent(ev_t ev)
 		break;
 	case EV_JOINED:
 #ifdef DEBUG
-		printf("netid = %lu\r\n", LMIC.netid);
+		printf("netid = %06lx\r\n", LMIC.netid);
 #endif
 		/* FALLTHROUGH */
 	case EV_LINK_ALIVE:
