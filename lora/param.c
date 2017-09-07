@@ -24,7 +24,7 @@ INITIALISED_PRIVILEGED_DATA static u1_t	devkey[16] = {
 	0xdf, 0x89, 0xdc, 0x73, 0xd9, 0xf5, 0x2c, 0x06,
 	0x09, 0xed, 0xb2, 0x18, 0x5e, 0xfa, 0x4a, 0x34,
 };
-PRIVILEGED_DATA static uint8_t	suota;
+PRIVILEGED_DATA static uint8_t	suota, sensor_period;
 
 /* NVPARAM "ble_platform" */
 #define PARAM_DEV_EUI_OFF	TAG_BLE_PLATFORM_BD_ADDRESS
@@ -38,6 +38,9 @@ PRIVILEGED_DATA static uint8_t	suota;
 
 #define PARAM_SUOTA_OFF		(PARAM_DEV_KEY_OFF + PARAM_DEV_KEY_LEN)
 #define PARAM_SUOTA_LEN		sizeof(suota)
+
+#define PARAM_SENSOR_PERIOD_OFF	(PARAM_SUOTA_OFF + PARAM_SUOTA_LEN)
+#define PARAM_SENSOR_PERIOD_LEN	sizeof(sensor_period)
 
 #define PARAM_FLAG_BLE_NV	0x01	/* Stored in BLE NVPARAM area */
 #define PARAM_FLAG_REVERSE	0x02	/* Reversed in protocol */
@@ -73,6 +76,11 @@ static const struct param_def	params[] = {
 		.mem	= &suota,
 		.offset	= PARAM_SUOTA_OFF,
 		.len	= PARAM_SUOTA_LEN,
+	},
+	[PARAM_SENSOR_PERIOD] = {
+		.mem	= &sensor_period,
+		.offset	= PARAM_SENSOR_PERIOD_OFF,
+		.len	= PARAM_SENSOR_PERIOD_LEN,
 	},
 };
 

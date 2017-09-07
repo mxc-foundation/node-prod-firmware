@@ -3,14 +3,32 @@
 #include <hw_gpio.h>
 #include "hw/hw.h"
 #include "lmic/oslmic.h"
+#include "lora/param.h"
 #include "gps.h"
 #include "sensor.h"
 #include "temp.h"
+
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 #define SENSOR_TYPE_UNKNOWN	0
 #define SENSOR_TYPE_GPS		1
 #define SENSOR_TYPE_TEMP	2
 static uint8_t	sensor_type;
+
+static ostime_t	sensor_periods[] = {
+	sec2osticks(60),	/* default */
+	sec2osticks(10),
+	sec2osticks(30),
+	sec2osticks(60),
+	sec2osticks(2 * 60),
+	sec2osticks(5 * 60),
+	sec2osticks(10 * 60),
+	sec2osticks(30 * 60),
+	sec2osticks(60 * 60),
+	sec2osticks(2 * 60 * 60),
+	sec2osticks(5 * 60 * 60),
+	sec2osticks(12 * 60 * 60),
+};
 
 struct sensor_callbacks {
 	void		(*init)(void);
@@ -82,7 +100,13 @@ sensor_get_data(char *buf, int len)
 ostime_t
 sensor_period(void)
 {
-	return sec2osticks(60);
+	uint8_t	idx = 0;
+
+	if (param_get(PARAM_SENSOR_PERIOD, &idx, sizeof(idx)) &&
+	    idx >= ARRAY_SIZE(sensor_periods)) {
+		idx = 0;
+	}
+	return sensor_periods[idx];
 }
 
 void

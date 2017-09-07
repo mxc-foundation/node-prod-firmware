@@ -32,7 +32,19 @@ Number	Name		Length	Description
 				1	8	AppEUI-64 (MSBF)
 				2	16	AppKey
 						(write-only)
-				3	TBD	Sensor period
+				3	1	Sensor period:
+						0	default
+						1	10 sec
+						2	30 sec
+						3	 1 min
+						4	 2 min
+						5	 5 min
+						6	10 min
+						7	30 min
+						8	 1 hour
+						9	 2 hours
+						10	 5 hours
+						11	12 hours
 
 				Parameters 0, 1 and 2 are
 				actualized after reboot.
