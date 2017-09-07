@@ -45,8 +45,10 @@ Number	Name		Length	Description
 						9	 2 hours
 						10	 5 hours
 						11	12 hours
+				4	1	Minimal LoRa Spread Factor
+						Valid values: 7-12
 
-				Parameters 0, 1 and 2 are
+				Parameters 0, 1, 2 and 4 are
 				actualized after reboot.
 
 1	Reboot/Upgrade	0	Reboot the mote immediately.

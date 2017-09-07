@@ -28,6 +28,7 @@
 //! \file
 #include <stdio.h>
 #include "lmic.h"
+#include "lora/param.h"
 
 #if !defined(MINRX_SYMS)
 #define MINRX_SYMS 5
@@ -568,7 +569,18 @@ static const u4_t iniChannelFreq[8] = {
 };
 #endif
 
+static u1_t get_min_sf() {
+    u1_t min_sf = 0;
+
+    if (param_get(PARAM_MIN_SF, &min_sf, sizeof(min_sf)))
+        min_sf &= 0xf;
+    if (min_sf < 7 || min_sf > 12)
+        return DR_SF7;
+    return DR_SF12 + 12 - min_sf;
+}
+
 static void initDefaultChannels (bit_t join) {
+    (void)join;
     os_clearMem(&LMIC.channelFreq, sizeof(LMIC.channelFreq));
     os_clearMem(&LMIC.channelDrMap, sizeof(LMIC.channelDrMap));
     os_clearMem(&LMIC.bands, sizeof(LMIC.bands));
@@ -579,16 +591,11 @@ static void initDefaultChannels (bit_t join) {
 #else
     u1_t su = 0;
 #endif
+    u1_t min_sf = get_min_sf();
     for( u1_t fu=0; fu<NUM_DEFAULT_CHANNELS; fu++,su++ ) {
         LMIC.channelFreq[fu]  = iniChannelFreq[su];
-        LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12,DR_SF7);
+        LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12,min_sf);
     }
-#ifndef LMIC_THREE_CHANNELS
-    if( !join ) {
-        //LMIC.channelDrMap[5] = DR_RANGE_MAP(DR_SF12,DR_SF7);
-        LMIC.channelDrMap[1] = DR_RANGE_MAP(DR_SF12,DR_FSK);
-    }
-#endif
 
     LMIC.bands[BAND_MILLI_1].txcap    = 1000;  // 0.1%
     LMIC.bands[BAND_MILLI_1].txpow    = 14;
@@ -643,7 +650,8 @@ bit_t LMIC_setupChannel (u1_t chidx, u4_t freq, u2_t drmap, s1_t band) {
         freq = (freq&~7) | band;
     }
     LMIC.channelFreq [chidx] = freq;
-    LMIC.channelDrMap[chidx] = drmap==0 ? DR_RANGE_MAP(DR_SF12,DR_SF7) : drmap;
+    LMIC.channelDrMap[chidx] = drmap==0 ?
+        DR_RANGE_MAP(DR_SF12,get_min_sf()) : drmap;
     LMIC.channelMap |= 1<<chidx;  // enabled right away
     return 1;
 }
@@ -731,7 +739,7 @@ static void initJoinLoop (void) {
     LMIC.txChnl = os_getRndU1() % NUM_DEFAULT_CHANNELS;
 #endif
     LMIC.adrTxPow = 14;
-    setDrJoin(DRCHG_SET, DR_SF7);
+    setDrJoin(DRCHG_SET, get_min_sf());
     initDefaultChannels(1);
     ASSERT((LMIC.opmode & OP_NEXTCHNL)==0);
     LMIC.txend = LMIC.bands[BAND_MILLI_1].avail + rndDelay(8);
