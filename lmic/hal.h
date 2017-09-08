@@ -40,6 +40,12 @@
  */
 void hal_init (void);
 void hal_periph_init (void);
+void hal_queue_init (void);
+
+/*
+ * Console UART RX helper.
+ */
+void hal_uart_rx(void);
 
 /*
  * drive radio NSS pin (0=low, 1=high).

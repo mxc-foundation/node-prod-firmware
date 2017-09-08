@@ -67,6 +67,7 @@ sysinit_task_func(void *param)
 	ASSERT_WARNING(idle_task_wdog_id != -1);
 	sys_watchdog_configure_idle_id(idle_task_wdog_id);
 #endif
+	hal_queue_init();
 	cons_init();
 	pm_system_init(periph_setup);
 	printf("*** FreeRTOS ***\r\n");

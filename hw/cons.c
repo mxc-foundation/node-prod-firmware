@@ -17,7 +17,6 @@
 #define BARRIER()	asm volatile ("":::"memory")
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
-extern void		hal_uart_rx(void);
 extern long long	strtonum(const char *numstr, long long minval,
     long long maxval, const char **errstrp);
 
@@ -334,10 +333,6 @@ cons_init()
 {
 	uart_pin_init();
 	hw_uart_init(HW_UART1, &uart_cfg);
-#ifdef CONSOLE_INPUT
-	hw_uart_set_isr(HW_UART1, uart_isr);
-	uart_enable_rx_int();
-#endif
 }
 
 void
@@ -346,6 +341,7 @@ cons_reinit()
 	uart_pin_init();
 	hw_uart_reinit(HW_UART1, &uart_cfg);
 #ifdef CONSOLE_INPUT
+	hw_uart_set_isr(HW_UART1, uart_isr);
 	uart_enable_rx_int();
 #endif
 }

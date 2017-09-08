@@ -117,6 +117,12 @@ hal_lora_init(void)
 }
 
 void
+hal_queue_init()
+{
+	lora_queue = xQueueCreate(4, sizeof(struct event));
+}
+
+void
 hal_periph_init()
 {
 	power_init();
@@ -131,7 +137,6 @@ hal_init()
 	wdog_id = sys_watchdog_register(false);
 	sys_watchdog_notify(wdog_id);
 	wkup_init();
-	lora_queue = xQueueCreate(4, sizeof(struct event));
 }
 
 u1_t
