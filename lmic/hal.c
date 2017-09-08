@@ -22,7 +22,7 @@ struct event {
 };
 
 PRIVILEGED_DATA static int8_t		wdog_id;
-PRIVILEGED_DATA static QueueHandle_t	lora_queue;
+PRIVILEGED_DATA static QueueHandle_t	hal_queue;
 
 void
 hal_uart_rx(void)
@@ -33,8 +33,8 @@ hal_uart_rx(void)
 		.data	= 0,
 	};
 
-	if (lora_queue) {
-		xQueueSendFromISR(lora_queue, &ev, &woken);
+	if (hal_queue) {
+		xQueueSendFromISR(hal_queue, &ev, &woken);
 		portYIELD_FROM_ISR(woken);
 	}
 }
@@ -52,10 +52,10 @@ wkup_intr_cb(void)
 	} else {
 		ev.ev = EV_BTN_PRESS;
 	}
-	if (lora_queue)
-		xQueueSendFromISR(lora_queue, &ev, &woken);
+	if (hal_queue)
+		xQueueSendFromISR(hal_queue, &ev, &woken);
 	hw_wkup_reset_interrupt();
-	if (lora_queue)
+	if (hal_queue)
 		portYIELD_FROM_ISR(woken);
 }
 
@@ -119,7 +119,7 @@ hal_lora_init(void)
 void
 hal_queue_init()
 {
-	lora_queue = xQueueCreate(4, sizeof(struct event));
+	hal_queue = xQueueCreate(4, sizeof(struct event));
 }
 
 void
@@ -220,7 +220,7 @@ hal_sleep()
 		// Timer precision is 64 ticks.  Sleep for 64 to
 		// 128 ticks less than specified.
 		// Wait for timer or WKUP_GPIO interrupt
-		ret = xQueueReceive(lora_queue, &ev, dt / TIMER_PRECISION - 1);
+		ret = xQueueReceive(hal_queue, &ev, dt / TIMER_PRECISION - 1);
 		sys_watchdog_notify_and_resume(wdog_id);
 		if (ret)
 			hal_handle_event(ev);
@@ -236,7 +236,7 @@ hal_waitUntil(u4_t time)
 	struct event	ev;
 
 	while ((s4_t)(time - hal_ticks()) > 0) {
-		if (xQueueReceive(lora_queue, &ev, 0)) {
+		if (xQueueReceive(hal_queue, &ev, 0)) {
 			hal_handle_event(ev);
 			break;
 		}
