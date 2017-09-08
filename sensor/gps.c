@@ -9,6 +9,7 @@
 #include "hw/hw.h"
 #include "hw/power.h"
 #include "lmic/oslmic.h"
+#include "lora/util.h"
 #include "accel.h"
 #include "gps.h"
 
@@ -18,11 +19,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #endif
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
-
-extern long long	strtonum(const char *numstr, long long minval,
-    long long maxval, const char **errstrp);
 
 PRIVILEGED_DATA static char	rxbuf[128];
 PRIVILEGED_DATA static int	rxlen;

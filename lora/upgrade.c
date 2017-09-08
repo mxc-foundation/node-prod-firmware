@@ -5,12 +5,11 @@
 #include "ble.h"
 #include "lmic/lmic.h"
 #include "lora/param.h"
+#include "lora/util.h"
 
 /* CMD_REBOOT_UPGRADE */
 #define UPGRADE_BIT		0x80
 #define REBOOT_TIMEOUT_MASK	0x07
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 static const ostime_t	reboot_timeouts[] = {
 	sec2osticks(2),

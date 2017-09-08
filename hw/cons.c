@@ -11,14 +11,9 @@
 #include "lora/ad_lora.h"
 #include "lora/lora.h"
 #include "lora/param.h"
+#include "lora/util.h"
 
 #define CONSOLE_INPUT
-
-#define BARRIER()	asm volatile ("":::"memory")
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
-
-extern long long	strtonum(const char *numstr, long long minval,
-    long long maxval, const char **errstrp);
 
 #ifdef CONFIG_CUSTOM_PRINT
 

@@ -8,9 +8,8 @@
 
 #include "lmic/oslmic.h"
 #include "lora/ad_lora.h"
+#include "lora/util.h"
 #include "led.h"
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 PRIVILEGED_DATA static uint8_t	sys_status;
 

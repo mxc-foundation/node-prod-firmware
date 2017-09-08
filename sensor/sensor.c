@@ -4,11 +4,10 @@
 #include "hw/hw.h"
 #include "lmic/oslmic.h"
 #include "lora/param.h"
+#include "lora/util.h"
 #include "gps.h"
 #include "sensor.h"
 #include "temp.h"
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 #define SENSOR_TYPE_UNKNOWN	0
 #define SENSOR_TYPE_GPS		1

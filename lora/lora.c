@@ -11,14 +11,13 @@
 #include "lora/param.h"
 #include "lora/proto.h"
 #include "lora/upgrade.h"
+#include "lora/util.h"
 #include "sensor/sensor.h"
 
 #define DEBUG
 #define DEBUG_TIME
 //#define HELLO
 //#define BLE_ALWAYS_ON
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 /* State of the sampling/sending state machine */
 #define STATE_IDLE		0

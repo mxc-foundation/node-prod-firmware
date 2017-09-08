@@ -2,9 +2,8 @@
 #include <hw_gpio.h>
 
 #include "hw.h"
+#include "lora/util.h"
 #include "power.h"
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 static const struct {
 	uint8_t	port, pin;

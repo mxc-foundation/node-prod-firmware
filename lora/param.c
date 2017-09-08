@@ -6,10 +6,9 @@
 #include <platform_nvparam.h>
 #include "lmic/lmic.h"
 #include "lora/param.h"
+#include "lora/util.h"
 
 #define DEBUG
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 /* EUI-48: 78af58040000  EUI-64: 78af58fffe040000 */
 INITIALISED_PRIVILEGED_DATA static u1_t	deveui[6] = {

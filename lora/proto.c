@@ -8,6 +8,7 @@
 #include "lora/param.h"
 #include "lora/proto.h"
 #include "lora/upgrade.h"
+#include "lora/util.h"
 #include "sensor/bat.h"
 #include "sensor/sensor.h"
 
@@ -26,8 +27,6 @@ typedef enum {
 	INFO_SENSOR_DATA	= 0x10,
 	INFO_BATTERY		= 0x20,
 } uplink_info;
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*x))
 
 #define STATUS_TX_PENDING	0x01
 PRIVILEGED_DATA static uint8_t	status;
