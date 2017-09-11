@@ -106,13 +106,13 @@ hal_lora_init(void)
 	hw_gpio_set_pin_function(HW_LORA_TX_PORT,      HW_LORA_TX_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO0_PORT,    HW_LORA_DIO0_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO1_PORT,    HW_LORA_DIO1_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO2_PORT,    HW_LORA_DIO2_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_USER_BTN_PORT,     HW_USER_BTN_PIN,
-	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
+	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
 	hw_spi_init(HW_LORA_SPI, &cfg);
 }
 
