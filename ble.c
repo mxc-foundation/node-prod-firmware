@@ -18,6 +18,8 @@
 #include "lmic/hal.h"
 #include "ble.h"
 
+//#define DEBUG
+
 /*
  * 0x01 == BLE_APP_NOTIFY_MASK
  */
@@ -75,7 +77,9 @@ static bool
 suota_ready_cb(void)
 {
 	status |= STATUS_SUOTA_ONGOING;
+#ifdef DEBUG
 	printf("suota ongoing\r\n");
+#endif
 	return true;
 }
 
@@ -83,7 +87,9 @@ static void
 suota_status_cb(uint8_t status, uint8_t error_code)
 {
 	(void)error_code;
+#ifdef DEBUG
 	printf("suota status %d\r\n", status);
+#endif
 	if (status != SUOTA_ERROR)
 		return;
 }
@@ -112,14 +118,21 @@ adv_tim_cb(OS_TIMER timer)
 static void
 ias_alert_cb(uint16_t conn_idx, uint8_t level)
 {
+	(void)conn_idx;
+	(void)level;
+#ifdef DEBUG
 	printf("ias alert %d for conn %d\r\n", level, conn_idx);
+#endif
 }
 
 static void
 lls_alert_cb(uint16_t conn_idx, const bd_address_t *address, uint8_t level)
 {
+	(void)conn_idx;
 	(void)address;
+#ifdef DEBUG
 	printf("lls alert %d for conn %d\r\n", level, conn_idx);
+#endif
 	if (level == 0)
 		return;
 	//XXX list_add
@@ -133,7 +146,10 @@ lls_alert_cb(uint16_t conn_idx, const bd_address_t *address, uint8_t level)
 static void
 do_alert(uint8_t level)
 {
+	(void)level;
+#ifdef DEBUG
 	printf("do_alert %d\r\n", level);
+#endif
 }
 
 static bool
@@ -249,7 +265,9 @@ ble_task_func(void *params)
 	(void)params;
 	wdog_id = sys_watchdog_register(false);
 #endif
+#ifdef DEBUG
 	printf("ble init\r\n");
+#endif
 	ble_param_init();
 	ble_mgr_init();
 	ble_peripheral_start();
@@ -282,44 +300,62 @@ ble_task_func(void *params)
 	for (;;) {
 		uint32_t	notif;
 
+#ifdef DEBUG
 		printf("loop\r\n");
+#endif
 		sys_watchdog_notify(wdog_id);
 		sys_watchdog_suspend(wdog_id);
 		OS_TASK_NOTIFY_WAIT(0, OS_TASK_NOTIFY_ALL_BITS, &notif,
 		    OS_TASK_NOTIFY_FOREVER);
 		sys_watchdog_notify_and_resume(wdog_id);
+#ifdef DEBUG
 		printf("notif %#lx\r\n", notif);
+#endif
 		if (notif & BLE_APP_NOTIFY_MASK) {
 			ble_evt_hdr_t	*hdr;
 
 			if ((hdr = ble_get_event(false)) != NULL) {
 				if (!ble_service_handle_event(hdr)) {
+#ifdef DEBUG
 					printf("evt %#x\r\n", hdr->evt_code);
+#endif
 					switch (hdr->evt_code) {
 					case BLE_EVT_GAP_CONNECTED:
+#ifdef DEBUG
 						printf("gap connected\r\n");
+#endif
 						handle_evt_gap_connected((ble_evt_gap_connected_t *)hdr);
 						break;
 					case BLE_EVT_GAP_DISCONNECTED:
+#ifdef DEBUG
 						printf("gap disconnected\r\n");
+#endif
 						handle_evt_gap_disconnected((ble_evt_gap_disconnected_t *)hdr);
 						break;
 					case BLE_EVT_GAP_ADV_COMPLETED:
+#ifdef DEBUG
 						printf("gap adv completed\r\n");
+#endif
 						handle_evt_gap_adv_completed();
 						break;
 					case BLE_EVT_GAP_PAIR_REQ:
+#ifdef DEBUG
 						printf("gap pair req\r\n");
+#endif
 						handle_evt_gap_pair_req((ble_evt_gap_pair_req_t *)hdr);
 						break;
 					case BLE_EVT_L2CAP_CONNECTED:
 					case BLE_EVT_L2CAP_DISCONNECTED:
 					case BLE_EVT_L2CAP_DATA_IND:
+#ifdef DEBUG
 						printf("l2cap %d\r\n", hdr->evt_code & 0xff);
+#endif
 						suota_l2cap_event(suota, hdr);
 						break;
 					default:
+#ifdef DEBUG
 						printf("default event\r\n");
+#endif
 						ble_handle_event_default(hdr);
 						break;
 					}
@@ -327,18 +363,24 @@ ble_task_func(void *params)
 				OS_FREE(hdr);
 			}
 			if (ble_has_event()) {
+#ifdef DEBUG
 				printf("has event\r\n");
+#endif
 				OS_TASK_NOTIFY(OS_GET_CURRENT_TASK(),
 				    BLE_APP_NOTIFY_MASK, OS_NOTIFY_SET_BITS);
 			}
 		}
 		if (notif & ALERT_TMO_NOTIF) {
+#ifdef DEBUG
 			printf("alert tmo\r\n");
+#endif
 			do_alert(0);
 			//XXX list_free
 		}
 		if (notif & ADV_TMO_NOTIF) {
+#ifdef DEBUG
 			printf("adv tmo\r\n");
+#endif
 			ble_gap_adv_intv_set(BLE_ADV_INTERVAL_FROM_MS(1000),
 			    BLE_ADV_INTERVAL_FROM_MS(1500));
 			ble_gap_adv_stop();
