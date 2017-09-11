@@ -14,7 +14,7 @@
 #define SENSOR_TYPE_TEMP	2
 static uint8_t	sensor_type;
 
-static ostime_t	sensor_periods[] = {
+static const ostime_t	sensor_periods[] = {
 	sec2osticks(60),	/* default */
 	sec2osticks(10),
 	sec2osticks(30),
