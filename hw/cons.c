@@ -67,7 +67,7 @@ static void
 cmd_param(int argc, char **argv)
 {
 	uint8_t		 buf[PARAM_MAX_LEN];
-	const char	*errstr, *p;
+	const char	*errstr, *hi, *lo;
 	uint8_t		 idx, len, i;
 
 	idx = strtonum(argv[1], 0, 255, &errstr);
@@ -82,20 +82,28 @@ cmd_param(int argc, char **argv)
 	}
 	if (argc > 2) {
 		if (strlen(argv[2]) != len * 2) {
-invalid:
-			printf("%s: invalid\r\n", argv[2]);
+			printf("%s: invalid length\r\n", argv[2]);
 			return;
 		}
 		for (i = 0; i < len; i++) {
-			if (!(p = memchr(hex, argv[2][i<<1], sizeof(hex))))
-				goto invalid;
-			buf[i] = (p - hex) << 4;
-			if (!(p = memchr(hex, argv[2][(i<<1)+1], sizeof(hex))))
-				goto invalid;
-			buf[i] |= p - hex;
+			if ((hi = memchr(hex, argv[2][i<<1], sizeof(hex)))
+			    == NULL) {
+				printf("%c: invalid character\r\n",
+				    argv[2][i<<1]);
+				return;
+			}
+			if ((lo = memchr(hex, argv[2][(i<<1) + 1], sizeof(hex)))
+			    == NULL) {
+				printf("%c: invalid character\r\n",
+				    argv[2][(i<<1) + 1]);
+				return;
+			}
+			buf[i] = (hi - hex) << 4 | (lo - hex);
 		}
-		if (param_set(idx, buf, len) == -1)
-			goto invalid;
+		if (param_set(idx, buf, len) == -1) {
+			printf("cannot set param\r\n");
+			return;
+		}
 	} else {
 		for (i = 0; i < len; i++)
 			printf("%02x", buf[i]);
