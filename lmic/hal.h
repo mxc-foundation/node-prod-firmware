@@ -72,16 +72,13 @@ void hal_uart_rx(void);
 } while (0)
 
 /*
- * control radio RST pin (0=low, 1=high, 2=floating)
+ * control radio RST pin (0=low, 1=high)
  */
 #define hal_pin_rst(val)	do {					\
-	if (val == 2) {							\
-		hw_gpio_set_pin_function(HW_LORA_REST_PORT, HW_LORA_REST_PIN, \
-		    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);		\
-	} else {							\
-		hw_gpio_configure_pin(HW_LORA_REST_PORT, HW_LORA_REST_PIN, \
-		    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, val);	\
-	}								\
+	if (val)							\
+		hw_gpio_set_active(  HW_LORA_REST_PORT, HW_LORA_REST_PIN); \
+	else								\
+		hw_gpio_set_inactive(HW_LORA_REST_PORT, HW_LORA_REST_PIN); \
 } while (0)
 
 /*

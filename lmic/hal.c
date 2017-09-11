@@ -92,7 +92,8 @@ hal_lora_init(void)
 		.fifo_mode	= HW_SPI_FIFO_RX_TX,
 	};
 
-	hal_pin_rst(2);
+	hw_gpio_configure_pin(   HW_LORA_REST_PORT, HW_LORA_REST_PIN,
+	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_GPIO, true);
 	hw_gpio_set_pin_function(HW_LORA_SPI_CLK_PORT, HW_LORA_SPI_CLK_PIN,
 	    HW_GPIO_MODE_OUTPUT, HW_LORA_GPIO_FUNC_SPI_CLK);
 	hw_gpio_set_pin_function(HW_LORA_SPI_DI_PORT,  HW_LORA_SPI_DI_PIN,
