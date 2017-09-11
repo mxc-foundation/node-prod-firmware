@@ -88,7 +88,7 @@ hal_lora_init(void)
 		.polarity_mode	= HW_SPI_POL_LOW,
 		.phase_mode	= HW_SPI_PHA_MODE_0,
 		.mint_mode	= HW_SPI_MINT_DISABLE,
-		.xtal_freq	= HW_SPI_FREQ_DIV_2,
+		.xtal_freq	= HW_SPI_FREQ_DIV_8,
 		.fifo_mode	= HW_SPI_FIFO_RX_TX,
 	};
 
