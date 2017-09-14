@@ -8,6 +8,8 @@
 #include "lmic/oslmic.h"
 #include "gps.h"
 
+#ifdef FEATURE_SENSOR
+
 //#define DEBUG
 
 #ifdef DEBUG
@@ -177,3 +179,5 @@ accel_status()
 	status = mpu_read_reg(MPU_INT_STATUS);
 	return status == -1 ? -1 : !level;
 }
+
+#endif /* FEATURE_SENSOR */

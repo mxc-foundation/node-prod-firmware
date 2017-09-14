@@ -5,6 +5,8 @@
 #include "lora/util.h"
 #include "power.h"
 
+#ifdef FEATURE_POWER_SUPPLY
+
 static const struct {
 	uint8_t	port, pin;
 } ps[] = {
@@ -51,3 +53,5 @@ power(uint8_t what, bool on)
 			hw_gpio_set_inactive(HW_PS_EN_PORT, HW_PS_EN_PIN);
 	}
 }
+
+#endif /* FEATURE_POWER_SUPPLY */

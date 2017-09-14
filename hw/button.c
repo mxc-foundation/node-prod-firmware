@@ -5,6 +5,8 @@
 #include "hw/button.h"
 #include "hw/hw.h"
 
+#ifdef FEATURE_USER_BUTTON
+
 #define LONG_PRESS_TIME	sec2osticks(10)
 
 PRIVILEGED_DATA static ostime_t	press_time;
@@ -30,3 +32,5 @@ button_press(ostime_t t)
 	press_time = t;
 	button_cb(&button_job);
 }
+
+#endif /* FEATURE_USER_BUTTON */

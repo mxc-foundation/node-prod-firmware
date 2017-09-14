@@ -27,8 +27,9 @@ ad_lora_prepare_for_sleep(void)
 		}
 		taskEXIT_CRITICAL();
 	}
-	if (!suspends_active)
+	if (!suspends_active) {
 		power(POWER_LORA, false);
+	}
 	return !suspends_active;
 }
 

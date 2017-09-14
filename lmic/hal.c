@@ -50,7 +50,9 @@ wkup_intr_cb(void)
 	    hw_gpio_get_pin_status(HW_LORA_DIO1_PORT, HW_LORA_DIO1_PIN)) {
 		ev.ev = EV_LORA_DIO;
 	} else {
+#ifdef FEATURE_USER_BUTTON
 		ev.ev = EV_BTN_PRESS;
+#endif
 	}
 	if (hal_queue)
 		xQueueSendFromISR(hal_queue, &ev, &woken);
@@ -70,8 +72,10 @@ wkup_init(void)
 	    HW_WKUP_PIN_STATE_HIGH);
 	hw_wkup_configure_pin(HW_LORA_DIO2_PORT, HW_LORA_DIO2_PIN, true,
 	    HW_WKUP_PIN_STATE_HIGH);
+#ifdef FEATURE_USER_BUTTON
 	hw_wkup_configure_pin(HW_USER_BTN_PORT,  HW_USER_BTN_PIN,  true,
 	    HW_WKUP_PIN_STATE_LOW);
+#endif
 	hw_wkup_register_interrupt(wkup_intr_cb, 1);
 }
 
@@ -112,8 +116,10 @@ hal_lora_init(void)
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
 	hw_gpio_set_pin_function(HW_LORA_DIO2_PORT,    HW_LORA_DIO2_PIN,
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
+#ifdef FEATURE_USER_BUTTON
 	hw_gpio_set_pin_function(HW_USER_BTN_PORT,     HW_USER_BTN_PIN,
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_GPIO);
+#endif
 	hw_spi_init(HW_LORA_SPI, &cfg);
 }
 
@@ -163,9 +169,11 @@ hal_handle_event(struct event ev)
 	case EV_LORA_DIO:
 		radio_irq_handler(ev.data);
 		break;
+#ifdef FEATURE_USER_BUTTON
 	case EV_BTN_PRESS:
 		button_press(ev.data);
 		break;
+#endif
 	case EV_CONS_RX:
 		cons_rx();
 		break;

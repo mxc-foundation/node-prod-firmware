@@ -13,6 +13,8 @@
 #include "accel.h"
 #include "gps.h"
 
+#ifdef FEATURE_SENSOR
+
 //#define DEBUG
 
 #ifdef DEBUG
@@ -305,3 +307,5 @@ gps_txstart()
 		power(POWER_SENSOR, false);
 	}
 }
+
+#endif /* FEATURE_SENSOR */

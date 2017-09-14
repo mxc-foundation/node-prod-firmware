@@ -9,13 +9,10 @@
 #include "sensor.h"
 #include "temp.h"
 
-#define SENSOR_TYPE_UNKNOWN	0
-#define SENSOR_TYPE_GPS		1
-#define SENSOR_TYPE_TEMP	2
-static uint8_t	sensor_type;
+#define DEFAULT_SENSOR_PERIOD	sec2osticks(60)
 
 static const ostime_t	sensor_periods[] = {
-	sec2osticks(60),	/* default */
+	DEFAULT_SENSOR_PERIOD,
 	sec2osticks(10),
 	sec2osticks(30),
 	sec2osticks(60),
@@ -28,6 +25,13 @@ static const ostime_t	sensor_periods[] = {
 	sec2osticks(5 * 60 * 60),
 	sec2osticks(12 * 60 * 60),
 };
+
+#ifdef FEATURE_SENSOR
+
+#define SENSOR_TYPE_UNKNOWN	0
+#define SENSOR_TYPE_GPS		1
+#define SENSOR_TYPE_TEMP	2
+static uint8_t	sensor_type;
 
 struct sensor_callbacks {
 	void		(*init)(void);
@@ -96,6 +100,15 @@ sensor_get_data(char *buf, int len)
 	return rlen;
 }
 
+void
+sensor_txstart(void)
+{
+	if (sensor_cb[sensor_type].txstart)
+		return sensor_cb[sensor_type].txstart();
+}
+
+#endif /* FEATURE_SENSOR */
+
 ostime_t
 sensor_period(void)
 {
@@ -106,11 +119,4 @@ sensor_period(void)
 		idx = 0;
 	}
 	return sensor_periods[idx];
-}
-
-void
-sensor_txstart(void)
-{
-	if (sensor_cb[sensor_type].txstart)
-		return sensor_cb[sensor_type].txstart();
 }
