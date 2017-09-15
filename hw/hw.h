@@ -2,7 +2,7 @@
 #define __HW_LORA_H__
 
 #ifndef HW_VERSION
-#define HW_VERSION	MATCHSTICK_2_0a
+#define HW_VERSION	HW_MATCHSTICK_2_0a
 #endif
 
 #define HW_MATCHSTICK_1_0a	0x010a
