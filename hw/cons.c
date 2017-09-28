@@ -159,8 +159,7 @@ static void
 runcmd(const struct command *c, int tokc, char **tokv) {
 	if (tokc < c->minargs || tokc > c->maxargs) {
 		printf("%s: needs between %d and %d args\r\n",
-		    c->cmd, c->minargs - 1,
-		    c->maxargs - 1);
+		    c->cmd, c->minargs - 1, c->maxargs - 1);
 		return;
 	}
 	c->handler(tokc, tokv);
@@ -241,6 +240,7 @@ proc_char(uint8_t c)
 		}
 		cons_line[cons_len++] = c;
 		_write(1, &c, 1);
+		break;
 	}
 }
 
