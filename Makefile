@@ -129,6 +129,7 @@ LDSCRIPTS=	obj/mem.ld obj/sections.ld
 LDSCRIPTFLAGS=	$(LDSCRIPTS:%=-T%)
 
 CC=		arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb
+CFLAGS+=	-Wno-expansion-to-defined
 CFLAGS+=	-std=gnu11 -Wall -Werror
 CFLAGS+=	-g -Os -fsigned-char -ffunction-sections -fdata-sections
 CFLAGS+=	-Ddg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A \
