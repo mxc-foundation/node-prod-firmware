@@ -76,14 +76,18 @@ cmd_param(int argc, char **argv)
 		return;
 	}
 	len = param_get(idx, buf, sizeof(buf));
-	if (len == 0) {
-		printf("param not found\r\n");
-		return;
-	}
 	if (argc > 2) {
-		if (strlen(argv[2]) != len * 2) {
-			printf("%s: invalid length\r\n", argv[2]);
-			return;
+		if (len != 0) {
+			if (strlen(argv[2]) != len * 2) {
+				printf("%s: invalid length\r\n", argv[2]);
+				return;
+			}
+		} else {
+			if ((strlen(argv[2]) & 1)) {
+				printf("%s: invalid length\r\n", argv[2]);
+				return;
+			}
+			len = strlen(argv[2]) / 2;
 		}
 		for (i = 0; i < len; i++) {
 			if ((hi = memchr(hex, argv[2][i<<1], sizeof(hex)))
@@ -105,6 +109,10 @@ cmd_param(int argc, char **argv)
 			return;
 		}
 	} else {
+		if (len == 0) {
+			printf("param not found\r\n");
+			return;
+		}
 		for (i = 0; i < len; i++)
 			printf("%02x", buf[i]);
 		printf("\r\n");
