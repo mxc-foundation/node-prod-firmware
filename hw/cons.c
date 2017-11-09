@@ -13,6 +13,7 @@
 #include "lora/lora.h"
 #include "lora/param.h"
 #include "lora/util.h"
+#include "sensor/sensor.h"
 
 #define CONSOLE_INPUT
 
@@ -121,6 +122,20 @@ cmd_param(int argc, char **argv)
 }
 
 static void
+cmd_sense(int argc, char **argv)
+{
+	char	buf[16];
+	size_t	i, len;
+
+	(void)argc;
+	(void)argv;
+	len = sensor_get_data(buf, sizeof(buf));
+	for (i = 0; i < len; i++)
+		printf("%02x", (uint8_t)buf[i]);
+	printf("\r\n");
+}
+
+static void
 cmd_reset(int argc, char **argv)
 {
 	(void)argv;
@@ -138,6 +153,7 @@ struct command {
 static const struct command	cmd[] = {
 	{ "param", 2, 3, cmd_param },
 	{ "reset", 1, 1, cmd_reset },
+	{ "sense", 1, 1, cmd_sense },
 };
 
 static int
