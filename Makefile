@@ -216,7 +216,7 @@ image: $(IMGTARGET)
 	arm-none-eabi-objcopy -O binary $< $@
 
 .bin.img:
-	$(SDKDIR)/utilities/scripts/suota/v11/mkimage.sh $<
+	$(SDKDIR)/utilities/scripts/suota/v11/mkimage.sh $< $@
 
 #%.o: $(OBJDIR)/%.c
 #.c.o:
