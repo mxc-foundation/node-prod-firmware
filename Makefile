@@ -131,7 +131,7 @@ LDSCRIPTFLAGS=	$(LDSCRIPTS:%=-T%)
 CC=		arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb
 CFLAGS+=	-Wno-expansion-to-defined
 CFLAGS+=	-std=gnu11 -Wall -Werror
-CFLAGS+=	-g -Os -fsigned-char -ffunction-sections -fdata-sections
+CFLAGS+=	-g -Os -fsigned-char -ffunction-sections -fdata-sections -flto
 CFLAGS+=	-Ddg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A \
 		-Ddg_configBLACK_ORCA_IC_STEP=BLACK_ORCA_IC_STEP_E \
 		-DCONFIG_AT45DB011D=1 -DCONFIG_24LC256=1 -DCONFIG_FM75=1
