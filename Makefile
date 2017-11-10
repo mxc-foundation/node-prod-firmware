@@ -14,6 +14,7 @@ OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/hw/button.o \
 	$(OBJDIR)/hw/cons.o \
 	$(OBJDIR)/hw/i2c.o \
+	$(OBJDIR)/hw/iox.o \
 	$(OBJDIR)/hw/led.o \
 	$(OBJDIR)/hw/power.o \
 	$(OBJDIR)/lora/ad_lora.o \

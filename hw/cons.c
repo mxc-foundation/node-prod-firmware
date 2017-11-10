@@ -6,6 +6,7 @@
 #include <resmgmt.h>
 
 #include "hw/hw.h"
+#include "hw/iox.h"
 #include "hw/cons.h"
 #include "lmic/lmic.h"
 #include "lora/ad_lora.h"
