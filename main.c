@@ -31,8 +31,10 @@ vApplicationMallocFailedHook(void)
 }
 
 void
-vApplicationStackOverflowHook(void)
+vApplicationStackOverflowHook(OS_TASK pxTask, char *pcTaskName)
 {
+	(void)pxTask;
+	(void)pcTaskName;
 	write(1, "stack\r\n", 7);
 	hal_failed();
 }
