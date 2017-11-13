@@ -8,6 +8,7 @@
 #include "hal.h"
 #include "hw/button.h"
 #include "hw/cons.h"
+#include "hw/i2c.h"
 #include "hw/power.h"
 #include "sensor/sensor.h"
 
@@ -135,6 +136,7 @@ hal_periph_init()
 	power_init();
 	cons_reinit();
 	hal_lora_init();
+	i2c_init();
 	sensor_init();
 }
 
