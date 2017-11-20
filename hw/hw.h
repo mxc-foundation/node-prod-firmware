@@ -16,6 +16,8 @@
 
 #if HW_VERSION == HW_SOM_1_0
 
+#define FEATURE_USER_BUTTON
+
 #define INITIAL_SLEEP_MODE	pm_mode_idle
 
 #define HW_LORA_SPI_DI_PORT	HW_GPIO_PORT_3
@@ -43,6 +45,9 @@
 #define HW_CONSOLE_UART_TX_PIN	HW_GPIO_PIN_4
 #define HW_CONSOLE_UART_RX_PORT	HW_GPIO_PORT_1
 #define HW_CONSOLE_UART_RX_PIN	HW_GPIO_PIN_6
+
+#define HW_USER_BTN_PORT	HW_GPIO_PORT_3
+#define HW_USER_BTN_PIN		HW_GPIO_PIN_2
 
 #else /* !HW_SOM_1_0 */
 #error Unsupported SOM version
