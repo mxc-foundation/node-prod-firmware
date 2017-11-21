@@ -72,7 +72,7 @@ sysinit_task_func(void *param)
 	hal_queue_init();
 	cons_init();
 	pm_system_init(periph_setup);
-	printf("*** FreeRTOS ***\r\n");
+	printf("*** " HW_VER_STRING " ***\r\n");
 	resource_init();
 #ifdef CONFIG_RETARGET
 	retarget_init();
