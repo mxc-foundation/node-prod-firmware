@@ -1,6 +1,10 @@
 #include <limits.h>
 #include <ad_temp_sens.h>
 
+#include "hw/hw.h"
+
+#ifdef FEATURE_SENSOR_TEMP
+
 int
 temp_read(char *buf, int len)
 {
@@ -17,3 +21,5 @@ temp_read(char *buf, int len)
 	buf[0] = temp;
 	return 1;
 }
+
+#endif /* FEATURE_SENSOR_TEMP */

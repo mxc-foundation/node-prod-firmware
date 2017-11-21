@@ -44,6 +44,7 @@ struct sensor_callbacks {
 const struct sensor_callbacks	sensor_cb[] = {
 	[SENSOR_TYPE_UNKNOWN]	= {
 	},
+#ifdef FEATURE_SENSOR_GPS
 	[SENSOR_TYPE_GPS]	= {
 		.init		= gps_init,
 		.prepare	= gps_prepare,
@@ -51,9 +52,12 @@ const struct sensor_callbacks	sensor_cb[] = {
 		.read		= gps_read,
 		.txstart	= gps_txstart,
 	},
+#endif
+#ifdef FEATURE_SENSOR_TEMP
 	[SENSOR_TYPE_TEMP]	= {
 		.read		= temp_read,
 	},
+#endif
 };
 
 static inline void

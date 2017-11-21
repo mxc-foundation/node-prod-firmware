@@ -13,7 +13,7 @@
 #include "accel.h"
 #include "gps.h"
 
-#ifdef FEATURE_SENSOR
+#ifdef FEATURE_SENSOR_GPS
 
 //#define DEBUG
 
@@ -308,4 +308,4 @@ gps_txstart()
 	}
 }
 
-#endif /* FEATURE_SENSOR */
+#endif /* FEATURE_SENSOR_GPS */
