@@ -20,6 +20,7 @@
 
 #define FEATURE_USER_BUTTON
 #define FEATURE_POWER_SUPPLY
+#define FEATURE_LED_RGB
 
 #define INITIAL_SLEEP_MODE	pm_mode_idle
 
@@ -66,6 +67,7 @@
 #define FEATURE_POWER_SUPPLY_MULTI
 #define FEATURE_SENSOR
 #define FEATURE_USER_BUTTON
+#define FEATURE_LED_RG
 
 #define INITIAL_SLEEP_MODE	pm_mode_extended_sleep
 

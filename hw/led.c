@@ -9,6 +9,7 @@
 #include "lmic/oslmic.h"
 #include "lora/ad_lora.h"
 #include "lora/util.h"
+#include "hw.h"
 #include "led.h"
 
 PRIVILEGED_DATA static uint8_t	sys_status;
@@ -28,9 +29,10 @@ PRIVILEGED_DATA static uint8_t	battery_status;
 #define LED_BLINK_FAST		0x04
 #define LED_BLINK_ALTERNATE	0x05
 
-#define LED_COLOUR_MASK		0x18
-#define LED_GREEN		0x08
-#define LED_RED			0x10
+#define LED_COLOUR_MASK		0x38
+#define LED_RED			0x08
+#define LED_GREEN		0x10
+#define LED_BLUE		0x20
 #define LED_YELLOW		(LED_RED | LED_GREEN)
 
 PRIVILEGED_DATA static uint8_t	led_status;
@@ -43,7 +45,11 @@ PRIVILEGED_DATA static uint8_t	led_status;
 
 static const uint8_t	led_sys_stati[] = {
 	[LED_STATE_IDLE]		= LED_OFF,
+#ifdef FEATURE_LED_RGB
+	[LED_STATE_BOOTING]		= LED_BLUE   | LED_BLINK_NORMAL,
+#else
 	[LED_STATE_BOOTING]		= LED_YELLOW | LED_BLINK_NORMAL,
+#endif
 	[LED_STATE_JOINING]		= LED_RED    | LED_BLINK_NORMAL,
 	[LED_STATE_SAMPLING_SENSOR]	= LED_YELLOW | LED_BLINK_ALTERNATE,
 	[LED_STATE_SENDING]		= LED_GREEN  | LED_BLINK_NORMAL,
@@ -57,17 +63,47 @@ static const uint8_t	led_battery_stati[] = {
 	[LED_BATTERY_CHARGED]		= LED_GREEN | LED_BREATH,
 };
 
+#if defined FEATURE_LED_RGB
+
+#define LED_SET_RED_BREATH()	hw_led_set_led1_src(HW_LED_SRC1_BREATH)
+#define LED_SET_RED_PWM()	hw_led_set_led1_src(HW_LED_SRC1_PWM2)
+#define LED_SET_GREEN_BREATH()	hw_led_set_led2_src(HW_LED_SRC2_BREATH)
+#define LED_SET_GREEN_PWM()	hw_led_set_led2_src(HW_LED_SRC2_PWM3)
+#define LED_SET_BLUE_BREATH()	hw_led_set_led3_src(HW_LED_SRC3_BREATH)
+#define LED_SET_BLUE_PWM()	hw_led_set_led3_src(HW_LED_SRC3_PWM4)
+#define LED_ENABLE_RED(state)	hw_led_enable_led1(state)
+#define LED_ENABLE_GREEN(state)	hw_led_enable_led2(state)
+#define LED_ENABLE_BLUE(state)	hw_led_enable_led3(state)
+
+#elif defined FEATURE_LED_RG
+
+#define LED_SET_RED_BREATH()	hw_led_set_led3_src(HW_LED_SRC3_BREATH)
+#define LED_SET_RED_PWM()	hw_led_set_led3_src(HW_LED_SRC3_PWM4)
+#define LED_SET_GREEN_BREATH()	hw_led_set_led2_src(HW_LED_SRC2_BREATH)
+#define LED_SET_GREEN_PWM()	hw_led_set_led2_src(HW_LED_SRC2_PWM3)
+#define LED_SET_BLUE_BREATH()
+#define LED_SET_BLUE_PWM()
+#define LED_ENABLE_RED(state)	hw_led_enable_led3(state)
+#define LED_ENABLE_GREEN(state)	hw_led_enable_led2(state)
+#define LED_ENABLE_BLUE(state)
+
+#else
+#error "Unknown LED setting"
+#endif
+
 static void
 led_conf_timers()
 {
 	if ((led_status & LED_FUNC_MASK) == LED_BREATH) {
 		hw_breath_enable();
-		hw_led_set_led2_src(HW_LED_SRC2_BREATH);
-		hw_led_set_led3_src(HW_LED_SRC3_BREATH);
+		LED_SET_RED_BREATH();
+		LED_SET_GREEN_BREATH();
+		LED_SET_BLUE_BREATH();
 	} else {
 		hw_breath_disable();
-		hw_led_set_led2_src(HW_LED_SRC2_PWM3);
-		hw_led_set_led3_src(HW_LED_SRC3_PWM4);
+		LED_SET_RED_PWM();
+		LED_SET_GREEN_PWM();
+		LED_SET_BLUE_PWM();
 	}
 
 	if ((led_status & LED_FUNC_MASK) >= LED_BLINK_NORMAL)
@@ -149,8 +185,9 @@ led_cb(osjob_t *job)
 		}
 		break;
 	}
-	hw_led_enable_led2(on && !!(led_status & LED_GREEN));
-	hw_led_enable_led3((on ^ red_inverted) && !!(led_status & LED_RED));
+	LED_ENABLE_RED((on ^ red_inverted) && !!(led_status & LED_RED));
+	LED_ENABLE_GREEN(on && !!(led_status & LED_GREEN));
+	LED_ENABLE_BLUE(on && !!(led_status & LED_BLUE));
 	os_setTimedCallback(&led_job, hal_ticks() + delay, led_cb);
 	if (on || red_inverted)
 		ad_lora_suspend_sleep(LORA_SUSPEND_LED, delay);
@@ -180,6 +217,10 @@ led_init(void)
 	};
 	timer2_config	t2cfg = {
 		.frequency	= HW_TIMER2_MAX_VALUE,
+#ifdef FEATURE_LED_RGB
+		.pwm2_start	= 0,
+		.pwm2_end	= 0xffff,
+#endif
 		.pwm3_start	= 0,
 		.pwm3_end	= 0xffff,
 		.pwm4_start	= 0,
