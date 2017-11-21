@@ -5,6 +5,7 @@
 #include <hw_i2c.h>
 
 #include "hw/hw.h"
+#include "hw/i2c.h"
 #include "lmic/oslmic.h"
 #include "gps.h"
 
@@ -19,17 +20,14 @@
 static int
 mpu_read_reg(uint8_t reg)
 {
-	size_t			status;
-	HW_I2C_ABORT_SOURCE	abort_src = HW_I2C_ABORT_NONE;
-	uint8_t			val;
+	int	status;
+	uint8_t	val;
 
 #ifdef DEBUG
 	printf("read %02x\r\n", reg);
 #endif
-	hw_i2c_write_byte(HW_I2C1, reg);
-	status = hw_i2c_read_buffer_sync(HW_I2C1, &val, 1, &abort_src,
-	    HW_I2C_F_NONE);
-	if (status < 1 || abort_src != HW_I2C_ABORT_NONE) {
+	status = i2c_read(HW_SENSOR_MPU_I2C_ADDR, reg, &val, sizeof(val));
+	if (status < 0) {
 #ifdef DEBUG
 		printf("i2c read error: %x\r\n", abort_src);
 #endif
@@ -44,20 +42,17 @@ mpu_read_reg(uint8_t reg)
 static void
 mpu_write_reg(uint8_t reg, uint8_t val)
 {
-	size_t			status;
-	HW_I2C_ABORT_SOURCE	abort_src = HW_I2C_ABORT_NONE;
+	int	status;
 
 #ifdef DEBUG
 	printf("write %02x: %02x\r\n", reg, val);
 #else
 	hw_cpm_delay_usec(4000);
 #endif
-	hw_i2c_write_byte(HW_I2C1, reg);
-	status = hw_i2c_write_buffer_sync(HW_I2C1, &val, 1, &abort_src,
-	    HW_I2C_F_WAIT_FOR_STOP);
+	status = i2c_write(HW_SENSOR_MPU_I2C_ADDR, reg, &val, sizeof(val));
 	(void)status;
 #ifdef DEBUG
-	if (status < 1 || abort_src != HW_I2C_ABORT_NONE)
+	if (status < 0)
 		printf("i2c write error: %x\r\n", abort_src);
 #endif
 }
@@ -151,18 +146,6 @@ mpu_reg_init()
 void
 accel_init()
 {
-	const i2c_config	i2c_cfg = {
-		.speed		= HW_I2C_SPEED_FAST,
-		.mode		= HW_I2C_MODE_MASTER,
-		.addr_mode	= HW_I2C_ADDRESSING_7B,
-		.address	= HW_SENSOR_MPU_I2C_ADDR,
-	};
-
-	hw_gpio_configure_pin(HW_SENSOR_I2C_SCL_PORT, HW_SENSOR_I2C_SCL_PIN,
-	    HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_I2C_SCL, true);
-	hw_gpio_configure_pin(HW_SENSOR_I2C_SDA_PORT, HW_SENSOR_I2C_SDA_PIN,
-	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_I2C_SDA, true);
-	hw_i2c_init(HW_I2C1, &i2c_cfg);
 	hw_gpio_set_pin_function(HW_SENSOR_MPU_INT_PORT, HW_SENSOR_MPU_INT_PIN,
 	    HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_GPIO);
 }
