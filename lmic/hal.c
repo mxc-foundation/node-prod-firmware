@@ -74,7 +74,7 @@ wkup_init(void)
 	    HW_WKUP_PIN_STATE_HIGH);
 #ifdef FEATURE_USER_BUTTON
 	hw_wkup_configure_pin(HW_USER_BTN_PORT,  HW_USER_BTN_PIN,  true,
-	    HW_WKUP_PIN_STATE_LOW);
+	    HW_USER_BTN_ACTIVE);
 #endif
 	hw_wkup_register_interrupt(wkup_intr_cb, 1);
 }

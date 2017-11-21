@@ -1,13 +1,20 @@
+#include <hw_wkup.h>
+
 #include "lmic/lmic.h"
 #include "lora/lora.h"
 #include "lora/upgrade.h"
-
 #include "hw/button.h"
 #include "hw/hw.h"
 
 #ifdef FEATURE_USER_BUTTON
 
 #define LONG_PRESS_TIME	sec2osticks(10)
+
+#if HW_USER_BTN_ACTIVE == HW_WKUP_PIN_STATE_HIGH
+#define USER_BTN_DOWN(port, pin)	hw_gpio_get_pin_status(port, pin)
+#else
+#define USER_BTN_DOWN(port, pin)	!hw_gpio_get_pin_status(port, pin)
+#endif
 
 PRIVILEGED_DATA static ostime_t	press_time;
 
@@ -18,7 +25,7 @@ button_cb(osjob_t *job)
 
 	if (now - press_time >= LONG_PRESS_TIME)
 		upgrade_reboot(UPGRADE_DEFAULT);
-	else if (hw_gpio_get_pin_status(HW_USER_BTN_PORT, HW_USER_BTN_PIN))
+	else if (!USER_BTN_DOWN(HW_USER_BTN_PORT, HW_USER_BTN_PIN))
 		lora_send();
 	else
 		os_setTimedCallback(job, now + ms2osticks(20), button_cb);

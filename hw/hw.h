@@ -48,6 +48,7 @@
 
 #define HW_USER_BTN_PORT	HW_GPIO_PORT_3
 #define HW_USER_BTN_PIN		HW_GPIO_PIN_2
+#define HW_USER_BTN_ACTIVE	HW_WKUP_PIN_STATE_HIGH
 
 #else /* !HW_SOM_1_0 */
 #error Unsupported SOM version
@@ -128,6 +129,7 @@
 
 #define HW_USER_BTN_PORT	HW_GPIO_PORT_3
 #define HW_USER_BTN_PIN		HW_GPIO_PIN_3
+#define HW_USER_BTN_ACTIVE	HW_WKUP_PIN_STATE_LOW
 
 #else
 #error Unsupported HW_VERSION
