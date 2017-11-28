@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <FreeRTOS.h>
+
 #include "hw/hw.h"
 #include "hw/i2c.h"
 #include "hw/iox.h"
@@ -15,20 +17,20 @@
 #define IOX_REG_POL_INV	4
 #define IOX_REG_CONF	6
 
-static int
-iox_setbit(uint8_t reg, uint8_t bit, bool val)
-{
-	uint8_t	b;
+static INITIALISED_PRIVILEGED_DATA uint8_t	xconf[2] = { 0xff, 0xff };
+static PRIVILEGED_DATA uint8_t			xoutput[2];
 
-	reg += bit >> 3;
+static int
+iox_setbit(uint8_t reg, uint8_t *loc, uint8_t bit, bool val)
+{
+	if (bit >> 3)
+		loc++;
 	bit &= 0x07;
-	if (i2c_read(HW_IOX_I2C_ADDR, reg, &b, 1) == -1)
-		return -1;
 	if (val)
-		b |= 1 << bit;
+		*loc |= 1 << bit;
 	else
-		b &= ~(1 << bit);
-	if (i2c_write(HW_IOX_I2C_ADDR, reg, &b, 1) == -1)
+		*loc &= ~(1 << bit);
+	if (i2c_write(HW_IOX_I2C_ADDR, reg, loc, 1) == -1)
 		return -1;
 	return 0;
 }
@@ -36,13 +38,13 @@ iox_setbit(uint8_t reg, uint8_t bit, bool val)
 int
 iox_conf(uint8_t pin, bool input)
 {
-	return iox_setbit(IOX_REG_CONF, pin, input);
+	return iox_setbit(IOX_REG_CONF, xconf, pin, input);
 }
 
 int
 iox_set(uint8_t pin, bool val)
 {
-	return iox_setbit(IOX_REG_OUTPUT, pin, val);
+	return iox_setbit(IOX_REG_OUTPUT, xoutput, pin, val);
 }
 
 int
@@ -72,11 +74,7 @@ iox_setconf(int conf)
 int
 iox_getconf()
 {
-	uint8_t	buf[2];
-
-	if (i2c_read(HW_IOX_I2C_ADDR, IOX_REG_CONF, buf, sizeof(buf)) == -1)
-		return -1;
-	return (int)buf[1] << 8 | buf[0];
+	return (int)xconf[1] << 8 | xconf[0];
 }
 
 int
