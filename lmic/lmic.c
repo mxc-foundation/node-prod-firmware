@@ -791,8 +791,10 @@ static ostime_t nextJoinState (void) {
 
 static void initDefaultChannels (void) {
     for( u1_t i=0; i<4; i++ )
-        LMIC.channelMap[i] = 0xFFFF;
-    LMIC.channelMap[4] = 0x00FF;
+        LMIC.channelMap[1] = 0x0000;
+    LMIC.channelMap[US915_125kHz_1STCHAN / 16] =
+        ((1 << US915_125kHz_CHANS) - 1) << (US915_125kHz_1STCHAN % 16);
+    LMIC.channelMap[4] = 1 << (US915_500kHz_CHAN - 64);
 }
 
 static u4_t convFreq (xref2u1_t ptr) {
@@ -858,7 +860,7 @@ static void updateTx (ostime_t txbeg) {
 #define nextTx(now) (_nextTx(),(now))
 static void _nextTx (void) {
     if( LMIC.chRnd==0 )
-        LMIC.chRnd = os_getRndU1() & 0x3F;
+        LMIC.chRnd = os_getRndU1() & (US915_125kHz_CHANS - 1);
     if( LMIC.datarate >= DR_SF8C ) { // 500kHz
         u1_t map = LMIC.channelMap[64/16]&0xFF;
         for( u1_t i=0; i<8; i++ ) {
@@ -868,8 +870,9 @@ static void _nextTx (void) {
             }
         }
     } else { // 125kHz
-        for( u1_t i=0; i<64; i++ ) {
-            u1_t chnl = ++LMIC.chRnd & 0x3F;
+        for( u1_t i=0; i<US915_125kHz_CHANS; i++ ) {
+            u1_t chnl = US915_125kHz_1STCHAN +
+                (++LMIC.chRnd & (US915_125kHz_CHANS - 1));
             if( (LMIC.channelMap[(chnl >> 4)] & (1<<(chnl & 0xF))) != 0 ) {
                 LMIC.txChnl = chnl;
                 return;
@@ -896,7 +899,7 @@ static void setBcnRxParams (void) {
 
 static void initJoinLoop (void) {
     LMIC.chRnd = 0;
-    LMIC.txChnl = 0;
+    LMIC.txChnl = US915_125kHz_1STCHAN;
     LMIC.adrTxPow = 20;
     ASSERT((LMIC.opmode & OP_NEXTCHNL)==0);
     LMIC.txend = os_getTime();
@@ -910,10 +913,11 @@ static ostime_t nextJoinState (void) {
     //
     u1_t failed = 0;
     if( LMIC.datarate != DR_SF8C ) {
-        LMIC.txChnl = 64+(LMIC.txChnl&7);
+        LMIC.txChnl = US915_500kHz_CHAN;
         setDrJoin(DRCHG_SET, DR_SF8C);
     } else {
-        LMIC.txChnl = os_getRndU1() & 0x3F;
+        LMIC.txChnl =
+            US915_125kHz_1STCHAN + (os_getRndU1() & (US915_125kHz_CHANS - 1));
         s1_t dr = DR_SF7 - ++LMIC.txCnt;
         if( dr < DR_SF10 ) {
             dr = DR_SF10;
