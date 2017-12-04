@@ -9,7 +9,7 @@
 
 #ifdef FEATURE_SENSOR_LIGHT
 
-#define SZ	4
+#define SZ	3
 
 #define REG_CONTROL	0x80
 #define REG_TIMING	0x81
@@ -192,7 +192,6 @@ light_read(char *buf, int len)
 	buf[0] = lux;
 	buf[1] = lux >> 8;
 	buf[2] = lux >> 16;
-	buf[3] = lux >> 24;
 	return SZ;
 }
 
