@@ -789,6 +789,16 @@ static ostime_t nextJoinState (void) {
 //
 
 
+static u1_t get_min_sf() {
+    u1_t min_sf = 0;
+
+    if (param_get(PARAM_MIN_SF, &min_sf, sizeof(min_sf)))
+        min_sf &= 0xf;
+    if (min_sf < 7 || min_sf > 10)
+        return DR_SF7;
+    return DR_SF10 + 10 - min_sf;
+}
+
 static void initDefaultChannels (void) {
     for( u1_t i=0; i<4; i++ )
         LMIC.channelMap[i] = 0x0000;
@@ -903,7 +913,7 @@ static void initJoinLoop (void) {
     LMIC.adrTxPow = 20;
     ASSERT((LMIC.opmode & OP_NEXTCHNL)==0);
     LMIC.txend = os_getTime();
-    setDrJoin(DRCHG_SET, DR_SF7);
+    setDrJoin(DRCHG_SET, get_min_sf());
 }
 
 static ostime_t nextJoinState (void) {
@@ -918,7 +928,7 @@ static ostime_t nextJoinState (void) {
     } else {
         LMIC.txChnl =
             US915_125kHz_1STCHAN + (os_getRndU1() & (US915_125kHz_CHANS - 1));
-        s1_t dr = DR_SF7 - ++LMIC.txCnt;
+        s1_t dr = get_min_sf() - ++LMIC.txCnt;
         if( dr < DR_SF10 ) {
             dr = DR_SF10;
             failed = 1; // All DR exhausted - signal failed
