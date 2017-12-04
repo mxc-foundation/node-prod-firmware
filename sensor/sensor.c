@@ -6,6 +6,7 @@
 #include "lora/param.h"
 #include "lora/util.h"
 #include "gps.h"
+#include "light.h"
 #include "sensor.h"
 #include "temp.h"
 
@@ -31,6 +32,7 @@ static const ostime_t	sensor_periods[] = {
 #define SENSOR_TYPE_UNKNOWN	0
 #define SENSOR_TYPE_GPS		1
 #define SENSOR_TYPE_TEMP	2
+#define SENSOR_TYPE_LIGHT	3
 static uint8_t	sensor_type;
 
 struct sensor_callbacks {
@@ -56,6 +58,12 @@ const struct sensor_callbacks	sensor_cb[] = {
 #ifdef FEATURE_SENSOR_TEMP
 	[SENSOR_TYPE_TEMP]	= {
 		.read		= temp_read,
+	},
+#endif
+#ifdef FEATURE_SENSOR_LIGHT
+	[SENSOR_TYPE_LIGHT]	= {
+		.init		= light_init,
+		.read		= light_read,
 	},
 #endif
 };

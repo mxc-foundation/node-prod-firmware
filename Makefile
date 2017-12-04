@@ -25,6 +25,7 @@ OBJS+=	$(OBJDIR)/main.o \
 	$(OBJDIR)/sensor/accel.o \
 	$(OBJDIR)/sensor/bat.o \
 	$(OBJDIR)/sensor/gps.o \
+	$(OBJDIR)/sensor/light.o \
 	$(OBJDIR)/sensor/sensor.o \
 	$(OBJDIR)/sensor/temp.o \
 	$(OBJDIR)/strtonum.o
