@@ -791,7 +791,7 @@ static ostime_t nextJoinState (void) {
 
 static void initDefaultChannels (void) {
     for( u1_t i=0; i<4; i++ )
-        LMIC.channelMap[1] = 0x0000;
+        LMIC.channelMap[i] = 0x0000;
     LMIC.channelMap[US915_125kHz_1STCHAN / 16] =
         ((1 << US915_125kHz_CHANS) - 1) << (US915_125kHz_1STCHAN % 16);
     LMIC.channelMap[4] = 1 << (US915_500kHz_CHAN - 64);
