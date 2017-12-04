@@ -104,6 +104,7 @@ static void
 lora_reset(osjob_t *job)
 {
 	PRIVILEGED_DATA static uint8_t	reset_count;
+	uint8_t				lora_region;
 
 #ifdef DEBUG
 	debug_time();
@@ -112,7 +113,8 @@ lora_reset(osjob_t *job)
 	if (++reset_count > MAX_RESETS)
 		hal_failed();
 	status = 0;
-	LMIC_reset();
+	param_get(PARAM_LORA_REGION, &lora_region, sizeof(lora_region));
+	LMIC_reset(lora_region);
 	os_setCallback(job, lora_start_joining);
 }
 

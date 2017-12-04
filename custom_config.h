@@ -156,7 +156,6 @@
 #include "bsp_defaults.h"
 
 /* LMIC */
-#define CFG_eu868 1
 #define CFG_sx1276_radio
 
 #if (dg_configCODE_LOCATION == NON_VOLATILE_IS_OTP)

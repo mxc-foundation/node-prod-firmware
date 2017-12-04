@@ -58,12 +58,12 @@ enum { JOIN_GUARD_ms      =  9000 };  // msecs - don't start Join Req/Acc transa
 enum { TXRX_BCNEXT_secs   =     2 };  // secs - earliest start after beacon time
 enum { RETRY_PERIOD_secs  =     3 };  // secs - random period for retrying a confirmed send
 
-#if defined(CFG_eu868) // EU868 spectrum ====================================================
+// EU868 spectrum ====================================================
 
-enum { MAX_CHANNELS = 16 };      //!< Max supported channels
-enum { MAX_BANDS    =  6 };
+enum { MAX_CHANNELS_EU = 16 };      //!< Max supported channels
+enum { MAX_BANDS_EU    =  6 };
 
-enum { LIMIT_CHANNELS = (1<<4) };   // EU868 will never have more channels
+enum { LIMIT_CHANNELS_EU = (1<<4) };   // EU868 will never have more channels
 //! \internal
 struct band_t {
     u2_t     txcap;     // duty cycle limitation: 1/txcap
@@ -73,12 +73,10 @@ struct band_t {
 };
 TYPEDEF_xref2band_t; //!< \internal
 
-#elif defined(CFG_us915)  // US915 spectrum =================================================
+// US915 spectrum =================================================
 
-enum { MAX_XCHANNELS = 2 };      // extra channels in RAM, channels 0-71 are immutable 
+enum { MAX_XCHANNELS_US = 2 };      // extra channels in RAM, channels 0-71 are immutable
 enum { MAX_TXPOW_125kHz = 30 };
-
-#endif // ==========================================================================
 
 // Keep in sync with evdefs.hpp::drChange
 enum { DRCHG_SET, DRCHG_NOJACC, DRCHG_NOACK, DRCHG_NOADRACK, DRCHG_NWKCMD };
@@ -171,17 +169,14 @@ struct lmic_t {
     osjob_t     osjob;
 
     // Channel scheduling
-#if defined(CFG_eu868)
-    band_t      bands[MAX_BANDS];
-    u4_t        channelFreq[MAX_CHANNELS];
-    u2_t        channelDrMap[MAX_CHANNELS];
-    u2_t        channelMap;
-#elif defined(CFG_us915)
-    u4_t        xchFreq[MAX_XCHANNELS];    // extra channel frequencies (if device is behind a repeater)
-    u2_t        xchDrMap[MAX_XCHANNELS];   // extra channel datarate ranges  ---XXX: ditto
-    u2_t        channelMap[(72+MAX_XCHANNELS+15)/16];  // enabled bits
+    u1_t        region;
+    band_t      bands[MAX_BANDS_EU];
+    u4_t        channelFreq[MAX_CHANNELS_EU];
+    u2_t        channelDrMap[MAX_CHANNELS_EU];
+    u4_t        xchFreq[MAX_XCHANNELS_US];    // extra channel frequencies (if device is behind a repeater)
+    u2_t        xchDrMap[MAX_XCHANNELS_US];   // extra channel datarate ranges  ---XXX: ditto
+    u2_t        channelMap[(72+MAX_XCHANNELS_US+15)/16];  // enabled bits
     u2_t        chRnd;        // channel randomizer
-#endif
     u1_t        txChnl;          // channel for next TX
     u1_t        globalDutyRate;  // max rate: 1/2^k
     ostime_t    globalDutyAvail; // time device can send again
@@ -251,17 +246,15 @@ DECLARE_LMIC; //!< \internal
 
 //! Construct a bit map of allowed datarates from drlo to drhi (both included). 
 #define DR_RANGE_MAP(drlo,drhi) (((u2_t)0xFFFF<<(drlo)) & ((u2_t)0xFFFF>>(15-(drhi))))
-#if defined(CFG_eu868)
 enum {
 	BAND_MILLI_1	= 0,
 	BAND_CENTI_1	= 1,
-	BAND_DECI	= 2,
+	BAND_DECI		= 2,
 	BAND_MILLI_2	= 3,
 	BAND_CENTI_2	= 4,
-	BAND_AUX	= 5,
+	BAND_AUX		= 5,
 };
 bit_t LMIC_setupBand (u1_t bandidx, s1_t txpow, u2_t txcap);
-#endif
 bit_t LMIC_setupChannel (u1_t channel, u4_t freq, u2_t drmap, s1_t band);
 void  LMIC_disableChannel (u1_t channel);
 
@@ -271,7 +264,7 @@ bit_t LMIC_startJoining (void);
 
 void  LMIC_shutdown     (void);
 void  LMIC_init         (void);
-void  LMIC_reset        (void);
+void  LMIC_reset        (u1_t region);
 void  LMIC_clrTxData    (void);
 void  LMIC_setTxData    (void);
 int   LMIC_setTxData2   (u1_t port, xref2u1_t data, u1_t dlen, u1_t confirmed);

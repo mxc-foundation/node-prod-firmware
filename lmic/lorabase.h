@@ -32,6 +32,14 @@
 // BEG: Keep in sync with lorabase.hpp
 //
 
+#define REGION_EU   0
+#define REGION_US   1
+#define REGION_AU   2
+#define REGION_AS1  3
+#define REGION_KR   4
+#define REGION_MASK 0x07
+#define REGION_FULL 8
+
 enum _cr_t { CR_4_5=0, CR_4_6, CR_4_7, CR_4_8 };
 enum _sf_t { FSK=0, SF7, SF8, SF9, SF10, SF11, SF12, SFrfu };
 enum _bw_t { BW125=0, BW250, BW500, BWrfu };
@@ -70,11 +78,12 @@ enum { BCN_RESERVE_us    = 2120000 };
 enum { BCN_GUARD_us      = 3000000 };
 enum { BCN_SLOT_SPAN_us  =   30000 };
 
-#if defined(CFG_eu868) // ==============================================
+enum _dr_eu868_t { DR_SF12_EU=0, DR_SF11_EU, DR_SF10_EU, DR_SF9_EU, DR_SF8_EU, DR_SF7_EU, DR_SF7B_EU, DR_FSK_EU, DR_NONE_EU };
+enum _dr_us915_t { DR_SF10_US=0, DR_SF9_US, DR_SF8_US, DR_SF7_US, DR_SF8C_US, DR_NONE_US,
+                   // Devices behind a router:
+                   DR_SF12CR_US=8, DR_SF11CR_US, DR_SF10CR_US, DR_SF9CR_US, DR_SF8CR_US, DR_SF7CR_US };
 
-enum _dr_eu868_t { DR_SF12=0, DR_SF11, DR_SF10, DR_SF9, DR_SF8, DR_SF7, DR_SF7B, DR_FSK, DR_NONE };
-enum { DR_DFLTMIN = DR_SF7 };
-enum { DR_PAGE = DR_PAGE_EU868 };
+enum { DR_PAGE_EU = DR_PAGE_EU868 };
 
 // MatchX frequency plan for EU 868MHz ISM band
 // Bands:
@@ -99,36 +108,18 @@ enum { EU868_F1 = 868100000,      // g1   SF7-12
 enum { EU868_FREQ_MIN = 863000000,
        EU868_FREQ_MAX = 870000000 };
 
-enum { CHNL_PING         = 5 };
-enum { FREQ_PING         = EU868_F6 };  // default ping freq
-enum { DR_PING           = SF9 };       // default ping DR
-enum { CHNL_DNW2         = 5 };
-enum { FREQ_DNW2         = EU868_F6 };
-enum { DR_DNW2           = DR_SF12 };
-enum { CHNL_BCN          = 5 };
-enum { FREQ_BCN          = EU868_F6 };
-enum { DR_BCN            = DR_SF9 };
-enum { AIRTIME_BCN       = 144384 };  // micros
+enum { CHNL_PING_EU      = 5 };
+enum { FREQ_PING_EU      = EU868_F6 };  // default ping freq
+enum { DR_PING_EU        = SF9 };       // default ping DR
+enum { CHNL_DNW2_EU      = 5 };
+enum { FREQ_DNW2_EU      = EU868_F6 };
+enum { DR_DNW2_EU        = DR_SF12_EU };
+enum { CHNL_BCN_EU       = 5 };
+enum { FREQ_BCN_EU       = EU868_F6 };
+enum { DR_BCN_EU         = DR_SF9_EU };
+enum { AIRTIME_BCN_EU    = 144384 };  // micros
 
-enum {
-    // Beacon frame format EU SF9
-    OFF_BCN_NETID    = 0,         
-    OFF_BCN_TIME     = 3,
-    OFF_BCN_CRC1     = 7,
-    OFF_BCN_INFO     = 8,
-    OFF_BCN_LAT      = 9,
-    OFF_BCN_LON      = 12,
-    OFF_BCN_CRC2     = 15,
-    LEN_BCN          = 17
-};
-
-#elif defined(CFG_us915)  // =========================================
-
-enum _dr_us915_t { DR_SF10=0, DR_SF9, DR_SF8, DR_SF7, DR_SF8C, DR_NONE,
-                   // Devices behind a router:
-                   DR_SF12CR=8, DR_SF11CR, DR_SF10CR, DR_SF9CR, DR_SF8CR, DR_SF7CR };
-enum { DR_DFLTMIN = DR_SF8C };
-enum { DR_PAGE = DR_PAGE_US915 };
+enum { DR_PAGE_US = DR_PAGE_US915 };
 
 // Default frequency plan for US 915MHz
 enum { US915_125kHz_UPFBASE = 902300000,
@@ -144,30 +135,33 @@ enum { US915_125kHz_UPFBASE = 902300000,
 enum { US915_FREQ_MIN = 902000000,
        US915_FREQ_MAX = 928000000 };
 
-enum { CHNL_PING         = 0 }; // used only for default init of state (follows beacon - rotating)
-enum { FREQ_PING         = US915_500kHz_DNFBASE + CHNL_PING*US915_500kHz_DNFSTEP };  // default ping freq
-enum { DR_PING           = DR_SF10CR };       // default ping DR
-enum { CHNL_DNW2         = 0 };
-enum { FREQ_DNW2         = US915_500kHz_DNFBASE + CHNL_DNW2*US915_500kHz_DNFSTEP };
-enum { DR_DNW2           = DR_SF12CR };
-enum { CHNL_BCN          = 0 }; // used only for default init of state (rotating beacon scheme)
-enum { DR_BCN            = DR_SF10CR };
-enum { AIRTIME_BCN       = 72192 };  // micros
+enum { CHNL_PING_US      = 0 }; // used only for default init of state (follows beacon - rotating)
+enum { FREQ_PING_US      = US915_500kHz_DNFBASE + CHNL_PING_US*US915_500kHz_DNFSTEP };  // default ping freq
+enum { DR_PING_US        = DR_SF10CR_US };       // default ping DR
+enum { CHNL_DNW2_US      = 0 };
+enum { FREQ_DNW2_US      = US915_500kHz_DNFBASE + CHNL_DNW2_US*US915_500kHz_DNFSTEP };
+enum { DR_DNW2_US        = DR_SF12CR_US };
+enum { CHNL_BCN_US       = 0 }; // used only for default init of state (rotating beacon scheme)
+enum { DR_BCN_US         = DR_SF10CR_US };
+enum { AIRTIME_BCN_US    = 72192 };  // micros
 
 enum {
-    // Beacon frame format US SF10
-    OFF_BCN_NETID    = 0,         
+    // Beacon frame formats EU SF9 and US SF10
+    OFF_BCN_NETID    = 0,
     OFF_BCN_TIME     = 3,
     OFF_BCN_CRC1     = 7,
-    OFF_BCN_INFO     = 9,
-    OFF_BCN_LAT      = 10,
-    OFF_BCN_LON      = 13,
+    OFF_BCN_INFO_EU  = 8,
+    OFF_BCN_INFO_US  = 9,
+    OFF_BCN_LAT_EU   = 9,
+    OFF_BCN_LAT_US   = 10,
+    OFF_BCN_LON_EU   = 12,
+    OFF_BCN_LON_US   = 13,
     OFF_BCN_RFU1     = 16,
-    OFF_BCN_CRC2     = 17,
-    LEN_BCN          = 19
+    OFF_BCN_CRC2_EU  = 15,
+    OFF_BCN_CRC2_US  = 17,
+    LEN_BCN_EU       = 17,
+    LEN_BCN_US       = 19,
 };
-
-#endif // ===================================================
 
 enum {
     // Join Request frame format
@@ -314,6 +308,7 @@ enum {
     MCMD_LADR_POW_MASK   = 0x0F,
     MCMD_LADR_DR_SHIFT   = 4,
     MCMD_LADR_POW_SHIFT  = 0,
+#if 0
 #if defined(CFG_eu868)
     MCMD_LADR_SF12      = DR_SF12<<4,
     MCMD_LADR_SF11      = DR_SF11<<4,
@@ -355,6 +350,7 @@ enum {
     MCMD_LADR_12dBm     = 9,
     MCMD_LADR_10dBm     = 10
 #endif
+#endif
 };
 
 // Device address
@@ -379,17 +375,6 @@ inline rps_t makeRps (sf_t sf, bw_t bw, cr_t cr, int ih, int nocrc) {
 #define MAKERPS(sf,bw,cr,ih,nocrc) ((rps_t)((sf) | ((bw)<<3) | ((cr)<<5) | ((nocrc)?(1<<7):0) | ((ih&0xFF)<<8)))
 // Two frames with params r1/r2 would interfere on air: same SFx + BWx 
 inline int sameSfBw(rps_t r1, rps_t r2) { return ((r1^r2)&0x1F) == 0; }
-
-extern const u1_t _DR2RPS_CRC[];
-inline rps_t updr2rps (dr_t dr) { return (rps_t)_DR2RPS_CRC[dr+1]; }
-inline rps_t dndr2rps (dr_t dr) { return setNocrc(updr2rps(dr),1); }
-inline int isFasterDR (dr_t dr1, dr_t dr2) { return dr1 > dr2; }
-inline int isSlowerDR (dr_t dr1, dr_t dr2) { return dr1 < dr2; }
-inline dr_t  incDR    (dr_t dr) { return _DR2RPS_CRC[dr+2]==ILLEGAL_RPS ? dr : (dr_t)(dr+1); } // increase data rate
-inline dr_t  decDR    (dr_t dr) { return _DR2RPS_CRC[dr  ]==ILLEGAL_RPS ? dr : (dr_t)(dr-1); } // decrease data rate
-inline dr_t  assertDR (dr_t dr) { return _DR2RPS_CRC[dr+1]==ILLEGAL_RPS ? DR_DFLTMIN : dr; }   // force into a valid DR
-inline bit_t validDR  (dr_t dr) { return _DR2RPS_CRC[dr+1]!=ILLEGAL_RPS; } // in range
-inline dr_t  lowerDR  (dr_t dr, u1_t n) { while(n--){dr=decDR(dr);} return dr; } // decrease data rate by n steps
 
 //
 // BEG: Keep in sync with lorabase.hpp
