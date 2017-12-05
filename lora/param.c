@@ -231,8 +231,13 @@ param_init(void)
 	for (i = 0; i < (int)ARRAY_SIZE(params); i++) {
 		read_param(params + i);
 #ifdef DEBUG
-		for (int j = 0; j < params[i].len; j++)
-			printf("%02x", ((uint8_t *)params[i].mem)[j]);
+		if (params[i].flags & PARAM_FLAG_REVERSE) {
+			for (int j = params[i].len - 1; j >= 0; j--)
+				printf("%02x", ((uint8_t *)params[i].mem)[j]);
+		} else {
+			for (int j = 0; j < params[i].len; j++)
+				printf("%02x", ((uint8_t *)params[i].mem)[j]);
+		}
 		printf("\r\n");
 #endif
 	}
@@ -241,7 +246,7 @@ param_init(void)
 		uint8_t eui[8];
 
 		os_getDevEui(eui);
-		for (int j = 0; j < 8; j++)
+		for (int j = sizeof(eui) - 1; j >= 0; j--)
 			printf("%02x", eui[j]);
 		printf("\r\n");
 	}
