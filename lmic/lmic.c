@@ -602,11 +602,17 @@ static void initDefaultChannels_EU (bit_t join) {
 }
 
 static void initDefaultChannels_US (void) {
-    for( u1_t i=0; i<4; i++ )
-        LMIC.channelMap[i] = 0x0000;
-    LMIC.channelMap[US915_125kHz_1STCHAN / 16] =
-        ((1 << US915_125kHz_CHANS) - 1) << (US915_125kHz_1STCHAN % 16);
-    LMIC.channelMap[4] = 1 << (US915_500kHz_CHAN - 64);
+    if (LMIC.region & REGION_FULL) {
+        for( u1_t i=0; i<4; i++ )
+            LMIC.channelMap[i] = 0xFFFF;
+        LMIC.channelMap[4] = 0x00FF;
+    } else {
+        for( u1_t i=0; i<4; i++ )
+            LMIC.channelMap[i] = 0x0000;
+        LMIC.channelMap[US915_125kHz_1STCHAN / 16] =
+            ((1 << US915_125kHz_CHANS) - 1) << (US915_125kHz_1STCHAN % 16);
+        LMIC.channelMap[4] = 1 << (US915_500kHz_CHAN - 64);
+    }
 }
 
 static u4_t convFreq (xref2u1_t ptr) {
@@ -778,8 +784,16 @@ static ostime_t nextTx_EU (ostime_t now) {
 
 // US does not have duty cycling - return now as earliest TX time
 static ostime_t nextTx_US (ostime_t now) {
+    u1_t chans, first;
+    if (LMIC.region & REGION_FULL) {
+        first = 0;
+        chans = 64;
+    } else {
+        first = US915_125kHz_1STCHAN;
+        chans = US915_125kHz_CHANS;
+    }
     if( LMIC.chRnd==0 )
-        LMIC.chRnd = os_getRndU1() & (US915_125kHz_CHANS - 1);
+        LMIC.chRnd = os_getRndU1() % chans;
     if( LMIC.datarate >= DR_SF8C_US ) { // 500kHz
         u1_t map = LMIC.channelMap[64/16]&0xFF;
         for( u1_t i=0; i<8; i++ ) {
@@ -789,9 +803,8 @@ static ostime_t nextTx_US (ostime_t now) {
             }
         }
     } else { // 125kHz
-        for( u1_t i=0; i<US915_125kHz_CHANS; i++ ) {
-            u1_t chnl = US915_125kHz_1STCHAN +
-                (++LMIC.chRnd & (US915_125kHz_CHANS - 1));
+        for( u1_t i=0; i<chans; i++ ) {
+            u1_t chnl = first + (++LMIC.chRnd % chans);
             if( (LMIC.channelMap[(chnl >> 4)] & (1<<(chnl & 0xF))) != 0 ) {
                 LMIC.txChnl = chnl;
                 return now;
@@ -831,7 +844,7 @@ static void initJoinLoop (void) {
     LMIC.txChnl = 0;
 #else
     LMIC.txChnl = EU() ? os_getRndU1() % NUM_DEFAULT_CHANNELS :
-        US915_125kHz_1STCHAN;
+        (LMIC.region & REGION_FULL) ? 0 : US915_125kHz_1STCHAN;
 #endif
     LMIC.adrTxPow = EU() ? 14 : 20;
     setDrJoin(DRCHG_SET, get_min_sf());
@@ -882,10 +895,12 @@ static ostime_t nextJoinState_US (void) {
     //
     u1_t failed = 0;
     if( LMIC.datarate != DR_SF8C_US ) {
-        LMIC.txChnl = US915_500kHz_CHAN;
+        LMIC.txChnl = (LMIC.region & REGION_FULL) ? 64+(LMIC.txChnl&7) :
+            US915_500kHz_CHAN;
         setDrJoin(DRCHG_SET, DR_SF8C_US);
     } else {
-        LMIC.txChnl =
+        LMIC.txChnl = (LMIC.region & REGION_FULL) ?
+            os_getRndU1() & 0x3F :
             US915_125kHz_1STCHAN + (os_getRndU1() & (US915_125kHz_CHANS - 1));
         s1_t dr = get_min_sf() - ++LMIC.txCnt;
         if( dr < DR_SF10_US ) {
