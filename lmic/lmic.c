@@ -550,7 +550,7 @@ static const u4_t iniChannelFreq[8] = {
 };
 #endif
 
-static u1_t get_min_sf() {
+static u1_t get_hi_dr() {
     u1_t min_sf = 0;
 
     if (param_get(PARAM_MIN_SF, &min_sf, sizeof(min_sf)))
@@ -573,10 +573,10 @@ static void initDefaultChannels_EU (bit_t join) {
 #else
     u1_t su = 0;
 #endif
-    u1_t min_sf = get_min_sf();
+    u1_t hi_dr = get_hi_dr();
     for( u1_t fu=0; fu<NUM_DEFAULT_CHANNELS; fu++,su++ ) {
         LMIC.channelFreq[fu]  = iniChannelFreq[su];
-        LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12_EU,min_sf);
+        LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12_EU,hi_dr);
     }
 
     LMIC.bands[BAND_MILLI_1].txcap    = 1000;  // 0.1%
@@ -659,7 +659,7 @@ bit_t LMIC_setupChannel_EU (u1_t chidx, u4_t freq, u2_t drmap, s1_t band) {
     }
     LMIC.channelFreq [chidx] = freq;
     LMIC.channelDrMap[chidx] = drmap==0 ?
-        DR_RANGE_MAP(DR_SF12_EU,get_min_sf()) : drmap;
+        DR_RANGE_MAP(DR_SF12_EU,get_hi_dr()) : drmap;
     LMIC.channelMap[0] |= 1<<chidx;  // enabled right away
     return 1;
 }
@@ -847,7 +847,7 @@ static void initJoinLoop (void) {
         (LMIC.region & REGION_FULL) ? 0 : US915_125kHz_1STCHAN;
 #endif
     LMIC.adrTxPow = EU() ? 14 : 20;
-    setDrJoin(DRCHG_SET, get_min_sf());
+    setDrJoin(DRCHG_SET, get_hi_dr());
     if (EU())
         initDefaultChannels_EU(1);
     ASSERT((LMIC.opmode & OP_NEXTCHNL)==0);
@@ -902,7 +902,7 @@ static ostime_t nextJoinState_US (void) {
         LMIC.txChnl = (LMIC.region & REGION_FULL) ?
             os_getRndU1() & 0x3F :
             US915_125kHz_1STCHAN + (os_getRndU1() & (US915_125kHz_CHANS - 1));
-        s1_t dr = get_min_sf() - ++LMIC.txCnt;
+        s1_t dr = get_hi_dr() - ++LMIC.txCnt;
         if( dr < DR_SF10_US ) {
             dr = DR_SF10_US;
             failed = 1; // All DR exhausted - signal failed
