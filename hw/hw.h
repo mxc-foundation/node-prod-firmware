@@ -18,6 +18,7 @@
 
 #define HW_VER_STRING		"DevKit 1.0"
 
+#define FEATURE_BATTERY
 #define FEATURE_LED_RGB
 #define FEATURE_POWER_SUPPLY
 #define FEATURE_SENSOR
@@ -26,7 +27,7 @@
 #define FEATURE_SENSOR_LIGHT
 #define FEATURE_USER_BUTTON
 
-#define INITIAL_SLEEP_MODE	pm_mode_idle
+#define INITIAL_SLEEP_MODE	pm_mode_extended_sleep
 
 #define HW_PS_EN_PORT		HW_GPIO_PORT_3
 #define HW_PS_EN_PIN		HW_GPIO_PIN_4
