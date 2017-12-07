@@ -32,13 +32,14 @@
 // BEG: Keep in sync with lorabase.hpp
 //
 
-#define REGION_EU   0
-#define REGION_US   1
-#define REGION_AU   2
-#define REGION_AS1  3
-#define REGION_KR   4
-#define REGION_MASK 0x07
-#define REGION_FULL 8
+#define REGION_EU       0
+#define REGION_US       1
+#define REGION_AU       2
+#define REGION_AS1      3
+#define REGION_KR       4
+#define REGION_MASK     0x07
+#define REGION_FULL     8
+#define REGION_FLAGS    0x08
 
 enum _cr_t { CR_4_5=0, CR_4_6, CR_4_7, CR_4_8 };
 enum _sf_t { FSK=0, SF7, SF8, SF9, SF10, SF11, SF12, SFrfu };
@@ -78,10 +79,51 @@ enum { BCN_RESERVE_us    = 2120000 };
 enum { BCN_GUARD_us      = 3000000 };
 enum { BCN_SLOT_SPAN_us  =   30000 };
 
-enum _dr_eu868_t { DR_SF12_EU=0, DR_SF11_EU, DR_SF10_EU, DR_SF9_EU, DR_SF8_EU, DR_SF7_EU, DR_SF7B_EU, DR_FSK_EU, DR_NONE_EU };
-enum _dr_us915_t { DR_SF10_US=0, DR_SF9_US, DR_SF8_US, DR_SF7_US, DR_SF8C_US, DR_NONE_US,
-                   // Devices behind a router:
-                   DR_SF12CR_US=8, DR_SF11CR_US, DR_SF10CR_US, DR_SF9CR_US, DR_SF8CR_US, DR_SF7CR_US };
+enum _dr_eu868_t {
+    DR_SF12_EU=0,
+    DR_SF11_EU,
+    DR_SF10_EU,
+    DR_SF9_EU,
+    DR_SF8_EU,
+    DR_SF7_EU,
+    DR_SF7B_EU,
+    DR_FSK_EU,
+    DR_NONE_EU,
+};
+
+enum _dr_us915_t {
+    DR_SF10_US=0,
+    DR_SF9_US,
+    DR_SF8_US,
+    DR_SF7_US,
+    DR_SF8C_US,
+    DR_NONE_US,
+    // Devices behind a router:
+    DR_SF12CR_US=8,
+    DR_SF11CR_US,
+    DR_SF10CR_US,
+    DR_SF9CR_US,
+    DR_SF8CR_US,
+    DR_SF7CR_US,
+};
+
+enum _dr_au915_t {
+    DR_SF12_AU=0,
+    DR_SF11_AU,
+    DR_SF10_AU,
+    DR_SF9_AU,
+    DR_SF8_AU,
+    DR_SF7_AU,
+    DR_SF8C_AU,
+    DR_NONE_AU,
+    // Devices behind a router:
+    DR_SF12CR_AU=8,
+    DR_SF11CR_AU,
+    DR_SF10CR_AU,
+    DR_SF9CR_AU,
+    DR_SF8CR_AU,
+    DR_SF7CR_AU,
+};
 
 enum { DR_PAGE_EU = DR_PAGE_EU868 };
 

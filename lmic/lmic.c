@@ -226,11 +226,14 @@ static void aes_sessKeys (u2_t devnonce, xref2cu1_t artnonce, xref2u1_t nwkkey, 
 #define EU()    (LMIC.region == REGION_EU)
 #define REG(x)  (EU() ? x ## _EU : x ## _US)
 
-#define maxFrameLen(dr) ((dr)<=(EU() ? DR_SF9_EU : DR_SF11CR_US) ? REG(maxFrameLensEU)[(dr)] : 0xFF)
-const u1_t maxFrameLens_EU [] = { 64,64,64,123 };
-const u1_t maxFrameLens_US [] = { 24,66,142,255,255,255,255,255,  66,142 };
+#define maxFrameLen(dr) ((dr)<=(EU() ? DR_SF9_EU : DR_SF11CR_US) ?  \
+    (EU() ? maxFrameLens_EU : freq_map[LMIC.region].max_frame_lens)[(dr)] : \
+    0xFF)
+static const u1_t maxFrameLens_EU [] = { 64,64,64,123 };
+static const u1_t maxFrameLens_US [] = { 24,66,142,255,255,255,255,255,  66,142 };
+static const u1_t maxFrameLens_AU [] = { 64,64,64,128,235,235,235,255,  66,142 };
 
-const u1_t _DR2RPS_CRC_EU[] = {
+static const u1_t _DR2RPS_CRC_EU[] = {
     ILLEGAL_RPS,
     (u1_t)MAKERPS(SF12, BW125, CR_4_5, 0, 0),
     (u1_t)MAKERPS(SF11, BW125, CR_4_5, 0, 0),
@@ -243,7 +246,7 @@ const u1_t _DR2RPS_CRC_EU[] = {
     ILLEGAL_RPS
 };
 
-const u1_t _DR2RPS_CRC_US[] = {
+static const u1_t _DR2RPS_CRC_US[] = {
     ILLEGAL_RPS,
     MAKERPS(SF10, BW125, CR_4_5, 0, 0),
     MAKERPS(SF9 , BW125, CR_4_5, 0, 0),
@@ -252,6 +255,25 @@ const u1_t _DR2RPS_CRC_US[] = {
     MAKERPS(SF8 , BW500, CR_4_5, 0, 0),
     ILLEGAL_RPS ,
     ILLEGAL_RPS ,
+    ILLEGAL_RPS ,
+    MAKERPS(SF12, BW500, CR_4_5, 0, 0),
+    MAKERPS(SF11, BW500, CR_4_5, 0, 0),
+    MAKERPS(SF10, BW500, CR_4_5, 0, 0),
+    MAKERPS(SF9 , BW500, CR_4_5, 0, 0),
+    MAKERPS(SF8 , BW500, CR_4_5, 0, 0),
+    MAKERPS(SF7 , BW500, CR_4_5, 0, 0),
+    ILLEGAL_RPS
+};
+
+static const u1_t _DR2RPS_CRC_AU[] = {
+    ILLEGAL_RPS,
+    MAKERPS(SF12, BW125, CR_4_5, 0, 0),
+    MAKERPS(SF11, BW125, CR_4_5, 0, 0),
+    MAKERPS(SF10, BW125, CR_4_5, 0, 0),
+    MAKERPS(SF9 , BW125, CR_4_5, 0, 0),
+    MAKERPS(SF8 , BW125, CR_4_5, 0, 0),
+    MAKERPS(SF7 , BW125, CR_4_5, 0, 0),
+    MAKERPS(SF8 , BW500, CR_4_5, 0, 0),
     ILLEGAL_RPS ,
     MAKERPS(SF12, BW500, CR_4_5, 0, 0),
     MAKERPS(SF11, BW500, CR_4_5, 0, 0),
@@ -284,6 +306,114 @@ static const u1_t SENSITIVITY[7][3] = {
 int getSensitivity (rps_t rps) {
     return -141 + SENSITIVITY[getSf(rps)][getBw(rps)];
 }
+
+
+// Table below defines the size of one symbol as
+//   symtime = 256us * 2^T(sf,bw)
+// 256us is called one symunit. 
+//                 SF:                                  
+//      BW:      |__7___8___9__10__11__12
+//      125kHz   |  2   3   4   5   6   7
+//      250kHz   |  1   2   3   4   5   6
+//      500kHz   |  0   1   2   3   4   5
+//  
+// Times for half symbol per DR
+// Per DR table to minimize rounding errors
+static const ostime_t DR2HSYM_osticks_EU[] = {
+    us2osticksRound(128<<7),  // DR_SF12_EU
+    us2osticksRound(128<<6),  // DR_SF11_EU
+    us2osticksRound(128<<5),  // DR_SF10_EU
+    us2osticksRound(128<<4),  // DR_SF9_EU
+    us2osticksRound(128<<3),  // DR_SF8_EU
+    us2osticksRound(128<<2),  // DR_SF7_EU
+    us2osticksRound(128<<1),  // DR_SF7B_EU
+    us2osticksRound(80)       // FSK -- not used (time for 1/2 byte)
+};
+static const ostime_t DR2HSYM_osticks_AU[] = {
+    us2osticksRound(128<<7),  // DR_SF12_AU
+    us2osticksRound(128<<6),  // DR_SF11_AU
+    us2osticksRound(128<<5),  // DR_SF10_{AU,US}   DR_SF12CR_{AU,US}
+    us2osticksRound(128<<4),  // DR_SF9_{AU,US}    DR_SF11CR_{AU,US}
+    us2osticksRound(128<<3),  // DR_SF8_{AU,US}    DR_SF10CR_{AU,US}
+    us2osticksRound(128<<2),  // DR_SF7_{AU,US}    DR_SF9CR_{AU,US}
+    us2osticksRound(128<<1),  // DR_SF8C_{AU,US}   DR_SF8CR_{AU,US}
+    us2osticksRound(128<<0)   // ---------         DR_SF7CR_{AU,US}
+};
+#define DR2HSYM_osticks_US  (DR2HSYM_osticks_AU + 2)
+
+static ostime_t dr2hsym_US(dr_t dr) {
+    return DR2HSYM_osticks_US[dr&7];
+}
+
+static ostime_t dr2hsym_AU(dr_t dr) {
+    return DR2HSYM_osticks_AU[((dr&8)>>2)+(dr&7)];
+}
+
+#define dr2hsym(dr) (EU() ? DR2HSYM_osticks_EU[dr] :                    \
+    freq_map[LMIC.region].dr2hsym(dr))
+
+
+static const struct freq_map {
+    ostime_t    (*dr2hsym)(dr_t);
+    const u1_t  *dr2rps;
+    const u1_t  *max_frame_lens;
+    u4_t    freq_125kHz_upfbase;
+    u4_t    freq_125kHz_upfstep;
+    u4_t    freq_500kHz_upfbase;
+    u4_t    freq_500kHz_upfstep;
+    u4_t    freq_500kHz_dnfbase;
+    u4_t    freq_500kHz_dnfstep;
+    u4_t    freq_min;
+    u4_t    freq_max;
+    u1_t    freq_125kHz_1stchan;
+    u1_t    freq_125kHz_chans;
+    u1_t    freq_500kHz_chan;
+    u1_t    max_sf;
+    u1_t    dr_sf8c;
+    u1_t    rx1_dr_offset;
+    u2_t    drmap;
+} freq_map[] = {
+    [REGION_US] = {
+        .dr2hsym                = dr2hsym_US,
+        .dr2rps                 = _DR2RPS_CRC_US,
+        .max_frame_lens         = maxFrameLens_US,
+        .freq_125kHz_upfbase    = 902300000,
+        .freq_125kHz_upfstep    =    200000,
+        .freq_500kHz_upfbase    = 903000000,
+        .freq_500kHz_upfstep    =   1600000,
+        .freq_500kHz_dnfbase    = 923300000,
+        .freq_500kHz_dnfstep    =    600000,
+        .freq_min               = 902000000,
+        .freq_max               = 928000000,
+        .freq_125kHz_1stchan    =         8,
+        .freq_125kHz_chans      =         8,
+        .freq_500kHz_chan       =        65,
+        .max_sf                 =        10,
+        .dr_sf8c                = DR_SF8C_US,
+        .rx1_dr_offset          = DR_SF10CR_US - DR_SF10_US,
+        .drmap                  = DR_RANGE_MAP(DR_SF10_US, DR_SF8C_US),
+    },
+    [REGION_AU] = {
+        .dr2hsym                = dr2hsym_AU,
+        .dr2rps                 = _DR2RPS_CRC_AU,
+        .max_frame_lens         = maxFrameLens_AU,
+        .freq_125kHz_upfbase    = 915200000,
+        .freq_125kHz_upfstep    =    200000,
+        .freq_500kHz_upfbase    = 915900000,
+        .freq_500kHz_upfstep    =   1600000,
+        .freq_500kHz_dnfbase    = 923300000,
+        .freq_500kHz_dnfstep    =    600000,
+        .freq_min               = 915000000,
+        .freq_max               = 928000000,
+        .freq_125kHz_1stchan    =         0,
+        .freq_125kHz_chans      =         8,
+        .freq_500kHz_chan       =        64,
+        .max_sf                 =        12,
+        .dr_sf8c                = DR_SF8C_AU,
+        .rx1_dr_offset          = DR_SF12CR_AU - DR_SF12_AU,
+        .drmap                  = DR_RANGE_MAP(DR_SF12_AU, DR_SF8C_AU),
+    },
+};
 
 ostime_t calcAirTime (rps_t rps, u1_t plen) {
     u1_t bw = getBw(rps);  // 0,1,2 = 125,250,500kHz
@@ -323,14 +453,15 @@ ostime_t calcAirTime (rps_t rps, u1_t plen) {
     return (((ostime_t)tmp << sfx) * OSTICKS_PER_SEC + div/2) / div;
 }
 
-inline rps_t updr2rps (dr_t dr) { return (rps_t)REG(_DR2RPS_CRC)[dr+1]; }
-inline rps_t dndr2rps (dr_t dr) { return setNocrc(updr2rps(dr),1); }
+static inline const u1_t *dr2rps ()    { return EU() ? _DR2RPS_CRC_EU : freq_map[LMIC.region].dr2rps; }
+static inline rps_t updr2rps (dr_t dr) { return (rps_t)dr2rps()[dr+1]; }
+static inline rps_t dndr2rps (dr_t dr) { return setNocrc(updr2rps(dr),1); }
 inline int isFasterDR (dr_t dr1, dr_t dr2) { return dr1 > dr2; }
 inline int isSlowerDR (dr_t dr1, dr_t dr2) { return dr1 < dr2; }
-inline dr_t  incDR    (dr_t dr) { return REG(_DR2RPS_CRC)[dr+2]==ILLEGAL_RPS ? dr : (dr_t)(dr+1); } // increase data rate
-inline dr_t  decDR    (dr_t dr) { return REG(_DR2RPS_CRC)[dr  ]==ILLEGAL_RPS ? dr : (dr_t)(dr-1); } // decrease data rate
-inline bit_t validDR  (dr_t dr) { return REG(_DR2RPS_CRC)[dr+1]!=ILLEGAL_RPS; } // in range
-inline dr_t  lowerDR  (dr_t dr, u1_t n) { while(n--){dr=decDR(dr);} return dr; } // decrease data rate by n steps
+static inline dr_t  incDR    (dr_t dr) { return dr2rps()[dr+2]==ILLEGAL_RPS ? dr : (dr_t)(dr+1); } // increase data rate
+static inline dr_t  decDR    (dr_t dr) { return dr2rps()[dr  ]==ILLEGAL_RPS ? dr : (dr_t)(dr-1); } // decrease data rate
+static inline bit_t validDR  (dr_t dr) { return dr2rps()[dr+1]!=ILLEGAL_RPS; } // in range
+static inline dr_t  lowerDR  (dr_t dr, u1_t n) { while(n--){dr=decDR(dr);} return dr; } // decrease data rate by n steps
 
 extern inline sf_t  getSf    (rps_t params);
 extern inline rps_t setSf    (rps_t params, sf_t sf);
@@ -358,38 +489,6 @@ static const u1_t DRADJUST[2+TXCONF_ATTEMPTS] = {
     // confirmed frames
     0,0,1,0,1,0,1,0,0
 };
-
-
-// Table below defines the size of one symbol as
-//   symtime = 256us * 2^T(sf,bw)
-// 256us is called one symunit. 
-//                 SF:                                  
-//      BW:      |__7___8___9__10__11__12
-//      125kHz   |  2   3   4   5   6   7
-//      250kHz   |  1   2   3   4   5   6
-//      500kHz   |  0   1   2   3   4   5
-//  
-// Times for half symbol per DR
-// Per DR table to minimize rounding errors
-static const ostime_t DR2HSYM_osticks_EU[] = {
-    us2osticksRound(128<<7),  // DR_SF12_EU
-    us2osticksRound(128<<6),  // DR_SF11_EU
-    us2osticksRound(128<<5),  // DR_SF10_EU
-    us2osticksRound(128<<4),  // DR_SF9_EU
-    us2osticksRound(128<<3),  // DR_SF8_EU
-    us2osticksRound(128<<2),  // DR_SF7_EU
-    us2osticksRound(128<<1),  // DR_SF7B_EU
-    us2osticksRound(80)       // FSK -- not used (time for 1/2 byte)
-};
-static const ostime_t DR2HSYM_osticks_US[] = {
-    us2osticksRound(128<<5),  // DR_SF10_US   DR_SF12CR_US
-    us2osticksRound(128<<4),  // DR_SF9_US    DR_SF11CR_US
-    us2osticksRound(128<<3),  // DR_SF8_US    DR_SF10CR_US
-    us2osticksRound(128<<2),  // DR_SF7_US    DR_SF9CR_US
-    us2osticksRound(128<<1),  // DR_SF8C_US   DR_SF8CR_US
-    us2osticksRound(128<<0)   // ---------    DR_SF7CR_US
-};
-#define dr2hsym(dr) (REG(DR2HSYM_osticks)[(dr)&7])
 
 
 static ostime_t calcRxWindow (u1_t secs, dr_t dr) {
@@ -552,12 +651,15 @@ static const u4_t iniChannelFreq[8] = {
 
 static u1_t get_hi_dr() {
     u1_t min_sf = 0;
+    u1_t max_sf = EU() ? 12 : freq_map[LMIC.region].max_sf;
 
     if (param_get(PARAM_MIN_SF, &min_sf, sizeof(min_sf)))
         min_sf &= 0xf;
-    if (min_sf < 7 || min_sf > (EU() ? 12 : 10))
-        return REG(DR_SF7);
-    return (EU() ? DR_SF12_EU + 12 : DR_SF10_US + 10) - min_sf;
+    if (min_sf < 7)
+        min_sf = 7;
+    else if (min_sf > max_sf)
+        min_sf = max_sf;
+    return max_sf - min_sf;
 }
 
 static void initDefaultChannels_EU (bit_t join) {
@@ -609,9 +711,11 @@ static void initDefaultChannels_US (void) {
     } else {
         for( u1_t i=0; i<4; i++ )
             LMIC.channelMap[i] = 0x0000;
-        LMIC.channelMap[US915_125kHz_1STCHAN / 16] =
-            ((1 << US915_125kHz_CHANS) - 1) << (US915_125kHz_1STCHAN % 16);
-        LMIC.channelMap[4] = 1 << (US915_500kHz_CHAN - 64);
+        const struct freq_map *freq = freq_map + LMIC.region;
+        LMIC.channelMap[freq->freq_125kHz_1stchan / 16] =
+            ((1 << freq->freq_125kHz_chans) - 1) <<
+            (freq->freq_125kHz_1stchan % 16);
+        LMIC.channelMap[4] = 1 << (freq->freq_500kHz_chan - 64);
     }
 }
 
@@ -621,7 +725,8 @@ static u4_t convFreq (xref2u1_t ptr) {
         if( freq < EU868_FREQ_MIN || freq > EU868_FREQ_MAX )
             freq = 0;
     } else {
-        if( freq < US915_FREQ_MIN || freq > US915_FREQ_MAX )
+        if( freq < freq_map[LMIC.region].freq_min ||
+            freq > freq_map[LMIC.region].freq_max )
             freq = 0;
     }
     return freq;
@@ -670,7 +775,7 @@ bit_t LMIC_setupChannel_US (u1_t chidx, u4_t freq, u2_t drmap, s1_t band) {
         return 0; // channels 0..71 are hardwired
     chidx -= 72;
     LMIC.xchFreq[chidx] = freq;
-    LMIC.xchDrMap[chidx] = drmap==0 ? DR_RANGE_MAP(DR_SF10_US,DR_SF8C_US) : drmap;
+    LMIC.xchDrMap[chidx] = drmap==0 ? freq_map[LMIC.region].drmap : drmap;
     LMIC.channelMap[chidx>>4] |= (1<<(chidx&0xF));
     return 1;
 }
@@ -731,15 +836,16 @@ static void updateTx_EU (ostime_t txbeg) {
 }
 
 static void updateTx_US (ostime_t txbeg) {
+    const struct freq_map *freq = freq_map + LMIC.region;
     u1_t chnl = LMIC.txChnl;
     if( chnl < 64 ) {
-        LMIC.freq = US915_125kHz_UPFBASE + chnl*US915_125kHz_UPFSTEP;
+        LMIC.freq = freq->freq_125kHz_upfbase + chnl*freq->freq_125kHz_upfstep;
         LMIC.txpow = 30;
         return;
     }
     LMIC.txpow = 26;
     if( chnl < 64+8 ) {
-        LMIC.freq = US915_500kHz_UPFBASE + (chnl-64)*US915_500kHz_UPFSTEP;
+        LMIC.freq = freq->freq_500kHz_upfbase + (chnl-64)*freq->freq_500kHz_upfstep;
     } else {
         ASSERT(chnl < 64+8+MAX_XCHANNELS_US);
         LMIC.freq = LMIC.xchFreq[chnl-72];
@@ -789,12 +895,12 @@ static ostime_t nextTx_US (ostime_t now) {
         first = 0;
         chans = 64;
     } else {
-        first = US915_125kHz_1STCHAN;
-        chans = US915_125kHz_CHANS;
+        first = freq_map[LMIC.region].freq_125kHz_1stchan;
+        chans = freq_map[LMIC.region].freq_125kHz_chans;
     }
     if( LMIC.chRnd==0 )
         LMIC.chRnd = os_getRndU1() % chans;
-    if( LMIC.datarate >= DR_SF8C_US ) { // 500kHz
+    if( LMIC.datarate >= freq_map[LMIC.region].dr_sf8c ) { // 500kHz
         u1_t map = LMIC.channelMap[64/16]&0xFF;
         for( u1_t i=0; i<8; i++ ) {
             if( (map & (1<<(++LMIC.chRnd & 7))) != 0 ) {
@@ -822,17 +928,18 @@ static void setBcnRxParams (void) {
     if (EU())
         LMIC.freq = LMIC.channelFreq[LMIC.bcnChnl] & ~(u4_t)7;
     else
-        LMIC.freq = US915_500kHz_DNFBASE + LMIC.bcnChnl * US915_500kHz_DNFSTEP;
+        LMIC.freq = freq_map[LMIC.region].freq_500kHz_dnfbase + LMIC.bcnChnl * freq_map[LMIC.region].freq_500kHz_dnfstep;
     LMIC.rps  = setIh(setNocrc(dndr2rps((dr_t)REG(DR_BCN)),1),REG(LEN_BCN));
 }
 
 #define setRx1Params() do {                                             \
     if (!EU()) {                                                        \
-        LMIC.freq = US915_500kHz_DNFBASE +                              \
-            (LMIC.txChnl & 0x7) * US915_500kHz_DNFSTEP;                 \
-        if( /* TX datarate */LMIC.dndr < DR_SF8C_US )                   \
-            LMIC.dndr += DR_SF10CR_US - DR_SF10_US;                     \
-        else if( LMIC.dndr == DR_SF8C_US )                              \
+        const struct freq_map *freq = freq_map + LMIC.region;           \
+        LMIC.freq = freq->freq_500kHz_dnfbase +                         \
+            (LMIC.txChnl & 0x7) * freq->freq_500kHz_dnfstep;            \
+        if( /* TX datarate */LMIC.dndr < freq->dr_sf8c )                \
+            LMIC.dndr += freq->rx1_dr_offset;                           \
+        else if( LMIC.dndr == freq->dr_sf8c )                           \
             LMIC.dndr = DR_SF7CR_US;                                    \
         LMIC.rps = dndr2rps(LMIC.dndr);                                 \
     }                                                                   \
@@ -844,7 +951,8 @@ static void initJoinLoop (void) {
     LMIC.txChnl = 0;
 #else
     LMIC.txChnl = EU() ? os_getRndU1() % NUM_DEFAULT_CHANNELS :
-        (LMIC.region & REGION_FULL) ? 0 : US915_125kHz_1STCHAN;
+        (LMIC.region & REGION_FULL) ? 0 :
+        freq_map[LMIC.region].freq_125kHz_1stchan;
 #endif
     LMIC.adrTxPow = EU() ? 14 : 20;
     setDrJoin(DRCHG_SET, get_hi_dr());
@@ -894,14 +1002,15 @@ static ostime_t nextJoinState_US (void) {
     //   SF8C        on a random channel 64..71
     //
     u1_t failed = 0;
-    if( LMIC.datarate != DR_SF8C_US ) {
+    if( LMIC.datarate != freq_map[LMIC.region].dr_sf8c ) {
         LMIC.txChnl = (LMIC.region & REGION_FULL) ? 64+(LMIC.txChnl&7) :
-            US915_500kHz_CHAN;
-        setDrJoin(DRCHG_SET, DR_SF8C_US);
+            freq_map[LMIC.region].freq_500kHz_chan;
+        setDrJoin(DRCHG_SET, freq_map[LMIC.region].dr_sf8c);
     } else {
         LMIC.txChnl = (LMIC.region & REGION_FULL) ?
             os_getRndU1() & 0x3F :
-            US915_125kHz_1STCHAN + (os_getRndU1() & (US915_125kHz_CHANS - 1));
+            freq_map[LMIC.region].freq_125kHz_1stchan +
+            (os_getRndU1() % freq_map[LMIC.region].freq_125kHz_chans);
         s1_t dr = get_hi_dr() - ++LMIC.txCnt;
         if( dr < DR_SF10_US ) {
             dr = DR_SF10_US;
@@ -2129,6 +2238,11 @@ void LMIC_reset (u1_t region) {
     os_clearCallback(&LMIC.osjob);
 
     os_clearMem((xref2u1_t)&LMIC,SIZEOFEXPR(LMIC));
+    if ((region & ~(REGION_MASK | REGION_FLAGS)) != 0 ||
+        region == (REGION_EU | REGION_FULL) ||
+        (region & REGION_MASK) >= sizeof(freq_map) / sizeof(*freq_map)) {
+        region = REGION_EU;
+    }
     LMIC.region       =  region;
     LMIC.devaddr      =  0;
     LMIC.devNonce     =  os_getRndU2();
