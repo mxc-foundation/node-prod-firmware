@@ -1,5 +1,8 @@
 #include <ad_battery.h>
+#include "hw/hw.h"
 #include "sensor/bat.h"
+
+#ifdef FEATURE_BATTERY
 
 #define mV_DIV	10
 #define mV_MIN	2000				/* 2000 mV */
@@ -20,3 +23,5 @@ bat_level()
 		voltage = mV_MAX;
 	return (voltage - mV_MIN) / mV_DIV;
 }
+
+#endif /* FEATURE_BATTERY */

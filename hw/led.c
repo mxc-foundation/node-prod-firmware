@@ -137,6 +137,7 @@ led_update_battery(void)
 {
 	uint8_t	s = LED_BATTERY_OK;
 
+#ifdef FEATURE_BATTERY
 	if (hw_charger_is_charging())
 		s = LED_BATTERY_CHARGING;
 	else if (hw_charger_check_vbus())
@@ -145,6 +146,7 @@ led_update_battery(void)
 		s = LED_BATTERY_LOW;
 	if (s == battery_status)
 		return false;
+#endif
 	battery_status = s;
 	return led_update_status();
 }
