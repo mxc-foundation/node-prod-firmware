@@ -9,7 +9,7 @@
 #include "lmic/oslmic.h"
 #include "gps.h"
 
-#ifdef FEATURE_SENSOR_GPS
+#ifdef FEATURE_SENSOR_GPS_ACCEL
 
 //#define DEBUG
 
@@ -163,4 +163,4 @@ accel_status()
 	return status == -1 ? -1 : !level;
 }
 
-#endif /* FEATURE_SENSOR_GPS */
+#endif /* FEATURE_SENSOR_GPS_ACCEL */

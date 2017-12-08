@@ -4,6 +4,8 @@
 #include "hw/hw.h"
 #include "hw/i2c.h"
 
+#ifdef FEATURE_I2C
+
 static void
 i2c_set_addr(uint8_t addr)
 {
@@ -58,3 +60,5 @@ i2c_init()
 	    HW_GPIO_MODE_INPUT,  HW_GPIO_FUNC_I2C_SDA, true);
 	hw_i2c_init(HW_I2C1, &i2c_cfg);
 }
+
+#endif /* FEATURE_I2C */

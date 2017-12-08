@@ -52,7 +52,9 @@ const struct sensor_callbacks	sensor_cb[] = {
 		.prepare	= gps_prepare,
 		.data_ready	= gps_data_ready,
 		.read		= gps_read,
+#ifdef FEATURE_SENSOR_GPS_ACCEL
 		.txstart	= gps_txstart,
+#endif
 	},
 #endif
 #ifdef FEATURE_SENSOR_TEMP

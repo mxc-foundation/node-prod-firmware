@@ -19,6 +19,7 @@
 #define HW_VER_STRING		"DevKit 1.0"
 
 #define FEATURE_BATTERY
+#define FEATURE_I2C
 #define FEATURE_LED_RGB
 #define FEATURE_POWER_SUPPLY
 #define FEATURE_SENSOR
@@ -86,20 +87,27 @@
 #define FEATURE_SENSOR_TEMP_INTERNAL
 #define FEATURE_USER_BUTTON
 
-#define INITIAL_SLEEP_MODE	pm_mode_extended_sleep
-
 #if HW_VERSION == HW_MATCHSTICK_1_0a
 
 #define HW_VER_STRING		"MatchStick 1.0a"
+
+#define INITIAL_SLEEP_MODE	pm_mode_extended_sleep
 
 #define HW_CONSOLE_UART_TX_PORT	HW_GPIO_PORT_4
 #define HW_CONSOLE_UART_TX_PIN	HW_GPIO_PIN_5
 #define HW_LORA_SPI_CLK_PORT	HW_GPIO_PORT_1
 #define HW_LORA_SPI_CLK_PIN	HW_GPIO_PIN_0
 
+#define HW_POWER_SENSOR_INVERT	true
+
 #elif HW_VERSION == HW_MATCHSTICK_2_0a
 
 #define HW_VER_STRING		"MatchStick 2.0a"
+
+#define INITIAL_SLEEP_MODE	pm_mode_extended_sleep
+
+#define FEATURE_I2C
+#define FEATURE_SENSOR_GPS_ACCEL
 
 #define HW_CONSOLE_UART_TX_PORT	HW_GPIO_PORT_1
 #define HW_CONSOLE_UART_TX_PIN	HW_GPIO_PIN_0
@@ -113,6 +121,8 @@
 #define HW_I2C_SCL_PIN		HW_GPIO_PIN_3
 #define HW_I2C_SDA_PORT		HW_GPIO_PORT_0
 #define HW_I2C_SDA_PIN		HW_GPIO_PIN_7
+
+#define HW_POWER_SENSOR_INVERT	false
 
 #else
 #error Unsupported Matchstick version

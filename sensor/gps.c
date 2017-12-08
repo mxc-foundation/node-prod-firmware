@@ -299,6 +299,7 @@ gps_read(char *buf, int len)
 	return sizeof(last_fix);
 }
 
+#ifdef FEATURE_SENSOR_GPS_ACCEL
 void
 gps_txstart()
 {
@@ -307,5 +308,6 @@ gps_txstart()
 		power(POWER_SENSOR, false);
 	}
 }
+#endif
 
 #endif /* FEATURE_SENSOR_GPS */
