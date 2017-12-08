@@ -33,13 +33,14 @@
 //
 
 #define REGION_EU       0
-#define REGION_US       1
-#define REGION_AU       2
-#define REGION_AS1      3
-#define REGION_KR       4
+#define REGION_AS1      1
+#define REGION_KR       2
+#define REGION_US       (REGION_WIDEBAND | 0)
+#define REGION_AU       (REGION_WIDEBAND | 1)
 #define REGION_MASK     0x07
-#define REGION_FULL     8
-#define REGION_FLAGS    0x08
+#define REGION_FULL     0x10
+#define REGION_WIDEBAND 0x08
+#define REGION_FLAGS    0x18
 
 enum _cr_t { CR_4_5=0, CR_4_6, CR_4_7, CR_4_8 };
 enum _sf_t { FSK=0, SF7, SF8, SF9, SF10, SF11, SF12, SFrfu };

@@ -223,11 +223,11 @@ static void aes_sessKeys (u2_t devnonce, xref2cu1_t artnonce, xref2u1_t nwkkey, 
 // ================================================================================
 // BEG LORA
 
-#define EU()    (LMIC.region == REGION_EU)
+#define EU()    (LMIC.wb_reg == NULL)
 #define REG(x)  (EU() ? x ## _EU : x ## _US)
 
-#define maxFrameLen(dr) ((dr)<=(EU() ? DR_SF9_EU : DR_SF11CR_US) ?  \
-    (EU() ? maxFrameLens_EU : freq_map[LMIC.region].max_frame_lens)[(dr)] : \
+#define maxFrameLen(dr) ((dr)<=(EU() ? DR_SF9_EU : DR_SF11CR_US) ?      \
+    (EU() ? maxFrameLens_EU : LMIC.wb_reg->max_frame_lens)[(dr)] :      \
     0xFF)
 static const u1_t maxFrameLens_EU [] = { 64,64,64,123 };
 static const u1_t maxFrameLens_US [] = { 24,66,142,255,255,255,255,255,  66,142 };
@@ -349,11 +349,11 @@ static ostime_t dr2hsym_AU(dr_t dr) {
     return DR2HSYM_osticks_AU[((dr&8)>>2)+(dr&7)];
 }
 
-#define dr2hsym(dr) (EU() ? DR2HSYM_osticks_EU[dr] :                    \
-    freq_map[LMIC.region].dr2hsym(dr))
+#define dr2hsym(dr) (EU() ? DR2HSYM_osticks_EU[dr] : LMIC.wb_reg->dr2hsym(dr))
 
 
-static const struct freq_map {
+// Wide band region
+static const struct wb_reg {
     ostime_t    (*dr2hsym)(dr_t);
     const u1_t  *dr2rps;
     const u1_t  *max_frame_lens;
@@ -372,8 +372,8 @@ static const struct freq_map {
     u1_t    dr_sf8c;
     u1_t    rx1_dr_offset;
     u2_t    drmap;
-} freq_map[] = {
-    [REGION_US] = {
+} wb_reg[] = {
+    [REGION_US & REGION_MASK] = {
         .dr2hsym                = dr2hsym_US,
         .dr2rps                 = _DR2RPS_CRC_US,
         .max_frame_lens         = maxFrameLens_US,
@@ -393,7 +393,7 @@ static const struct freq_map {
         .rx1_dr_offset          = DR_SF10CR_US - DR_SF10_US,
         .drmap                  = DR_RANGE_MAP(DR_SF10_US, DR_SF8C_US),
     },
-    [REGION_AU] = {
+    [REGION_AU & REGION_MASK] = {
         .dr2hsym                = dr2hsym_AU,
         .dr2rps                 = _DR2RPS_CRC_AU,
         .max_frame_lens         = maxFrameLens_AU,
@@ -453,7 +453,7 @@ ostime_t calcAirTime (rps_t rps, u1_t plen) {
     return (((ostime_t)tmp << sfx) * OSTICKS_PER_SEC + div/2) / div;
 }
 
-static inline const u1_t *dr2rps ()    { return EU() ? _DR2RPS_CRC_EU : freq_map[LMIC.region].dr2rps; }
+static inline const u1_t *dr2rps ()    { return EU() ? _DR2RPS_CRC_EU : LMIC.wb_reg->dr2rps; }
 static inline rps_t updr2rps (dr_t dr) { return (rps_t)dr2rps()[dr+1]; }
 static inline rps_t dndr2rps (dr_t dr) { return setNocrc(updr2rps(dr),1); }
 inline int isFasterDR (dr_t dr1, dr_t dr2) { return dr1 > dr2; }
@@ -651,7 +651,7 @@ static const u4_t iniChannelFreq[8] = {
 
 static u1_t get_hi_dr() {
     u1_t min_sf = 0;
-    u1_t max_sf = EU() ? 12 : freq_map[LMIC.region].max_sf;
+    u1_t max_sf = EU() ? 12 : LMIC.wb_reg->max_sf;
 
     if (param_get(PARAM_MIN_SF, &min_sf, sizeof(min_sf)))
         min_sf &= 0xf;
@@ -711,11 +711,10 @@ static void initDefaultChannels_US (void) {
     } else {
         for( u1_t i=0; i<4; i++ )
             LMIC.channelMap[i] = 0x0000;
-        const struct freq_map *freq = freq_map + LMIC.region;
-        LMIC.channelMap[freq->freq_125kHz_1stchan / 16] =
-            ((1 << freq->freq_125kHz_chans) - 1) <<
-            (freq->freq_125kHz_1stchan % 16);
-        LMIC.channelMap[4] = 1 << (freq->freq_500kHz_chan - 64);
+        LMIC.channelMap[LMIC.wb_reg->freq_125kHz_1stchan / 16] =
+            ((1 << LMIC.wb_reg->freq_125kHz_chans) - 1) <<
+            (LMIC.wb_reg->freq_125kHz_1stchan % 16);
+        LMIC.channelMap[4] = 1 << (LMIC.wb_reg->freq_500kHz_chan - 64);
     }
 }
 
@@ -725,8 +724,7 @@ static u4_t convFreq (xref2u1_t ptr) {
         if( freq < EU868_FREQ_MIN || freq > EU868_FREQ_MAX )
             freq = 0;
     } else {
-        if( freq < freq_map[LMIC.region].freq_min ||
-            freq > freq_map[LMIC.region].freq_max )
+        if( freq < LMIC.wb_reg->freq_min || freq > LMIC.wb_reg->freq_max )
             freq = 0;
     }
     return freq;
@@ -775,7 +773,7 @@ bit_t LMIC_setupChannel_US (u1_t chidx, u4_t freq, u2_t drmap, s1_t band) {
         return 0; // channels 0..71 are hardwired
     chidx -= 72;
     LMIC.xchFreq[chidx] = freq;
-    LMIC.xchDrMap[chidx] = drmap==0 ? freq_map[LMIC.region].drmap : drmap;
+    LMIC.xchDrMap[chidx] = drmap==0 ? LMIC.wb_reg->drmap : drmap;
     LMIC.channelMap[chidx>>4] |= (1<<(chidx&0xF));
     return 1;
 }
@@ -836,16 +834,17 @@ static void updateTx_EU (ostime_t txbeg) {
 }
 
 static void updateTx_US (ostime_t txbeg) {
-    const struct freq_map *freq = freq_map + LMIC.region;
     u1_t chnl = LMIC.txChnl;
     if( chnl < 64 ) {
-        LMIC.freq = freq->freq_125kHz_upfbase + chnl*freq->freq_125kHz_upfstep;
+        LMIC.freq = LMIC.wb_reg->freq_125kHz_upfbase +
+            chnl * LMIC.wb_reg->freq_125kHz_upfstep;
         LMIC.txpow = 30;
         return;
     }
     LMIC.txpow = 26;
     if( chnl < 64+8 ) {
-        LMIC.freq = freq->freq_500kHz_upfbase + (chnl-64)*freq->freq_500kHz_upfstep;
+        LMIC.freq = LMIC.wb_reg->freq_500kHz_upfbase +
+            (chnl-64)*LMIC.wb_reg->freq_500kHz_upfstep;
     } else {
         ASSERT(chnl < 64+8+MAX_XCHANNELS_US);
         LMIC.freq = LMIC.xchFreq[chnl-72];
@@ -895,12 +894,12 @@ static ostime_t nextTx_US (ostime_t now) {
         first = 0;
         chans = 64;
     } else {
-        first = freq_map[LMIC.region].freq_125kHz_1stchan;
-        chans = freq_map[LMIC.region].freq_125kHz_chans;
+        first = LMIC.wb_reg->freq_125kHz_1stchan;
+        chans = LMIC.wb_reg->freq_125kHz_chans;
     }
     if( LMIC.chRnd==0 )
         LMIC.chRnd = os_getRndU1() % chans;
-    if( LMIC.datarate >= freq_map[LMIC.region].dr_sf8c ) { // 500kHz
+    if( LMIC.datarate >= LMIC.wb_reg->dr_sf8c ) { // 500kHz
         u1_t map = LMIC.channelMap[64/16]&0xFF;
         for( u1_t i=0; i<8; i++ ) {
             if( (map & (1<<(++LMIC.chRnd & 7))) != 0 ) {
@@ -928,18 +927,18 @@ static void setBcnRxParams (void) {
     if (EU())
         LMIC.freq = LMIC.channelFreq[LMIC.bcnChnl] & ~(u4_t)7;
     else
-        LMIC.freq = freq_map[LMIC.region].freq_500kHz_dnfbase + LMIC.bcnChnl * freq_map[LMIC.region].freq_500kHz_dnfstep;
+        LMIC.freq = LMIC.wb_reg->freq_500kHz_dnfbase +
+            LMIC.bcnChnl * LMIC.wb_reg->freq_500kHz_dnfstep;
     LMIC.rps  = setIh(setNocrc(dndr2rps((dr_t)REG(DR_BCN)),1),REG(LEN_BCN));
 }
 
 #define setRx1Params() do {                                             \
     if (!EU()) {                                                        \
-        const struct freq_map *freq = freq_map + LMIC.region;           \
-        LMIC.freq = freq->freq_500kHz_dnfbase +                         \
-            (LMIC.txChnl & 0x7) * freq->freq_500kHz_dnfstep;            \
-        if( /* TX datarate */LMIC.dndr < freq->dr_sf8c )                \
-            LMIC.dndr += freq->rx1_dr_offset;                           \
-        else if( LMIC.dndr == freq->dr_sf8c )                           \
+        LMIC.freq = LMIC.wb_reg->freq_500kHz_dnfbase +                  \
+            (LMIC.txChnl & 0x7) * LMIC.wb_reg->freq_500kHz_dnfstep;     \
+        if( /* TX datarate */LMIC.dndr < LMIC.wb_reg->dr_sf8c )         \
+            LMIC.dndr += LMIC.wb_reg->rx1_dr_offset;                    \
+        else if( LMIC.dndr == LMIC.wb_reg->dr_sf8c )                    \
             LMIC.dndr = DR_SF7CR_US;                                    \
         LMIC.rps = dndr2rps(LMIC.dndr);                                 \
     }                                                                   \
@@ -952,7 +951,7 @@ static void initJoinLoop (void) {
 #else
     LMIC.txChnl = EU() ? os_getRndU1() % NUM_DEFAULT_CHANNELS :
         (LMIC.region & REGION_FULL) ? 0 :
-        freq_map[LMIC.region].freq_125kHz_1stchan;
+        LMIC.wb_reg->freq_125kHz_1stchan;
 #endif
     LMIC.adrTxPow = EU() ? 14 : 20;
     setDrJoin(DRCHG_SET, get_hi_dr());
@@ -1002,15 +1001,15 @@ static ostime_t nextJoinState_US (void) {
     //   SF8C        on a random channel 64..71
     //
     u1_t failed = 0;
-    if( LMIC.datarate != freq_map[LMIC.region].dr_sf8c ) {
+    if( LMIC.datarate != LMIC.wb_reg->dr_sf8c ) {
         LMIC.txChnl = (LMIC.region & REGION_FULL) ? 64+(LMIC.txChnl&7) :
-            freq_map[LMIC.region].freq_500kHz_chan;
-        setDrJoin(DRCHG_SET, freq_map[LMIC.region].dr_sf8c);
+            LMIC.wb_reg->freq_500kHz_chan;
+        setDrJoin(DRCHG_SET, wb_reg->dr_sf8c);
     } else {
         LMIC.txChnl = (LMIC.region & REGION_FULL) ?
             os_getRndU1() & 0x3F :
-            freq_map[LMIC.region].freq_125kHz_1stchan +
-            (os_getRndU1() % freq_map[LMIC.region].freq_125kHz_chans);
+            LMIC.wb_reg->freq_125kHz_1stchan +
+            (os_getRndU1() % LMIC.wb_reg->freq_125kHz_chans);
         s1_t dr = get_hi_dr() - ++LMIC.txCnt;
         if( dr < DR_SF10_US ) {
             dr = DR_SF10_US;
@@ -2240,10 +2239,12 @@ void LMIC_reset (u1_t region) {
     os_clearMem((xref2u1_t)&LMIC,SIZEOFEXPR(LMIC));
     if ((region & ~(REGION_MASK | REGION_FLAGS)) != 0 ||
         region == (REGION_EU | REGION_FULL) ||
-        (region & REGION_MASK) >= sizeof(freq_map) / sizeof(*freq_map)) {
+        (region & REGION_MASK) >= sizeof(wb_reg) / sizeof(*wb_reg)) {
         region = REGION_EU;
     }
     LMIC.region       =  region;
+    if (region & REGION_WIDEBAND)
+        LMIC.wb_reg = wb_reg + (region & REGION_MASK);
     LMIC.devaddr      =  0;
     LMIC.devNonce     =  os_getRndU2();
     LMIC.opmode       =  OP_NONE;
