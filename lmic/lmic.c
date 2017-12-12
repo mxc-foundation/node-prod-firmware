@@ -233,6 +233,10 @@ static const u1_t maxFrameLens_EU [] = { 64,64,64,123 };
 static const u1_t maxFrameLens_US [] = { 24,66,142,255,255,255,255,255,  66,142 };
 static const u1_t maxFrameLens_AU [] = { 64,64,64,128,235,235,235,255,  66,142 };
 
+static const u1_t maxEIRP [] = {
+    8, 10, 12, 13, 14, 16, 18, 20, 21, 24, 26, 27, 29, 30, 33, 36,
+};
+
 static const u1_t _DR2RPS_CRC_EU[] = {
     ILLEGAL_RPS,
     (u1_t)MAKERPS(SF12, BW125, CR_4_5, 0, 0),
@@ -381,7 +385,8 @@ static const u4_t iniChannelFreq_AS1[8] = {
 
 // Narrow band region
 static const struct nb_reg {
-#define HAS_BANDS   1
+#define HAS_BANDS       0x01
+#define HAS_DWELLTIME   0x02
     const u4_t  *iniChannelFreq;
     const u1_t  *dr2rps;
     u4_t         dn2_freq;
@@ -412,7 +417,7 @@ static const struct nb_reg {
         .dn2_dr         = DR_DNW2_AS,
         .ping_dr        = DR_PING_AS,
         .bcn_dr         = DR_BCN_AS,
-        .flags          = 0,
+        .flags          = HAS_DWELLTIME,
     },
 };
 
@@ -745,6 +750,8 @@ static void initDefaultChannels_NB (bit_t join) {
         LMIC.bands[BAND_DECI   ].avail =
         LMIC.bands[BAND_MILLI_2].avail =
         LMIC.bands[BAND_CENTI_2].avail = os_getTime();
+    } else {
+        LMIC.txpow = 16;
     }
 }
 
@@ -761,6 +768,13 @@ static void initDefaultChannels_WB (void) {
             (LMIC.wb_reg->freq_125kHz_1stchan % 16);
         LMIC.channelMap[4] = 1 << (LMIC.wb_reg->freq_500kHz_chan - 64);
     }
+}
+
+static void setupDwellTime(u1_t dwelltime) {
+    u2_t drmap = DR_RANGE_MAP(dwelltime ? DR_SF10_EU : DR_SF12_EU, get_hi_dr());
+    int i;
+    for (i = 0; i < MAX_CHANNELS_EU; i++)
+        LMIC.channelDrMap[i] = drmap;
 }
 
 static u4_t convFreq (xref2u1_t ptr) {
@@ -876,8 +890,6 @@ static void updateTx_NB (ostime_t txbeg) {
         xref2band_t band = &LMIC.bands[freq & 0x7];
         LMIC.txpow = band->txpow;
         band->avail = txbeg + airtime * band->txcap;
-    } else {
-        LMIC.txpow = 16; // XXX
     }
     if( LMIC.globalDutyRate != 0 )
         LMIC.globalDutyAvail = txbeg + (airtime<<LMIC.globalDutyRate);
@@ -1355,6 +1367,16 @@ static bit_t decodeFrame (void) {
             oidx += 6;
             continue;
         }
+        case MCMD_TXPS_REQ: {
+            u1_t p1 = opts[oidx+1];
+            oidx += 2;
+            if (NB() && (LMIC.nb_reg->flags & HAS_DWELLTIME)) {
+                LMIC.txpow = maxEIRP[p1 & 0x07];
+                setupDwellTime((p1 & 0x30) >> 4);
+                LMIC.txParamSetupAns = 1;
+            }
+            continue;
+        }
         case MCMD_PING_SET: {
             u4_t freq = convFreq(&opts[oidx+1]);
             oidx += 4;
@@ -1724,6 +1746,11 @@ static void buildDataFrame (void) {
         LMIC.frame[end] = MCMD_DCAP_ANS;
         end += 1;
         LMIC.dutyCapAns = 0;
+    }
+    if( LMIC.txParamSetupAns ) {
+        LMIC.frame[end] = MCMD_TXPS_ANS;
+        end += 1;
+        LMIC.txParamSetupAns = 0;
     }
     if( LMIC.dn2Ans ) {
         LMIC.frame[end+0] = MCMD_DN2P_ANS;

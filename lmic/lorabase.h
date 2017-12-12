@@ -305,6 +305,7 @@ enum {
     MCMD_DN2P_ANS = 0x05, // -  2nd DN slot status : u1:7-2:RFU  1/0:datarate/channel ack
     MCMD_DEVS_ANS = 0x06, // -  device status ans  : u1:battery 0,1-254,255=?, u1:7-6:RFU,5-0:margin(-32..31)
     MCMD_SNCH_ANS = 0x07, // -  set new channel    : u1: 7-2=RFU, 1/0:DR/freq ACK
+    MCMD_TXPS_ANS = 0x09, // -  TxParamSetupAns    : -
     // Class B
     MCMD_PING_IND = 0x10, // -  pingability indic  : u1: 7=RFU, 6-4:interval, 3-0:datarate
     MCMD_PING_ANS = 0x11, // -  ack ping freq      : u1: 7-1:RFU, 0:freq ok
@@ -320,6 +321,7 @@ enum {
     MCMD_DN2P_SET = 0x05, // 2nd DN window param: u1:7-4:RFU/3-0:datarate, u3:freq
     MCMD_DEVS_REQ = 0x06, // device status req  : -
     MCMD_SNCH_REQ = 0x07, // set new channel    : u1:chidx, u3:freq, u1:DRrange
+    MCMD_TXPS_REQ = 0x09, // TxParamSetupReq    : u1: [5-4]:DwellTime,[3-0]:EIRP
     // Class B
     MCMD_PING_SET = 0x11, // set ping freq      : u3: freq
     MCMD_BCNI_ANS = 0x12, // next beacon start  : u2: delay(in TUNIT millis), u1:channel

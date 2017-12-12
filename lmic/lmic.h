@@ -216,6 +216,7 @@ struct lmic_t {
     u1_t        adrEnabled;
     u1_t        moreData;     // NWK has more data pending
     bit_t       dutyCapAns;   // have to ACK duty cycle settings
+    bit_t       txParamSetupAns; // have to ACK TX param setup
     u1_t        snchAns;      // answer set new channel
     // 2nd RX window (after up stream)
     u1_t        dn2Dr;
