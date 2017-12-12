@@ -163,6 +163,17 @@ enum { AS923_F1 = 923200000,
 enum { AS923_FREQ_MIN = 922000000,
        AS923_FREQ_MAX = 924000000 };
 
+enum { KR920_F1 = 922100000,
+       KR920_F2 = 922300000,
+       KR920_F3 = 922500000,
+       KR920_F4 = 922700000,
+       KR920_F5 = 922900000,
+       KR920_F6 = 923100000,
+       KR920_F7 = 923300000,
+};
+enum { KR920_FREQ_MIN = 920900000,
+       KR920_FREQ_MAX = 923300000 };
+
 enum { CHNL_PING_EU      = 5 };
 enum { FREQ_PING_EU      = EU868_F6 };  // default ping freq
 enum { DR_PING_EU        = SF9 };       // default ping DR
@@ -182,6 +193,15 @@ enum { DR_DNW2_AS        = DR_SF10_EU };
 enum { CHNL_BCN_AS       = 1 };
 enum { FREQ_BCN_AS       = AS923_F2 };  // default ping freq
 enum { DR_BCN_AS         = DR_SF9_EU };
+
+enum { CHNL_PING_KR      = 5 };
+enum { FREQ_PING_KR      = KR920_F6 };  // default ping freq
+enum { DR_PING_KR        = SF9 };       // default ping DR
+enum { FREQ_DNW2_KR      = 921900000 };
+enum { DR_DNW2_KR        = DR_SF12_EU };
+enum { CHNL_BCN_KR       = 5 };
+enum { FREQ_BCN_KR       = KR920_F6 };  // default ping freq
+enum { DR_BCN_KR         = DR_SF9_EU };
 
 enum { DR_PAGE_US = DR_PAGE_US915 };
 

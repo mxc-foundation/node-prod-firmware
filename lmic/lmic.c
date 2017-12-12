@@ -251,6 +251,17 @@ static const u1_t _DR2RPS_CRC_EU[] = {
     ILLEGAL_RPS
 };
 
+static const u1_t _DR2RPS_CRC_KR[] = {
+    ILLEGAL_RPS,
+    (u1_t)MAKERPS(SF12, BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF11, BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF10, BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF9,  BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF8,  BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF7,  BW125, CR_4_5, 0, 0),
+    ILLEGAL_RPS
+};
+
 static const u1_t _DR2RPS_CRC_US[] = {
     ILLEGAL_RPS,
     MAKERPS(SF10, BW125, CR_4_5, 0, 0),
@@ -334,6 +345,14 @@ static const ostime_t DR2HSYM_osticks_EU[] = {
     us2osticksRound(128<<1),  // DR_SF7B_EU
     us2osticksRound(80)       // FSK -- not used (time for 1/2 byte)
 };
+static const ostime_t DR2HSYM_osticks_KR[] = {
+    us2osticksRound(128<<7),  // DR_SF12_EU
+    us2osticksRound(128<<6),  // DR_SF11_EU
+    us2osticksRound(128<<5),  // DR_SF10_EU
+    us2osticksRound(128<<4),  // DR_SF9_EU
+    us2osticksRound(128<<3),  // DR_SF8_EU
+    us2osticksRound(128<<2),  // DR_SF7_EU
+};
 static const ostime_t DR2HSYM_osticks_AU[] = {
     us2osticksRound(128<<7),  // DR_SF12_AU
     us2osticksRound(128<<6),  // DR_SF11_AU
@@ -384,6 +403,12 @@ static const u4_t iniChannelFreq_AS1[8] = {
     AS923_F5, AS923_F6, AS923_F7, AS923_F8,
 };
 
+static const u4_t iniChannelFreq_KR[7] = {
+    // Default operational frequencies
+    KR920_F1, KR920_F2, KR920_F3, KR920_F4,
+    KR920_F5, KR920_F6, KR920_F7,
+};
+
 // Narrow band region
 static const struct nb_reg {
 #define HAS_BANDS       0x01
@@ -396,6 +421,7 @@ static const struct nb_reg {
     u4_t         ping_freq;
     u1_t         freqs;
     u1_t         dflt_freqs;
+    u1_t         dflt_max_eirp;
     u1_t         bcn_chnl;
     u1_t         dn2_dr;
     u1_t         ping_dr;
@@ -411,6 +437,7 @@ static const struct nb_reg {
         .ping_freq      = FREQ_PING_EU,
         .freqs          = ARRAY_SIZE(iniChannelFreq_EU),
         .dflt_freqs     = 3,
+        .dflt_max_eirp  = 16,
         .bcn_chnl       = CHNL_BCN_EU,
         .dn2_dr         = DR_DNW2_EU,
         .ping_dr        = DR_PING_EU,
@@ -426,10 +453,27 @@ static const struct nb_reg {
         .ping_freq      = FREQ_PING_AS,
         .freqs          = ARRAY_SIZE(iniChannelFreq_AS1),
         .dflt_freqs     = 2,
+        .dflt_max_eirp  = 16,
         .bcn_chnl       = CHNL_BCN_AS,
         .dn2_dr         = DR_DNW2_AS,
         .ping_dr        = DR_PING_AS,
         .bcn_dr         = DR_BCN_AS,
+        .flags          = HAS_DWELLTIME,
+    },
+    [REGION_KR] = {
+        .iniChannelFreq = iniChannelFreq_KR,
+        .dr2rps         = _DR2RPS_CRC_KR,
+        .freq_min       = KR920_FREQ_MIN,
+        .freq_max       = KR920_FREQ_MAX,
+        .dn2_freq       = FREQ_DNW2_KR,
+        .ping_freq      = FREQ_PING_KR,
+        .freqs          = ARRAY_SIZE(iniChannelFreq_KR),
+        .dflt_freqs     = 3,
+        .dflt_max_eirp  = 14,
+        .bcn_chnl       = CHNL_BCN_KR,
+        .dn2_dr         = DR_DNW2_KR,
+        .ping_dr        = DR_PING_KR,
+        .bcn_dr         = DR_BCN_KR,
         .flags          = HAS_DWELLTIME,
     },
 };
@@ -764,7 +808,7 @@ static void initDefaultChannels_NB (bit_t join) {
         LMIC.bands[BAND_MILLI_2].avail =
         LMIC.bands[BAND_CENTI_2].avail = os_getTime();
     } else {
-        LMIC.txpow = 16;
+        LMIC.txpow = LMIC.nb_reg->dflt_max_eirp;
     }
 }
 
