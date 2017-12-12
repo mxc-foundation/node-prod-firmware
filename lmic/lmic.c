@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include "lmic.h"
 #include "lora/param.h"
+#include "lora/util.h"
 
 #if !defined(MINRX_SYMS)
 #define MINRX_SYMS 5
@@ -393,6 +394,8 @@ static const struct nb_reg {
     u4_t         freq_max;
     u4_t         dn2_freq;
     u4_t         ping_freq;
+    u1_t         freqs;
+    u1_t         dflt_freqs;
     u1_t         bcn_chnl;
     u1_t         dn2_dr;
     u1_t         ping_dr;
@@ -406,6 +409,8 @@ static const struct nb_reg {
         .freq_max       = EU868_FREQ_MAX,
         .dn2_freq       = FREQ_DNW2_EU,
         .ping_freq      = FREQ_PING_EU,
+        .freqs          = ARRAY_SIZE(iniChannelFreq_EU),
+        .dflt_freqs     = 3,
         .bcn_chnl       = CHNL_BCN_EU,
         .dn2_dr         = DR_DNW2_EU,
         .ping_dr        = DR_PING_EU,
@@ -419,6 +424,8 @@ static const struct nb_reg {
         .freq_max       = AS923_FREQ_MAX,
         .dn2_freq       = FREQ_DNW2_AS,
         .ping_freq      = FREQ_PING_AS,
+        .freqs          = ARRAY_SIZE(iniChannelFreq_AS1),
+        .dflt_freqs     = 2,
         .bcn_chnl       = CHNL_BCN_AS,
         .dn2_dr         = DR_DNW2_AS,
         .ping_dr        = DR_PING_AS,
@@ -730,7 +737,7 @@ static void initDefaultChannels_NB (bit_t join) {
     u1_t su = 0;
 #endif
     u1_t hi_dr = get_hi_dr();
-    for( u1_t fu=0; fu<NUM_DEFAULT_CHANNELS; fu++,su++ ) {
+    for( u1_t fu=0; fu<LMIC.nb_reg->freqs; fu++,su++ ) {
         LMIC.channelFreq[fu]  = LMIC.nb_reg->iniChannelFreq[su];
         LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12_EU,hi_dr);
     }
@@ -1613,7 +1620,9 @@ static bit_t processJoinAccept (void) {
         if (!NB())
             goto badframe;
         dlen = OFF_CFLIST;
-        for( u1_t chidx=3; chidx<8; chidx++, dlen+=3 ) {
+        for( u1_t chidx = LMIC.nb_reg->dflt_freqs;
+            chidx<LMIC.nb_reg->dflt_freqs + 5;
+            chidx++, dlen+=3 ) {
             u4_t freq = convFreq(&LMIC.frame[dlen]);
             if( freq )
                 LMIC_setupChannel(chidx, freq, 0, -1);
