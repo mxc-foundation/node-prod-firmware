@@ -151,6 +151,18 @@ enum { EU868_F1 = 868100000,      // g1   SF7-12
 enum { EU868_FREQ_MIN = 863000000,
        EU868_FREQ_MAX = 870000000 };
 
+enum { AS923_F1 = 923200000,
+       AS923_F2 = 923400000,
+       AS923_F3 = 922200000,
+       AS923_F4 = 922400000,
+       AS923_F5 = 922600000,
+       AS923_F6 = 922800000,
+       AS923_F7 = 923000000,
+       AS923_F8 = 922000000,
+};
+enum { AS923_FREQ_MIN = 922000000,
+       AS923_FREQ_MAX = 924000000 };
+
 enum { CHNL_PING_EU      = 5 };
 enum { FREQ_PING_EU      = EU868_F6 };  // default ping freq
 enum { DR_PING_EU        = SF9 };       // default ping DR
@@ -161,6 +173,15 @@ enum { CHNL_BCN_EU       = 5 };
 enum { FREQ_BCN_EU       = EU868_F6 };
 enum { DR_BCN_EU         = DR_SF9_EU };
 enum { AIRTIME_BCN_EU    = 144384 };  // micros
+
+enum { CHNL_PING_AS      = 1 };
+enum { FREQ_PING_AS      = AS923_F2 };  // default ping freq
+enum { DR_PING_AS        = SF9 };       // default ping DR
+enum { FREQ_DNW2_AS      = AS923_F1 };
+enum { DR_DNW2_AS        = DR_SF10_EU };
+enum { CHNL_BCN_AS       = 1 };
+enum { FREQ_BCN_AS       = AS923_F2 };  // default ping freq
+enum { DR_BCN_AS         = DR_SF9_EU };
 
 enum { DR_PAGE_US = DR_PAGE_US915 };
 

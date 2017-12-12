@@ -170,6 +170,7 @@ struct lmic_t {
 
     // Channel scheduling
     u1_t        region;
+    const struct nb_reg *nb_reg;
     const struct wb_reg *wb_reg;
     band_t      bands[MAX_BANDS_EU];
     u4_t        channelFreq[MAX_CHANNELS_EU];

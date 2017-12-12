@@ -49,7 +49,7 @@
 #define BCN_RESERVE_osticks    ms2osticks(BCN_RESERVE_ms)
 #define BCN_GUARD_osticks      ms2osticks(BCN_GUARD_ms)
 #define BCN_WINDOW_osticks     ms2osticks(BCN_WINDOW_ms)
-#define AIRTIME_BCN_osticks    us2osticks(EUUS(AIRTIME_BCN))
+#define AIRTIME_BCN_osticks    us2osticks(NB()?AIRTIME_BCN_EU:AIRTIME_BCN_US)
 #define DNW2_SAFETY_ZONE       (NB() ? ms2osticks(3000) : ms2osticks(750))
 
 // Special APIs - for development or testing
@@ -223,9 +223,8 @@ static void aes_sessKeys (u2_t devnonce, xref2cu1_t artnonce, xref2u1_t nwkkey, 
 // ================================================================================
 // BEG LORA
 
-#define NB()    (LMIC.wb_reg == NULL)
+#define NB()    (LMIC.nb_reg != NULL)
 #define REG(x)  (NB() ? x ## _NB : x ## _WB)
-#define EUUS(x) (NB() ? x ## _EU : x ## _US)    // XXX
 
 #define maxFrameLen(dr) ((dr)<=(NB() ? DR_SF9_EU : DR_SF11CR_US) ?      \
     (NB() ? maxFrameLens_NB : LMIC.wb_reg->max_frame_lens)[(dr)] :      \
@@ -353,6 +352,70 @@ static ostime_t dr2hsym_AU(dr_t dr) {
 #define dr2hsym(dr) (NB() ? DR2HSYM_osticks_EU[dr] : LMIC.wb_reg->dr2hsym(dr))
 
 
+//#define LMIC_THREE_CHANNELS
+#ifdef LMIC_THREE_CHANNELS
+#define NUM_DEFAULT_CHANNELS	3
+static const u4_t iniChannelFreq_EU[6] = {
+    // Join frequencies and duty cycle limit (0.1%)
+    EU868_F1|BAND_MILLI_1,
+    EU868_F2|BAND_MILLI_1,
+    EU868_F3|BAND_MILLI_1,
+    // Default operational frequencies
+    EU868_F1|BAND_CENTI_1, EU868_F2|BAND_CENTI_1, EU868_F3|BAND_CENTI_1,
+};
+#else
+#define NUM_DEFAULT_CHANNELS	8
+static const u4_t iniChannelFreq_EU[8] = {
+    // Default operational frequencies
+    EU868_F1|BAND_CENTI_1, EU868_F2|BAND_CENTI_1, EU868_F3|BAND_CENTI_1,
+    EU868_F4|BAND_MILLI_1, EU868_F5|BAND_MILLI_2, EU868_F6|BAND_MILLI_2,
+    EU868_F7|BAND_CENTI_2, EU868_F8|BAND_CENTI_2
+};
+#endif
+
+static const u4_t iniChannelFreq_AS1[8] = {
+    // Default operational frequencies
+    AS923_F1, AS923_F2, AS923_F3, AS923_F4,
+    AS923_F5, AS923_F6, AS923_F7, AS923_F8,
+};
+
+// Narrow band region
+static const struct nb_reg {
+#define HAS_BANDS   1
+    const u4_t  *iniChannelFreq;
+    const u1_t  *dr2rps;
+    u4_t         dn2_freq;
+    u4_t         ping_freq;
+    u1_t         bcn_chnl;
+    u1_t         dn2_dr;
+    u1_t         ping_dr;
+    u1_t         bcn_dr;
+    u1_t         flags;
+} nb_reg[] = {
+    [REGION_EU] = {
+        .iniChannelFreq = iniChannelFreq_EU,
+        .dr2rps         = _DR2RPS_CRC_EU,
+        .dn2_freq       = FREQ_DNW2_EU,
+        .ping_freq      = FREQ_PING_EU,
+        .bcn_chnl       = CHNL_BCN_EU,
+        .dn2_dr         = DR_DNW2_EU,
+        .ping_dr        = DR_PING_EU,
+        .bcn_dr         = DR_BCN_EU,
+        .flags          = HAS_BANDS,
+    },
+    [REGION_AS1] = {
+        .iniChannelFreq = iniChannelFreq_AS1,
+        .dr2rps         = _DR2RPS_CRC_EU,
+        .dn2_freq       = FREQ_DNW2_AS,
+        .ping_freq      = FREQ_PING_AS,
+        .bcn_chnl       = CHNL_BCN_AS,
+        .dn2_dr         = DR_DNW2_AS,
+        .ping_dr        = DR_PING_AS,
+        .bcn_dr         = DR_BCN_AS,
+        .flags          = 0,
+    },
+};
+
 // Wide band region
 static const struct wb_reg {
     ostime_t    (*dr2hsym)(dr_t);
@@ -454,7 +517,7 @@ ostime_t calcAirTime (rps_t rps, u1_t plen) {
     return (((ostime_t)tmp << sfx) * OSTICKS_PER_SEC + div/2) / div;
 }
 
-static inline const u1_t *dr2rps ()    { return NB() ? _DR2RPS_CRC_EU : LMIC.wb_reg->dr2rps; }
+static inline const u1_t *dr2rps ()    { return NB() ? LMIC.nb_reg->dr2rps : LMIC.wb_reg->dr2rps; }
 static inline rps_t updr2rps (dr_t dr) { return (rps_t)dr2rps()[dr+1]; }
 static inline rps_t dndr2rps (dr_t dr) { return setNocrc(updr2rps(dr),1); }
 inline int isFasterDR (dr_t dr1, dr_t dr2) { return dr1 > dr2; }
@@ -519,7 +582,7 @@ static void calcBcnRxWindowFromMillis (u1_t ms, bit_t ini) {
         LMIC.missedBcns = 0;
         LMIC.bcninfo.flags |= BCN_NODRIFT|BCN_NODDIFF;
     }
-    ostime_t hsym = dr2hsym(EUUS(DR_BCN));
+    ostime_t hsym = dr2hsym(NB() ? LMIC.nb_reg->bcn_dr : DR_BCN_US);
     LMIC.bcnRxsyms = MINRX_SYMS + ms2osticksCeil(ms) / hsym;
     LMIC.bcnRxtime = LMIC.bcninfo.txtime + BCN_INTV_osticks - (LMIC.bcnRxsyms-PAMBL_SYMS) * hsym;
 }
@@ -629,27 +692,6 @@ void LMIC_setPingable (u1_t intvExp) {
 }
 
 
-//#define LMIC_THREE_CHANNELS
-#ifdef LMIC_THREE_CHANNELS
-#define NUM_DEFAULT_CHANNELS	3
-static const u4_t iniChannelFreq[6] = {
-    // Join frequencies and duty cycle limit (0.1%)
-    EU868_F1|BAND_MILLI_1,
-    EU868_F2|BAND_MILLI_1,
-    EU868_F3|BAND_MILLI_1,
-    // Default operational frequencies
-    EU868_F1|BAND_CENTI_1, EU868_F2|BAND_CENTI_1, EU868_F3|BAND_CENTI_1,
-};
-#else
-#define NUM_DEFAULT_CHANNELS	8
-static const u4_t iniChannelFreq[8] = {
-    // Default operational frequencies
-    EU868_F1|BAND_CENTI_1, EU868_F2|BAND_CENTI_1, EU868_F3|BAND_CENTI_1,
-    EU868_F4|BAND_MILLI_1, EU868_F5|BAND_MILLI_2, EU868_F6|BAND_MILLI_2,
-    EU868_F7|BAND_CENTI_2, EU868_F8|BAND_CENTI_2
-};
-#endif
-
 static u1_t get_hi_dr() {
     u1_t min_sf = 0;
     u1_t max_sf = NB() ? 12 : LMIC.wb_reg->max_sf;
@@ -678,30 +720,32 @@ static void initDefaultChannels_NB (bit_t join) {
 #endif
     u1_t hi_dr = get_hi_dr();
     for( u1_t fu=0; fu<NUM_DEFAULT_CHANNELS; fu++,su++ ) {
-        LMIC.channelFreq[fu]  = iniChannelFreq[su];
+        LMIC.channelFreq[fu]  = LMIC.nb_reg->iniChannelFreq[su];
         LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12_EU,hi_dr);
     }
 
-    LMIC.bands[BAND_MILLI_1].txcap    = 1000;  // 0.1%
-    LMIC.bands[BAND_MILLI_1].txpow    = 14;
-    LMIC.bands[BAND_MILLI_1].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
-    LMIC.bands[BAND_CENTI_1].txcap    = 100;   // 1%
-    LMIC.bands[BAND_CENTI_1].txpow    = 14;
-    LMIC.bands[BAND_CENTI_1].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
-    LMIC.bands[BAND_DECI   ].txcap    = 10;    // 10%
-    LMIC.bands[BAND_DECI   ].txpow    = 27;
-    LMIC.bands[BAND_DECI   ].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
-    LMIC.bands[BAND_MILLI_2].txcap    = 1000;  // 0.1%
-    LMIC.bands[BAND_MILLI_2].txpow    = 14;
-    LMIC.bands[BAND_MILLI_2].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
-    LMIC.bands[BAND_CENTI_2].txcap    = 100;   // 1%
-    LMIC.bands[BAND_CENTI_2].txpow    = 6;
-    LMIC.bands[BAND_CENTI_2].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
-    LMIC.bands[BAND_MILLI_1].avail =
-    LMIC.bands[BAND_CENTI_1].avail =
-    LMIC.bands[BAND_DECI   ].avail =
-    LMIC.bands[BAND_MILLI_2].avail =
-    LMIC.bands[BAND_CENTI_2].avail = os_getTime();
+    if (LMIC.nb_reg->flags & HAS_BANDS) {
+        LMIC.bands[BAND_MILLI_1].txcap    = 1000;  // 0.1%
+        LMIC.bands[BAND_MILLI_1].txpow    = 14;
+        LMIC.bands[BAND_MILLI_1].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
+        LMIC.bands[BAND_CENTI_1].txcap    = 100;   // 1%
+        LMIC.bands[BAND_CENTI_1].txpow    = 14;
+        LMIC.bands[BAND_CENTI_1].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
+        LMIC.bands[BAND_DECI   ].txcap    = 10;    // 10%
+        LMIC.bands[BAND_DECI   ].txpow    = 27;
+        LMIC.bands[BAND_DECI   ].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
+        LMIC.bands[BAND_MILLI_2].txcap    = 1000;  // 0.1%
+        LMIC.bands[BAND_MILLI_2].txpow    = 14;
+        LMIC.bands[BAND_MILLI_2].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
+        LMIC.bands[BAND_CENTI_2].txcap    = 100;   // 1%
+        LMIC.bands[BAND_CENTI_2].txpow    = 6;
+        LMIC.bands[BAND_CENTI_2].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
+        LMIC.bands[BAND_MILLI_1].avail =
+        LMIC.bands[BAND_CENTI_1].avail =
+        LMIC.bands[BAND_DECI   ].avail =
+        LMIC.bands[BAND_MILLI_2].avail =
+        LMIC.bands[BAND_CENTI_2].avail = os_getTime();
+    }
 }
 
 static void initDefaultChannels_WB (void) {
@@ -732,7 +776,8 @@ static u4_t convFreq (xref2u1_t ptr) {
 }
 
 bit_t LMIC_setupBand (u1_t bandidx, s1_t txpow, u2_t txcap) {
-    if( bandidx > BAND_AUX ) return 0;
+    if( !NB() || !(LMIC.nb_reg->flags & HAS_BANDS) || bandidx > BAND_AUX )
+        return 0;
     //band_t* b = &LMIC.bands[bandidx];
     xref2band_t b = &LMIC.bands[bandidx];
     b->txpow = txpow;
@@ -826,10 +871,14 @@ static void updateTx_NB (ostime_t txbeg) {
     // Update global/band specific duty cycle stats
     ostime_t airtime = calcAirTime(LMIC.rps, LMIC.dataLen);
     // Update channel/global duty cycle stats
-    xref2band_t band = &LMIC.bands[freq & 0x7];
     LMIC.freq  = freq & ~(u4_t)7;
-    LMIC.txpow = band->txpow;
-    band->avail = txbeg + airtime * band->txcap;
+    if (LMIC.nb_reg->flags & HAS_BANDS) {
+        xref2band_t band = &LMIC.bands[freq & 0x7];
+        LMIC.txpow = band->txpow;
+        band->avail = txbeg + airtime * band->txcap;
+    } else {
+        LMIC.txpow = 16; // XXX
+    }
     if( LMIC.globalDutyRate != 0 )
         LMIC.globalDutyAvail = txbeg + (airtime<<LMIC.globalDutyRate);
 }
@@ -861,31 +910,45 @@ static void updateTx_WB (ostime_t txbeg) {
 #define updateTx(txbeg) REG(updateTx)(txbeg)
 
 static ostime_t nextTx_NB (ostime_t now) {
-    u1_t bmap=0xF;
-    do {
-        ostime_t mintime = now + /*10h*/36000*OSTICKS_PER_SEC;
-        u1_t band=0;
-        for( u1_t bi=0; bi<4; bi++ ) {
-            if( (bmap & (1<<bi)) && mintime - LMIC.bands[bi].avail > 0 )
-                mintime = LMIC.bands[band = bi].avail;
-        }
-        // Find next channel in given band
-        u1_t chnl = LMIC.bands[band].lastchnl;
-        for( u1_t ci=0; ci<MAX_CHANNELS_EU; ci++ ) {
-            if( (chnl = (chnl+1)) >= MAX_CHANNELS_EU )
-                chnl -=  MAX_CHANNELS_EU;
-            if( (LMIC.channelMap[0] & (1<<chnl)) != 0  &&  // channel enabled
-                (LMIC.channelDrMap[chnl] & (1<<(LMIC.datarate&0xF))) != 0  &&
-                band == (LMIC.channelFreq[chnl] & 0x3) ) { // in selected band
-                LMIC.txChnl = LMIC.bands[band].lastchnl = chnl;
+    if (LMIC.nb_reg->flags & HAS_BANDS) {
+        u1_t bmap=0xF;
+        for (;;) {
+            ostime_t mintime = now + /*10h*/36000*OSTICKS_PER_SEC;
+            u1_t band=0;
+            for( u1_t bi=0; bi<4; bi++ ) {
+                if( (bmap & (1<<bi)) && mintime - LMIC.bands[bi].avail > 0 )
+                    mintime = LMIC.bands[band = bi].avail;
+            }
+            // Find next channel in given band
+            u1_t chnl = LMIC.bands[band].lastchnl;
+            for( u1_t ci=0; ci<MAX_CHANNELS_EU; ci++ ) {
+                if( (chnl = (chnl+1)) >= MAX_CHANNELS_EU )
+                    chnl -=  MAX_CHANNELS_EU;
+                if( (LMIC.channelMap[0] & (1<<chnl)) != 0 && // channel enabled
+                    (LMIC.channelDrMap[chnl] & (1<<(LMIC.datarate&0xF))) != 0 &&
+                    band == (LMIC.channelFreq[chnl] & 0x3) ) { // in selected band
+                    LMIC.txChnl = LMIC.bands[band].lastchnl = chnl;
+                    return mintime;
+                }
+            }
+            if( (bmap &= ~(1<<band)) == 0 ) {
+                // No feasible channel  found!
                 return mintime;
             }
         }
-        if( (bmap &= ~(1<<band)) == 0 ) {
-            // No feasible channel  found!
-            return mintime;
+    } else {
+        u1_t chnl = LMIC.txChnl;
+        for( u1_t ci=0; ci<MAX_CHANNELS_EU; ci++ ) {
+            if( (chnl = (chnl+1)) >= MAX_CHANNELS_EU )
+                chnl -=  MAX_CHANNELS_EU;
+            if( (LMIC.channelMap[0] & (1<<chnl)) != 0 && // channel enabled
+                (LMIC.channelDrMap[chnl] & (1<<(LMIC.datarate&0xF))) != 0 ) {
+                LMIC.txChnl = chnl;
+                break;
+            }
         }
-    } while(1);
+        return now;
+    }
 }
 
 // US does not have duty cycling - return now as earliest TX time
@@ -930,7 +993,8 @@ static void setBcnRxParams (void) {
     else
         LMIC.freq = LMIC.wb_reg->freq_500kHz_dnfbase +
             LMIC.bcnChnl * LMIC.wb_reg->freq_500kHz_dnfstep;
-    LMIC.rps  = setIh(setNocrc(dndr2rps((dr_t)EUUS(DR_BCN)),1),REG(LEN_BCN));
+    LMIC.rps  = setIh(setNocrc(dndr2rps((dr_t)(NB() ? LMIC.nb_reg->bcn_dr :
+                    DR_BCN_US)),1),REG(LEN_BCN));
 }
 
 #define setRx1Params() do {                                             \
@@ -951,16 +1015,15 @@ static void initJoinLoop (void) {
     LMIC.txChnl = 0;
 #else
     LMIC.txChnl = NB() ? os_getRndU1() % NUM_DEFAULT_CHANNELS :
-        (LMIC.region & REGION_FULL) ? 0 :
-        LMIC.wb_reg->freq_125kHz_1stchan;
+        (LMIC.region & REGION_FULL) ? 0 : LMIC.wb_reg->freq_125kHz_1stchan;
 #endif
     LMIC.adrTxPow = NB() ? 14 : 20;
     setDrJoin(DRCHG_SET, get_hi_dr());
     if (NB())
         initDefaultChannels_NB(1);
     ASSERT((LMIC.opmode & OP_NEXTCHNL)==0);
-    LMIC.txend = NB() ? LMIC.bands[BAND_MILLI_1].avail + rndDelay(8) :
-        os_getTime();
+    LMIC.txend = NB() && (LMIC.nb_reg->flags & HAS_BANDS) ?
+        LMIC.bands[BAND_MILLI_1].avail + rndDelay(8) : os_getTime();
 }
 
 
@@ -983,7 +1046,8 @@ static ostime_t nextJoinState_NB (void) {
     // Move txend to randomize synchronized concurrent joins.
     // Duty cycle is based on txend.
     ostime_t time = os_getTime();
-    if( time - LMIC.bands[BAND_MILLI_1].avail < 0 )
+    if( (LMIC.nb_reg->flags & HAS_BANDS) &&
+        time - LMIC.bands[BAND_MILLI_1].avail < 0 )
         time = LMIC.bands[BAND_MILLI_1].avail;
     LMIC.txend = time +
         (isTESTMODE()
@@ -1064,11 +1128,11 @@ static void stateJustJoined (void) {
     LMIC.pingSetAns  = 0;
     LMIC.upRepeat    = 0;
     LMIC.adrAckReq   = LINK_CHECK_INIT;
-    LMIC.dn2Dr       = EUUS(DR_DNW2);
-    LMIC.dn2Freq     = EUUS(FREQ_DNW2);
-    LMIC.bcnChnl     = EUUS(CHNL_BCN);
-    LMIC.ping.freq   = EUUS(FREQ_PING);
-    LMIC.ping.dr     = EUUS(DR_PING);
+    LMIC.dn2Dr       = NB() ? LMIC.nb_reg->dn2_dr : DR_DNW2_US;
+    LMIC.dn2Freq     = NB() ? LMIC.nb_reg->dn2_freq : FREQ_DNW2_US;
+    LMIC.bcnChnl     = NB() ? LMIC.nb_reg->bcn_chnl : CHNL_BCN_US;
+    LMIC.ping.freq   = NB() ? LMIC.nb_reg->ping_freq : FREQ_PING_US;
+    LMIC.ping.dr     = NB() ? LMIC.nb_reg->ping_dr : DR_PING_US;
 }
 
 
@@ -2040,8 +2104,9 @@ static void processBeacon (xref2osjob_t osjob) {
             return;
         }
     }
-    LMIC.bcnRxtime = LMIC.bcninfo.txtime + BCN_INTV_osticks - calcRxWindow(0,EUUS(DR_BCN));
-    LMIC.bcnRxsyms = LMIC.rxsyms;    
+    LMIC.bcnRxtime = LMIC.bcninfo.txtime + BCN_INTV_osticks -
+        calcRxWindow(0, NB() ? LMIC.nb_reg->bcn_dr : DR_BCN_US);
+    LMIC.bcnRxsyms = LMIC.rxsyms;
   rev:
     if (!NB())
         LMIC.bcnChnl = (LMIC.bcnChnl+1) & 7;
@@ -2246,15 +2311,17 @@ void LMIC_reset (u1_t region) {
     LMIC.region       =  region;
     if (region & REGION_WIDEBAND)
         LMIC.wb_reg = wb_reg + (region & REGION_MASK);
+    else
+        LMIC.nb_reg = nb_reg + (region & REGION_MASK);
     LMIC.devaddr      =  0;
     LMIC.devNonce     =  os_getRndU2();
     LMIC.opmode       =  OP_NONE;
     LMIC.errcr        =  CR_4_5;
     LMIC.adrEnabled   =  FCT_ADREN;
-    LMIC.dn2Dr        =  EUUS(DR_DNW2);   // we need this for 2nd DN window of join accept
-    LMIC.dn2Freq      =  EUUS(FREQ_DNW2); // ditto
-    LMIC.ping.freq    =  EUUS(FREQ_PING); // defaults for ping
-    LMIC.ping.dr      =  EUUS(DR_PING);   // ditto
+    LMIC.dn2Dr        =  NB() ? LMIC.nb_reg->dn2_dr : DR_DNW2_US;      // we need this for 2nd DN window of join accept
+    LMIC.dn2Freq      =  NB() ? LMIC.nb_reg->dn2_freq : FREQ_DNW2_US;  // ditto
+    LMIC.ping.freq    =  NB() ? LMIC.nb_reg->ping_freq : FREQ_PING_US; // defaults for ping
+    LMIC.ping.dr      =  NB() ? LMIC.nb_reg->ping_dr : DR_PING_US;     // ditto
     LMIC.ping.intvExp =  0xFF;
     if (!NB())
         initDefaultChannels_WB();
