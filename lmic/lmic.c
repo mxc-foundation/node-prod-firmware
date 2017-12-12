@@ -2346,8 +2346,8 @@ void LMIC_reset (u1_t region) {
 
     os_clearMem((xref2u1_t)&LMIC,SIZEOFEXPR(LMIC));
     if ((region & ~(REGION_MASK | REGION_FLAGS)) != 0 ||
-        region == (REGION_EU | REGION_FULL) ||
-        (region & REGION_MASK) >= sizeof(wb_reg) / sizeof(*wb_reg)) {
+        (region & REGION_MASK) >=
+         (region & REGION_WIDEBAND ? ARRAY_SIZE(wb_reg) : ARRAY_SIZE(nb_reg))) {
         region = REGION_EU;
     }
     LMIC.region       =  region;
