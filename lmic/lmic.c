@@ -389,6 +389,8 @@ static const struct nb_reg {
 #define HAS_DWELLTIME   0x02
     const u4_t  *iniChannelFreq;
     const u1_t  *dr2rps;
+    u4_t         freq_min;
+    u4_t         freq_max;
     u4_t         dn2_freq;
     u4_t         ping_freq;
     u1_t         bcn_chnl;
@@ -400,6 +402,8 @@ static const struct nb_reg {
     [REGION_EU] = {
         .iniChannelFreq = iniChannelFreq_EU,
         .dr2rps         = _DR2RPS_CRC_EU,
+        .freq_min       = EU868_FREQ_MIN,
+        .freq_max       = EU868_FREQ_MAX,
         .dn2_freq       = FREQ_DNW2_EU,
         .ping_freq      = FREQ_PING_EU,
         .bcn_chnl       = CHNL_BCN_EU,
@@ -411,6 +415,8 @@ static const struct nb_reg {
     [REGION_AS1] = {
         .iniChannelFreq = iniChannelFreq_AS1,
         .dr2rps         = _DR2RPS_CRC_EU,
+        .freq_min       = AS923_FREQ_MIN,
+        .freq_max       = AS923_FREQ_MAX,
         .dn2_freq       = FREQ_DNW2_AS,
         .ping_freq      = FREQ_PING_AS,
         .bcn_chnl       = CHNL_BCN_AS,
@@ -780,7 +786,7 @@ static void setupDwellTime(u1_t dwelltime) {
 static u4_t convFreq (xref2u1_t ptr) {
     u4_t freq = (os_rlsbf4(ptr-1) >> 8) * 100;
     if (NB()) {
-        if( freq < EU868_FREQ_MIN || freq > EU868_FREQ_MAX )
+        if( freq < LMIC.nb_reg->freq_min || freq > LMIC.nb_reg->freq_max )
             freq = 0;
     } else {
         if( freq < LMIC.wb_reg->freq_min || freq > LMIC.wb_reg->freq_max )
