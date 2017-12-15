@@ -474,7 +474,7 @@ static const struct nb_reg {
         .dn2_dr         = DR_DNW2_KR,
         .ping_dr        = DR_PING_KR,
         .bcn_dr         = DR_BCN_KR,
-        .flags          = HAS_DWELLTIME,
+        .flags          = 0,
     },
 };
 
