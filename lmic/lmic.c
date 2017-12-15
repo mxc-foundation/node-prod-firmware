@@ -31,6 +31,34 @@
 #include "lora/param.h"
 #include "lora/util.h"
 
+//#define DEBUG
+//#define DEBUG_TIME
+
+#ifdef DEBUG
+
+#ifdef DEBUG_TIME
+static void debug_time(void) {
+    uint32_t    now = os_getTime();
+
+    printf("%lu:%02lu.%03lu+%02lu ", osticks2ms(now) / 60000,
+        osticks2ms(now) / 1000 % 60, osticks2ms(now) % 1000,
+        now - ms2osticks(osticks2ms(now)));
+}
+#else
+#define debug_time()
+#endif
+
+#define debugf(...)    do {                                             \
+    debug_time();                                                       \
+    printf(__VA_ARGS__);                                                \
+} while (0)
+
+#else /* !DEBUG */
+
+#define debugf(...)
+
+#endif /* DEBUG */
+
 #if !defined(MINRX_SYMS)
 #define MINRX_SYMS 5
 #endif // !defined(MINRX_SYMS)
@@ -991,6 +1019,7 @@ static void updateTx_NB (ostime_t txbeg) {
     ostime_t airtime = calcAirTime(LMIC.rps, LMIC.dataLen);
     // Update channel/global duty cycle stats
     LMIC.freq  = freq & ~(u4_t)7;
+    debugf("freq %lu\r\n", LMIC.freq);
     if (LMIC.nb_reg->flags & HAS_DUTYCYCLE) {
         xref2band_t band = &LMIC.bands[freq & 0x7];
         LMIC.txpow = band->txpow;
@@ -1005,6 +1034,7 @@ static void updateTx_WB (ostime_t txbeg) {
     if( chnl < 64 ) {
         LMIC.freq = LMIC.wb_reg->freq_125kHz_upfbase +
             chnl * LMIC.wb_reg->freq_125kHz_upfstep;
+        debugf("freq %lu\r\n", LMIC.freq);
         LMIC.txpow = 30;
         return;
     }
@@ -1016,6 +1046,7 @@ static void updateTx_WB (ostime_t txbeg) {
         ASSERT(chnl < 64+8+MAX_XCHANNELS_US);
         LMIC.freq = LMIC.xchFreq[chnl-72];
     }
+    debugf("freq %lu\r\n", LMIC.freq);
 
     // Update global duty cycle stats
     if( LMIC.globalDutyRate != 0 ) {
@@ -1110,6 +1141,7 @@ static void setBcnRxParams (void) {
     else
         LMIC.freq = LMIC.wb_reg->freq_500kHz_dnfbase +
             LMIC.bcnChnl * LMIC.wb_reg->freq_500kHz_dnfstep;
+    debugf("freq %lu\r\n", LMIC.freq);
     LMIC.rps  = setIh(setNocrc(dndr2rps((dr_t)(NB() ? LMIC.nb_reg->bcn_dr :
                     DR_BCN_US)),1),REG(LEN_BCN));
 }
@@ -1596,6 +1628,7 @@ static void setupRx2 (void) {
     LMIC.txrxFlags = TXRX_DNW2;
     LMIC.rps = dndr2rps(LMIC.dn2Dr);
     LMIC.freq = LMIC.dn2Freq;
+    debugf("freq %lu\r\n", LMIC.freq);
     LMIC.dataLen = 0;
     os_radio(RADIO_RX);
 }
@@ -2277,6 +2310,8 @@ static void engineUpdate (void) {
         return;
     }
 
+    debugf("%s: opmode %04x\r\n", __func__, LMIC.opmode);
+
     ostime_t now    = os_getTime();
     ostime_t rxtime = 0;
     ostime_t txbeg  = 0;
@@ -2418,6 +2453,7 @@ static void engineUpdate (void) {
     return;
 
   txdelay:
+    debugf("txdelay\r\n");
     EV(devCond, INFO, (e_.reason = EV::devCond_t::TX_DELAY,
                        e_.eui    = MAIN::CDEV->getEui(),
                        e_.info   = osticks2ms(txbeg-now),
