@@ -411,7 +411,7 @@ static const u4_t iniChannelFreq_KR[7] = {
 
 // Narrow band region
 static const struct nb_reg {
-#define HAS_BANDS       0x01
+#define HAS_DUTYCYCLE   0x01
 #define HAS_DWELLTIME   0x02
     const u4_t  *iniChannelFreq;
     const u1_t  *dr2rps;
@@ -442,7 +442,7 @@ static const struct nb_reg {
         .dn2_dr         = DR_DNW2_EU,
         .ping_dr        = DR_PING_EU,
         .bcn_dr         = DR_BCN_EU,
-        .flags          = HAS_BANDS,
+        .flags          = HAS_DUTYCYCLE,
     },
     [REGION_AS1] = {
         .iniChannelFreq = iniChannelFreq_AS1,
@@ -786,7 +786,7 @@ static void initDefaultChannels_NB (bit_t join) {
         LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12_EU,hi_dr);
     }
 
-    if (LMIC.nb_reg->flags & HAS_BANDS) {
+    if (LMIC.nb_reg->flags & HAS_DUTYCYCLE) {
         LMIC.bands[BAND_MILLI_1].txcap    = 1000;  // 0.1%
         LMIC.bands[BAND_MILLI_1].txpow    = 14;
         LMIC.bands[BAND_MILLI_1].lastchnl = os_getRndU1() % MAX_CHANNELS_EU;
@@ -847,7 +847,7 @@ static u4_t convFreq (xref2u1_t ptr) {
 }
 
 bit_t LMIC_setupBand (u1_t bandidx, s1_t txpow, u2_t txcap) {
-    if( !NB() || !(LMIC.nb_reg->flags & HAS_BANDS) || bandidx > BAND_AUX )
+    if( !NB() || !(LMIC.nb_reg->flags & HAS_DUTYCYCLE) || bandidx > BAND_AUX )
         return 0;
     //band_t* b = &LMIC.bands[bandidx];
     xref2band_t b = &LMIC.bands[bandidx];
@@ -943,7 +943,7 @@ static void updateTx_NB (ostime_t txbeg) {
     ostime_t airtime = calcAirTime(LMIC.rps, LMIC.dataLen);
     // Update channel/global duty cycle stats
     LMIC.freq  = freq & ~(u4_t)7;
-    if (LMIC.nb_reg->flags & HAS_BANDS) {
+    if (LMIC.nb_reg->flags & HAS_DUTYCYCLE) {
         xref2band_t band = &LMIC.bands[freq & 0x7];
         LMIC.txpow = band->txpow;
         band->avail = txbeg + airtime * band->txcap;
@@ -979,7 +979,7 @@ static void updateTx_WB (ostime_t txbeg) {
 #define updateTx(txbeg) REG(updateTx)(txbeg)
 
 static ostime_t nextTx_NB (ostime_t now) {
-    if (LMIC.nb_reg->flags & HAS_BANDS) {
+    if (LMIC.nb_reg->flags & HAS_DUTYCYCLE) {
         u1_t bmap=0xF;
         for (;;) {
             ostime_t mintime = now + /*10h*/36000*OSTICKS_PER_SEC;
@@ -1091,7 +1091,7 @@ static void initJoinLoop (void) {
     if (NB())
         initDefaultChannels_NB(1);
     ASSERT((LMIC.opmode & OP_NEXTCHNL)==0);
-    LMIC.txend = NB() && (LMIC.nb_reg->flags & HAS_BANDS) ?
+    LMIC.txend = NB() && (LMIC.nb_reg->flags & HAS_DUTYCYCLE) ?
         LMIC.bands[BAND_MILLI_1].avail + rndDelay(8) : os_getTime();
 }
 
@@ -1115,7 +1115,7 @@ static ostime_t nextJoinState_NB (void) {
     // Move txend to randomize synchronized concurrent joins.
     // Duty cycle is based on txend.
     ostime_t time = os_getTime();
-    if( (LMIC.nb_reg->flags & HAS_BANDS) &&
+    if( (LMIC.nb_reg->flags & HAS_DUTYCYCLE) &&
         time - LMIC.bands[BAND_MILLI_1].avail < 0 )
         time = LMIC.bands[BAND_MILLI_1].avail;
     LMIC.txend = time +
