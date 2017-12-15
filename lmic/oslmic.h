@@ -96,6 +96,7 @@ typedef s4_t  ostime_t;
 
 void radio_init (void);
 void radio_irq_handler (ostime_t now);
+s2_t radio_rssi (void);
 void os_init (void);
 void os_runloop (void);
 

@@ -692,12 +692,12 @@ void radio_init () {
     hal_enableIRQs();
 }
 
-u1_t radio_rssi () {
+s2_t radio_rssi () {
     u1_t r;
     hal_disableIRQs();
     r = readReg(LORARegRssiValue);
     hal_enableIRQs();
-    return r;
+    return (s2_t)r - 164; // RSSI [dBm] (-164...+91)
 }
 
 static const u2_t LORA_RXDONE_FIXUP[] = {

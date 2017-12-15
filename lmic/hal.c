@@ -251,5 +251,6 @@ hal_waitUntil(u4_t time)
 			hal_handle_event(ev);
 			break;
 		}
+		sys_watchdog_notify(wdog_id);
 	}
 }

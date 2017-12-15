@@ -409,10 +409,15 @@ static const u4_t iniChannelFreq_KR[7] = {
     KR920_F5, KR920_F6, KR920_F7,
 };
 
+#define LBT_SENSETIME       (ms2osticks(6))
+#define LBT_RSSI_THRESHOLD  (-85)
+#define MAX_LBT_RETRIES     16
+
 // Narrow band region
 static const struct nb_reg {
 #define HAS_DUTYCYCLE   0x01
 #define HAS_DWELLTIME   0x02
+#define HAS_LBT         0x04
     const u4_t  *iniChannelFreq;
     const u1_t  *dr2rps;
     u4_t         freq_min;
@@ -474,7 +479,7 @@ static const struct nb_reg {
         .dn2_dr         = DR_DNW2_KR,
         .ping_dr        = DR_PING_KR,
         .bcn_dr         = DR_BCN_KR,
-        .flags          = 0,
+        .flags          = HAS_LBT,
     },
 };
 
@@ -936,6 +941,49 @@ static u1_t mapChannels_WB (u1_t chpage, u2_t chmap) {
 }
 
 #define mapChannels(chpage, chmap)  REG(mapChannels)(chpage, chmap)
+
+u1_t channelAvailable(u1_t chnl) {
+    ostime_t    start, end;
+    u4_t        freq;
+    u1_t        available;
+
+    available = 1;
+    freq = LMIC.freq;
+    LMIC.freq = LMIC.channelFreq[chnl] & ~0x07;
+    os_radio(RADIO_RXON);
+    start = os_getTime() + ms2osticks(1);
+    while ((s4_t)(start - os_getTime()) > 0)
+        ;
+    end = start + LBT_SENSETIME;
+	while ((s4_t)(end - os_getTime()) > 0) {
+        if (radio_rssi() > LBT_RSSI_THRESHOLD) {
+            available = 0;
+            break;
+        }
+	}
+    os_radio(RADIO_RST);
+    LMIC.freq = freq;
+    return available;
+}
+
+static u1_t lbtAvailable() {
+    if (LMIC.nb_reg->flags & HAS_LBT) {
+        u4_t chnl = LMIC.txChnl;
+        LMIC.rps = setCr(updr2rps(LMIC.datarate), (cr_t)LMIC.errcr);
+        for( u1_t ci=0; ci<MAX_CHANNELS_EU; ci++ ) {
+            if( (chnl = (chnl+1)) >= MAX_CHANNELS_EU )
+                chnl -=  MAX_CHANNELS_EU;
+            if( (LMIC.channelMap[0] & (1<<chnl)) != 0 && // channel enabled
+                (LMIC.channelDrMap[chnl] & (1<<(LMIC.datarate&0xF))) != 0 &&
+                channelAvailable(chnl) ) {
+                LMIC.txChnl = chnl;
+                return 1;
+            }
+        }
+        return 0;
+    }
+    return 2;
+}
 
 static void updateTx_NB (ostime_t txbeg) {
     u4_t freq = LMIC.channelFreq[LMIC.txChnl];
@@ -2218,6 +2266,8 @@ static void startRxPing (xref2osjob_t osjob) {
 
 // Decide what to do next for the MAC layer of a device
 static void engineUpdate (void) {
+    static PRIVILEGED_DATA u1_t lbt_retries;
+
     // Check for ongoing state: scan or TX/RX transaction
     if( (LMIC.opmode & (OP_SCAN|OP_TXRXPEND|OP_SHUTDOWN)) != 0 ) 
         return;
@@ -2263,8 +2313,20 @@ static void engineUpdate (void) {
         }
         // Earliest possible time vs overhead to setup radio
         if( txbeg - (now + TX_RAMPUP) < 0 ) {
+            switch( lbtAvailable() ) {
+            case 0:
+                if( ++lbt_retries == MAX_LBT_RETRIES )
+                    txbeg = now + sec2osticks(60);
+                else
+                    txbeg = now + 2 * TX_RAMPUP + rndDelay(RETRY_PERIOD_secs);
+                goto lbtdelay;
+            case 1:
+                lbt_retries = 0;
+                LMIC.txend = now = os_getTime();
+                break;
+            }
             // We could send right now!
-        txbeg = now;
+            txbeg = now;
             dr_t txdr = (dr_t)LMIC.datarate;
             if( jacc ) {
                 u1_t ftype;
@@ -2309,6 +2371,7 @@ static void engineUpdate (void) {
             os_radio(RADIO_TX);
             return;
         }
+      lbtdelay:
         // Cannot yet TX
         if( (LMIC.opmode & OP_TRACK) == 0 )
             goto txdelay; // We don't track the beacon - nothing else to do - so wait for the time to TX
