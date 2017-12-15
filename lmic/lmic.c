@@ -1083,7 +1083,7 @@ static void initJoinLoop (void) {
 #if CFG_TxContinuousMode
     LMIC.txChnl = 0;
 #else
-    LMIC.txChnl = NB() ? os_getRndU1() % NUM_DEFAULT_CHANNELS :
+    LMIC.txChnl = NB() ? os_getRndU1() % LMIC.nb_reg->freqs :
         (LMIC.region & REGION_FULL) ? 0 : LMIC.wb_reg->freq_125kHz_1stchan;
 #endif
     LMIC.adrTxPow = NB() ? 14 : 20;
@@ -1101,7 +1101,7 @@ static ostime_t nextJoinState_NB (void) {
 
     // Try 869.x and then 864.x with same DR
     // If both fail try next lower datarate
-    if( ++LMIC.txChnl == NUM_DEFAULT_CHANNELS )
+    if( ++LMIC.txChnl == LMIC.nb_reg->freqs )
         LMIC.txChnl = 0;
     if( (++LMIC.txCnt & 1) == 0 ) {
         // Lower DR every 2nd try (having tried 868.x and 864.x with the same DR)
