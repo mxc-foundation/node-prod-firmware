@@ -419,8 +419,8 @@ static const struct nb_reg {
     u4_t         freq_max;
     u4_t         dn2_freq;
     u4_t         ping_freq;
-    u1_t         freqs;
-    u1_t         dflt_freqs;
+    u1_t         channels;
+    u1_t         dflt_channels;
     u1_t         dflt_max_eirp;
     u1_t         bcn_chnl;
     u1_t         dn2_dr;
@@ -435,8 +435,8 @@ static const struct nb_reg {
         .freq_max       = EU868_FREQ_MAX,
         .dn2_freq       = FREQ_DNW2_EU,
         .ping_freq      = FREQ_PING_EU,
-        .freqs          = ARRAY_SIZE(iniChannelFreq_EU),
-        .dflt_freqs     = 3,
+        .channels       = ARRAY_SIZE(iniChannelFreq_EU),
+        .dflt_channels  = 3,
         .dflt_max_eirp  = 16,
         .bcn_chnl       = CHNL_BCN_EU,
         .dn2_dr         = DR_DNW2_EU,
@@ -451,8 +451,8 @@ static const struct nb_reg {
         .freq_max       = AS923_FREQ_MAX,
         .dn2_freq       = FREQ_DNW2_AS,
         .ping_freq      = FREQ_PING_AS,
-        .freqs          = ARRAY_SIZE(iniChannelFreq_AS1),
-        .dflt_freqs     = 2,
+        .channels       = ARRAY_SIZE(iniChannelFreq_AS1),
+        .dflt_channels  = 2,
         .dflt_max_eirp  = 16,
         .bcn_chnl       = CHNL_BCN_AS,
         .dn2_dr         = DR_DNW2_AS,
@@ -467,8 +467,8 @@ static const struct nb_reg {
         .freq_max       = KR920_FREQ_MAX,
         .dn2_freq       = FREQ_DNW2_KR,
         .ping_freq      = FREQ_PING_KR,
-        .freqs          = ARRAY_SIZE(iniChannelFreq_KR),
-        .dflt_freqs     = 3,
+        .channels       = ARRAY_SIZE(iniChannelFreq_KR),
+        .dflt_channels  = 3,
         .dflt_max_eirp  = 14,
         .bcn_chnl       = CHNL_BCN_KR,
         .dn2_dr         = DR_DNW2_KR,
@@ -781,7 +781,7 @@ static void initDefaultChannels_NB (bit_t join) {
     u1_t su = 0;
 #endif
     u1_t hi_dr = get_hi_dr();
-    for( u1_t fu=0; fu<LMIC.nb_reg->freqs; fu++,su++ ) {
+    for( u1_t fu=0; fu<LMIC.nb_reg->channels; fu++,su++ ) {
         LMIC.channelFreq[fu]  = LMIC.nb_reg->iniChannelFreq[su];
         LMIC.channelDrMap[fu] = DR_RANGE_MAP(DR_SF12_EU,hi_dr);
     }
@@ -1083,7 +1083,7 @@ static void initJoinLoop (void) {
 #if CFG_TxContinuousMode
     LMIC.txChnl = 0;
 #else
-    LMIC.txChnl = NB() ? os_getRndU1() % LMIC.nb_reg->freqs :
+    LMIC.txChnl = NB() ? os_getRndU1() % LMIC.nb_reg->channels :
         (LMIC.region & REGION_FULL) ? 0 : LMIC.wb_reg->freq_125kHz_1stchan;
 #endif
     LMIC.adrTxPow = NB() ? 14 : 20;
@@ -1101,7 +1101,7 @@ static ostime_t nextJoinState_NB (void) {
 
     // Try 869.x and then 864.x with same DR
     // If both fail try next lower datarate
-    if( ++LMIC.txChnl == LMIC.nb_reg->freqs )
+    if( ++LMIC.txChnl == LMIC.nb_reg->channels )
         LMIC.txChnl = 0;
     if( (++LMIC.txCnt & 1) == 0 ) {
         // Lower DR every 2nd try (having tried 868.x and 864.x with the same DR)
@@ -1664,8 +1664,8 @@ static bit_t processJoinAccept (void) {
         if (!NB())
             goto badframe;
         dlen = OFF_CFLIST;
-        for( u1_t chidx = LMIC.nb_reg->dflt_freqs;
-            chidx<LMIC.nb_reg->dflt_freqs + 5;
+        for( u1_t chidx = LMIC.nb_reg->dflt_channels;
+            chidx<LMIC.nb_reg->dflt_channels + 5;
             chidx++, dlen+=3 ) {
             u4_t freq = convFreq(&LMIC.frame[dlen]);
             if( freq )
