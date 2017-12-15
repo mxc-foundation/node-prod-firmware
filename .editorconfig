@@ -10,3 +10,7 @@ indent_style = tab
 [lmic/*]
 indent_size = 4
 indent_style = space
+
+[lmic/hal.c]
+indent_size = 8
+indent_style = tab
