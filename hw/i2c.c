@@ -39,7 +39,7 @@ i2c_write(uint8_t addr, uint8_t reg, uint8_t *buf, size_t len)
 	i2c_set_addr(addr);
 	hw_i2c_write_byte(HW_I2C1, reg);
 	status = hw_i2c_write_buffer_sync(HW_I2C1, buf, len, &abort_src,
-	    HW_I2C_F_NONE);
+	    HW_I2C_F_WAIT_FOR_STOP);
 	if (status < len || abort_src != HW_I2C_ABORT_NONE)
 		return -1;
 	return status;
