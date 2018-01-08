@@ -23,8 +23,10 @@ static PRIVILEGED_DATA uint8_t			xoutput[2];
 static int
 iox_setbit(uint8_t reg, uint8_t *loc, uint8_t bit, bool val)
 {
-	if (bit >> 3)
+	if (bit & 0x07) {
 		loc++;
+		reg++;
+	}
 	bit &= 0x07;
 	if (val)
 		*loc |= 1 << bit;
