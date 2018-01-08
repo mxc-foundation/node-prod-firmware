@@ -23,7 +23,8 @@ INITIALISED_PRIVILEGED_DATA static u1_t	devkey[16] = {
 	0xdf, 0x89, 0xdc, 0x73, 0xd9, 0xf5, 0x2c, 0x06,
 	0x09, 0xed, 0xb2, 0x18, 0x5e, 0xfa, 0x4a, 0x34,
 };
-PRIVILEGED_DATA static uint8_t	suota, sensor_period, min_sf, lora_region;
+INITIALISED_PRIVILEGED_DATA static uint8_t	lora_region = 0xff;
+PRIVILEGED_DATA static uint8_t			suota, sensor_period, min_sf;
 
 /* NVPARAM "ble_platform" */
 #define PARAM_DEV_EUI_OFF	TAG_BLE_PLATFORM_BD_ADDRESS

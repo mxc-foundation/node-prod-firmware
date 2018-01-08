@@ -2480,7 +2480,7 @@ void LMIC_shutdown (void) {
 }
 
 
-void LMIC_reset (u1_t region) {
+int LMIC_reset (u1_t region) {
     EV(devCond, INFO, (e_.reason = EV::devCond_t::LMIC_EV,
                        e_.eui    = MAIN::CDEV->getEui(),
                        e_.info   = EV_RESET));
@@ -2491,7 +2491,7 @@ void LMIC_reset (u1_t region) {
     if ((region & ~(REGION_MASK | REGION_FLAGS)) != 0 ||
         (region & REGION_MASK) >=
          (region & REGION_WIDEBAND ? ARRAY_SIZE(wb_reg) : ARRAY_SIZE(nb_reg))) {
-        region = REGION_EU;
+        return -1;
     }
     LMIC.region       =  region;
     if (region & REGION_WIDEBAND)
@@ -2517,6 +2517,7 @@ void LMIC_reset (u1_t region) {
     DO_DEVDB(LMIC.ping.freq,    pingFreq);
     DO_DEVDB(LMIC.ping.dr,      pingDr);
     DO_DEVDB(LMIC.ping.intvExp, pingIntvExp);
+    return 0;
 }
 
 

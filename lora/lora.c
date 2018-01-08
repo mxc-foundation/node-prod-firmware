@@ -4,6 +4,8 @@
 #include <stdio.h>
 
 #include "ble.h"
+#include "hw/hw.h"
+#include "hw/iox.h"
 #include "hw/led.h"
 #include "lmic/lmic.h"
 #include "lora/ad_lora.h"
@@ -89,6 +91,86 @@ debug_event(int ev)
 #define debug_event(ev)
 #endif /* DEBUG */
 
+#ifdef HW_IOX_I2C_ADDR
+
+#define PIN_BIT0_0	0x0f
+#define PIN_BIT0_IN	0x0d
+#define PIN_BIT0_1	0x0b
+
+#define PIN_BIT1_0	0x0e
+#define PIN_BIT1_IN	0x0c
+#define PIN_BIT1_1	0x0a
+
+#define PIN_BIT2_0	0x09
+#define PIN_BIT2_IN	0x07
+#define PIN_BIT2_1	0x05
+
+#define PIN_BIT3_0	0x08
+#define PIN_BIT3_IN	0x06
+#define PIN_BIT3_1	0x04
+
+#define PINS_INPUT	((1<<PIN_BIT0_IN) | (1<<PIN_BIT1_IN) | \
+			 (1<<PIN_BIT2_IN) | (1<<PIN_BIT3_IN))
+#define PINS_ONES	((1<<PIN_BIT0_1) | (1<<PIN_BIT1_1) | \
+			 (1<<PIN_BIT2_1) | (1<<PIN_BIT3_1))
+#define PINS_NOTCONF	((1<<0x00) | (1<<0x01) | (1<<0x02) | (1<<0x03))
+
+static uint8_t
+lora_autodetect_region(void)
+{
+	int	pins;
+	uint8_t	region;
+
+	if (iox_setconf(PINS_INPUT | PINS_NOTCONF)) {
+#ifdef DEBUG
+		printf("IOX: cannot set configuration\r\n");
+#endif
+		return 0xff;
+	}
+	if (iox_setpins(PINS_ONES)) {
+#ifdef DEBUG
+		printf("IOX: cannot set pins\r\n");
+#endif
+		return 0xff;
+	}
+	if ((pins = iox_getpins()) == -1) {
+#ifdef DEBUG
+		printf("IOX: cannot get pins\r\n");
+#endif
+		return 0xff;
+	}
+	region = 0;
+	if (pins & (1 << PIN_BIT0_IN))
+		region |= 0x01;
+	if (pins & (1 << PIN_BIT1_IN))
+		region |= 0x02;
+	if (pins & (1 << PIN_BIT2_IN))
+		region |= REGION_WIDEBAND;
+	if (pins & (1 << PIN_BIT3_IN))
+		region |= REGION_FULL;
+	return region;
+}
+
+#else /* !HW_IOX_I2C_ADDR */
+
+#define lora_autodetect_region()	REGION_EU
+
+#endif /* HW_IOX_I2C_ADDR */
+
+static uint8_t
+lora_get_region(void)
+{
+	uint8_t	region;
+
+	param_get(PARAM_LORA_REGION, &region, sizeof(region));
+	if (region == 0xff)
+		region = lora_autodetect_region();
+#ifdef DEBUG
+	printf("region %02x\r\n", region);
+#endif
+	return region;
+}
+
 static void
 lora_start_joining(osjob_t *job)
 {
@@ -104,7 +186,6 @@ static void
 lora_reset(osjob_t *job)
 {
 	PRIVILEGED_DATA static uint8_t	reset_count;
-	uint8_t				lora_region;
 
 #ifdef DEBUG
 	debug_time();
@@ -113,8 +194,8 @@ lora_reset(osjob_t *job)
 	if (++reset_count > MAX_RESETS)
 		hal_failed();
 	status = 0;
-	param_get(PARAM_LORA_REGION, &lora_region, sizeof(lora_region));
-	LMIC_reset(lora_region);
+	if (LMIC_reset(lora_get_region()) == -1)
+		return;
 	os_setCallback(job, lora_start_joining);
 }
 
@@ -126,7 +207,8 @@ lora_reset_after(ostime_t delay)
 	os_setTimedCallback(&reset_job, os_getTime() + delay, lora_reset);
 }
 
-#define lora_init()	lora_reset_after(0)
+#define lora_init()	lora_reset_after(sec2osticks(1))
+#define lora_reinit()	lora_reset_after(0)
 
 static void	lora_send_init(osjob_t *job);
 
@@ -218,7 +300,7 @@ onEvent(ev_t ev)
 		lora_send();
 		break;
 	case EV_JOIN_FAILED:
-		lora_init();
+		lora_reinit();
 		break;
 	case EV_REJOIN_FAILED:
 		lora_reset_after(REJOIN_TIMEOUT);

@@ -267,7 +267,7 @@ bit_t LMIC_startJoining (void);
 
 void  LMIC_shutdown     (void);
 void  LMIC_init         (void);
-void  LMIC_reset        (u1_t region);
+int   LMIC_reset        (u1_t region);
 void  LMIC_clrTxData    (void);
 void  LMIC_setTxData    (void);
 int   LMIC_setTxData2   (u1_t port, xref2u1_t data, u1_t dlen, u1_t confirmed);
