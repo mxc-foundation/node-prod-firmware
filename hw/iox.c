@@ -64,12 +64,12 @@ iox_get(uint8_t pin)
 int
 iox_setconf(int conf)
 {
-	uint8_t	buf[2];
-
-	buf[0] = conf;
-	buf[1] = conf >> 8;
-	if (i2c_write(HW_IOX_I2C_ADDR, IOX_REG_CONF, buf, sizeof(buf)) == -1)
+	xconf[0] = conf;
+	xconf[1] = conf >> 8;
+	if (i2c_write(HW_IOX_I2C_ADDR, IOX_REG_CONF, xconf, sizeof(xconf))
+	    == -1) {
 		return -1;
+	}
 	return 0;
 }
 
@@ -82,12 +82,12 @@ iox_getconf()
 int
 iox_setpins(int pins)
 {
-	uint8_t	buf[2];
-
-	buf[0] = pins;
-	buf[1] = pins >> 8;
-	if (i2c_write(HW_IOX_I2C_ADDR, IOX_REG_OUTPUT, buf, sizeof(buf)) == -1)
+	xoutput[0] = pins;
+	xoutput[1] = pins >> 8;
+	if (i2c_write(HW_IOX_I2C_ADDR, IOX_REG_OUTPUT, xoutput, sizeof(xoutput))
+	    == -1) {
 		return -1;
+	}
 	return 0;
 }
 
