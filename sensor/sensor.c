@@ -33,7 +33,7 @@ static const ostime_t	sensor_periods[] = {
 #define SENSOR_TYPE_GPS		1
 #define SENSOR_TYPE_TEMP	2
 #define SENSOR_TYPE_LIGHT	3
-static uint8_t	sensor_type;
+static uint8_t	sensor_type[SENSOR_MAX];
 
 struct sensor_callbacks {
 	void		(*init)(void);
@@ -73,47 +73,65 @@ const struct sensor_callbacks	sensor_cb[] = {
 static inline void
 detect_sensor(void)
 {
-	sensor_type = SENSOR_TYPE_GPS;
+	sensor_type[0] = SENSOR_TYPE_GPS;
 }
 
 void
 sensor_init()
 {
+	int	i;
+
 	detect_sensor();
-	if (sensor_cb[sensor_type].init)
-		sensor_cb[sensor_type].init();
+	for (i = 0; i < SENSOR_MAX; i++) {
+		if (sensor_cb[sensor_type[i]].init)
+			sensor_cb[sensor_type[i]].init();
+	}
 }
 
 void
 sensor_prepare()
 {
-	if (sensor_cb[sensor_type].prepare)
-		sensor_cb[sensor_type].prepare();
+	int	i;
+
+	for (i = 0; i < SENSOR_MAX; i++) {
+		if (sensor_cb[sensor_type[i]].prepare)
+			sensor_cb[sensor_type[i]].prepare();
+	}
 }
 
 ostime_t
 sensor_data_ready()
 {
-	if (sensor_cb[sensor_type].data_ready)
-		return sensor_cb[sensor_type].data_ready();
-	else
-		return 0;
+	ostime_t	t;
+	int		i;
+
+	for (i = 0; i < SENSOR_MAX; i++) {
+		if (sensor_cb[sensor_type[i]].data_ready) {
+			if ((t = sensor_cb[sensor_type[i]].data_ready()) != 0)
+				return t;
+		}
+	}
+	return 0;
 }
 
 size_t
-sensor_get_data(char *buf, int len)
+sensor_get_data(int idx, char *buf, int len)
 {
-	if (len <= 0 || !sensor_cb[sensor_type].read)
+	if (len <= 0 || !sensor_cb[sensor_type[idx]].read)
 		return 0;
-	buf[0] = sensor_type;
-	return 1 + sensor_cb[sensor_type].read(buf + 1, len - 1);
+	buf[0] = sensor_type[idx];
+	return 1 + sensor_cb[sensor_type[idx]].read(buf + 1, len - 1);
 }
 
 void
 sensor_txstart(void)
 {
-	if (sensor_cb[sensor_type].txstart)
-		sensor_cb[sensor_type].txstart();
+	int	i;
+
+	for (i = 0; i < SENSOR_MAX; i++) {
+		if (sensor_cb[sensor_type[i]].txstart)
+			sensor_cb[sensor_type[i]].txstart();
+	}
 }
 
 #endif /* FEATURE_SENSOR */

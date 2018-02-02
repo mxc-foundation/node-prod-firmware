@@ -129,7 +129,7 @@ cmd_sense(int argc, char **argv)
 
 	(void)argc;
 	(void)argv;
-	len = sensor_get_data(buf, sizeof(buf));
+	len = sensor_get_data(0, buf, sizeof(buf));
 	for (i = 0; i < len; i++)
 		printf("%02x", (uint8_t)buf[i]);
 	printf("\r\n");

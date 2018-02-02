@@ -88,10 +88,13 @@ set_tx_data(void)
 	x ## _len = 0;							\
 } while (0)
 
+#define TX_ADD(x, cmd, len, data)					\
+	tx_enqueue(x ## _data, &x ## _len, ARRAY_SIZE(x ## _data),	\
+	    cmd, len, data)
+
 #define TX_SET(x, cmd, len, data)	do {				\
 	TX_CLEAR(x);							\
-	tx_enqueue(x ## _data, &x ## _len, ARRAY_SIZE(x ## _data),	\
-	    cmd, len, data);						\
+	TX_ADD(x, cmd, len, data);					\
 } while (0)
 
 #define TX_ENQUEUE(cmd, len, data)	TX_SET(pend_tx, cmd, len, data)
@@ -184,6 +187,7 @@ void
 proto_send_data(void)
 {
 	PRIVILEGED_DATA static uint8_t	last_bat_level;
+	int				i;
 	char				buf[MAX_LEN_PAYLOAD];
 	size_t				len;
 	uint8_t				cur_bat_level;
@@ -193,9 +197,12 @@ proto_send_data(void)
 		last_bat_level = cur_bat_level;
 		TX_SET(battery, INFO_BATTERY, 1, &cur_bat_level);
 	}
-	len = sensor_get_data(buf, sizeof(buf));
-	if (len != 0)
-		TX_SET(sensor, INFO_SENSOR_DATA, len, buf);
+	TX_CLEAR(sensor);
+	for (i = 0; i < SENSOR_MAX; i++) {
+		len = sensor_get_data(i, buf, sizeof(buf));
+		if (len != 0)
+			TX_ADD(sensor, INFO_SENSOR_DATA, len, buf);
+	}
 	set_tx_data();
 }
 
