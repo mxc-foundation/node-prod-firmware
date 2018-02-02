@@ -2,12 +2,13 @@
 #define __HW_LORA_H__
 
 #ifndef HW_VERSION
-#define HW_VERSION	HW_SOM_1_0
+#define HW_VERSION	HW_SOM_1_2
 #endif
 
 #define HW_MATCHSTICK_1_0a	0x010a
 #define HW_MATCHSTICK_2_0a	0x020a
 #define HW_SOM_1_0		0x1100
+#define HW_SOM_1_2		0x1120
 
 #define HW_IS_MATCHSTICK	((HW_VERSION & 0xf000) == 0x0000)
 #define HW_IS_SOM		((HW_VERSION & 0xf000) == 0x1000)
@@ -17,6 +18,22 @@
 #if HW_VERSION == HW_SOM_1_0
 
 #define HW_VER_STRING		"DevKit 1.0"
+
+#elif HW_VERSION == HW_SOM_1_2
+
+#define HW_VER_STRING		"DevKit 1.2"
+
+#define FEATURE_LED_RGB_REV
+#define FEATURE_SENSOR_GPS
+
+#define HW_SENSOR_UART_RX_PORT	HW_GPIO_PORT_3
+#define HW_SENSOR_UART_RX_PIN	HW_GPIO_PIN_3
+#define HW_SENSOR_UART_TX_PORT	HW_GPIO_PORT_2
+#define HW_SENSOR_UART_TX_PIN	HW_GPIO_PIN_3
+
+#else
+#error Unsupported SOM version
+#endif
 
 #define FEATURE_BATTERY
 #define FEATURE_I2C
@@ -70,10 +87,6 @@
 #define HW_I2C_SCL_PIN		HW_GPIO_PIN_3
 #define HW_I2C_SDA_PORT		HW_GPIO_PORT_4
 #define HW_I2C_SDA_PIN		HW_GPIO_PIN_2
-
-#else /* !HW_SOM_1_0 */
-#error Unsupported SOM version
-#endif /* HW_SOM_1_0 */
 
 #elif HW_IS_MATCHSTICK
 

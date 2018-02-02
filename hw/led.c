@@ -65,6 +65,20 @@ static const uint8_t	led_battery_stati[] = {
 
 #if defined FEATURE_LED_RGB
 
+#if defined FEATURE_LED_RGB_REV
+
+#define LED_SET_RED_BREATH()	hw_led_set_led3_src(HW_LED_SRC3_BREATH)
+#define LED_SET_RED_PWM()	hw_led_set_led3_src(HW_LED_SRC3_PWM4)
+#define LED_SET_GREEN_BREATH()	hw_led_set_led2_src(HW_LED_SRC2_BREATH)
+#define LED_SET_GREEN_PWM()	hw_led_set_led2_src(HW_LED_SRC2_PWM3)
+#define LED_SET_BLUE_BREATH()	hw_led_set_led1_src(HW_LED_SRC1_BREATH)
+#define LED_SET_BLUE_PWM()	hw_led_set_led1_src(HW_LED_SRC1_PWM2)
+#define LED_ENABLE_RED(state)	hw_led_enable_led3(state)
+#define LED_ENABLE_GREEN(state)	hw_led_enable_led2(state)
+#define LED_ENABLE_BLUE(state)	hw_led_enable_led1(state)
+
+#else /* !FEATURE_LED_RGB_REV */
+
 #define LED_SET_RED_BREATH()	hw_led_set_led1_src(HW_LED_SRC1_BREATH)
 #define LED_SET_RED_PWM()	hw_led_set_led1_src(HW_LED_SRC1_PWM2)
 #define LED_SET_GREEN_BREATH()	hw_led_set_led2_src(HW_LED_SRC2_BREATH)
@@ -74,6 +88,8 @@ static const uint8_t	led_battery_stati[] = {
 #define LED_ENABLE_RED(state)	hw_led_enable_led1(state)
 #define LED_ENABLE_GREEN(state)	hw_led_enable_led2(state)
 #define LED_ENABLE_BLUE(state)	hw_led_enable_led3(state)
+
+#endif /* FEATURE_LED_RGB_REV */
 
 #elif defined FEATURE_LED_RG
 
