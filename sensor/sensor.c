@@ -103,22 +103,17 @@ sensor_data_ready()
 size_t
 sensor_get_data(char *buf, int len)
 {
-	int	rlen;
-
-	if (len <= 0)
+	if (len <= 0 || !sensor_cb[sensor_type].read)
 		return 0;
 	buf[0] = sensor_type;
-	rlen = 1;
-	if (sensor_cb[sensor_type].read)
-		rlen += sensor_cb[sensor_type].read(buf + 1, len - 1);
-	return rlen;
+	return 1 + sensor_cb[sensor_type].read(buf + 1, len - 1);
 }
 
 void
 sensor_txstart(void)
 {
 	if (sensor_cb[sensor_type].txstart)
-		return sensor_cb[sensor_type].txstart();
+		sensor_cb[sensor_type].txstart();
 }
 
 #endif /* FEATURE_SENSOR */
