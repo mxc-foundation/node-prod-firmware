@@ -73,7 +73,14 @@ const struct sensor_callbacks	sensor_cb[] = {
 static inline void
 detect_sensor(void)
 {
+#if HW_IS_MATCHSTICK
 	sensor_type[0] = SENSOR_TYPE_GPS;
+#elif HW_IS_SOM
+	sensor_type[0] = SENSOR_TYPE_TEMP;
+#if HW_VERSION == HW_SOM_1_2
+	sensor_type[1] = SENSOR_TYPE_GPS;
+#endif
+#endif
 }
 
 void
