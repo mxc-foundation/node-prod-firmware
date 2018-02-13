@@ -33,7 +33,7 @@ static const ostime_t	sensor_periods[] = {
 #define SENSOR_TYPE_GPS		1
 #define SENSOR_TYPE_TEMP	2
 #define SENSOR_TYPE_LIGHT	3
-static uint8_t	sensor_type[SENSOR_MAX];
+PRIVILEGED_DATA static uint8_t	sensor_type[SENSOR_MAX];
 
 struct sensor_callbacks {
 	void		(*init)(void);
