@@ -32,7 +32,7 @@ typedef enum {
 PRIVILEGED_DATA static uint8_t	status;
 
 #define MAX_PAYLOAD_LEN		51
-#define MAX_SENSOR_DATA_LEN	16
+#define MAX_SENSOR_DATA_LEN	32
 #define MAX_BATTERY_DATA_LEN	2
 
 PRIVILEGED_DATA static uint8_t	pend_tx_data[MAX_PAYLOAD_LEN];
