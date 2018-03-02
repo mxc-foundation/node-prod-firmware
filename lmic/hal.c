@@ -157,11 +157,13 @@ hal_spi(u1_t outval)
 	return hw_spi_fifo_read8(HW_SPI2);
 }
 
-void
+__dead void
 hal_failed()
 {
 	write(1, "hal failed\r\n", 12);
 	hw_cpm_reboot_system();
+	for (;;)
+		;
 }
 
 void

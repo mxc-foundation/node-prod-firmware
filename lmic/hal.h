@@ -35,6 +35,10 @@
 
 #include "hw/hw.h"
 
+#ifndef __dead
+#define __dead  __attribute__((__noreturn__))
+#endif
+
 /*
  * initialize hardware (IO, SPI, TIMER, IRQ).
  */
@@ -142,6 +146,6 @@ void hal_setShortSleep(void);
  *   - called by assertions
  *   - action could be HALT or reboot
  */
-void hal_failed (void);
+__dead void hal_failed (void);
 
 #endif // _hal_hpp_
