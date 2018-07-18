@@ -46,8 +46,7 @@ PRIVILEGED_DATA static uint8_t			suota, sensor_period, min_sf;
 				 PARAM_SENSOR_PERIOD_LEN)
 #define PARAM_MIN_SF_LEN	sizeof(min_sf)
 
-#define PARAM_LORA_REGION_OFF	(PARAM_MIN_SF_OFF + \
-				 PARAM_MIN_SF_LEN)
+#define PARAM_LORA_REGION_OFF	(PARAM_MIN_SF_OFF + PARAM_MIN_SF_LEN)
 #define PARAM_LORA_REGION_LEN	sizeof(lora_region)
 
 #define PARAM_FLAG_BLE_NV	0x01	/* Stored in BLE NVPARAM area */
@@ -191,7 +190,6 @@ write_param(const struct param_def *param, void *data)
 		(void)param_len;
 		buf[param->len] = 0x00;
 		ad_nvparam_write(nvparam, param->offset, param->len + 1, buf);
-		//ad_nvms_flush(ad_nvms_open(NVMS_PARAM_PART), 0);
 	} else {
 		nvms_t		nvms;
 
@@ -204,14 +202,13 @@ int
 param_get(int idx, uint8_t *data, uint8_t len)
 {
 	if (idx >= (int)ARRAY_SIZE(params) || params[idx].len > len ||
-	    (params[idx].flags & PARAM_FLAG_WRITE_ONLY))
+	    (params[idx].flags & PARAM_FLAG_WRITE_ONLY)) {
 		return 0;
-	if (!(params[idx].flags & PARAM_FLAG_WRITE_ONLY)) {
-		if (params[idx].flags & PARAM_FLAG_REVERSE)
-			reverse_memcpy(data, params[idx].mem, params[idx].len);
-		else
-			memcpy(data, params[idx].mem, params[idx].len);
 	}
+	if (params[idx].flags & PARAM_FLAG_REVERSE)
+		reverse_memcpy(data, params[idx].mem, params[idx].len);
+	else
+		memcpy(data, params[idx].mem, params[idx].len);
 	return params[idx].len;
 }
 
