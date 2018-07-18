@@ -127,10 +127,13 @@ Offset	Length	Description
 
 The format of GPS data is subject to change.
 
-Temperature data format is as follows:
+Temperature data is 1 or 2 bytes.  The format is as follows:
 
 Offset	Length	Description
 ------	------	-----------
 0	1	Temperature in degrees Celsius as a signed
 		int8_t, giving the range between -128 and +127.
 		Temperatures outside this range are not sent.
+1	1	If present, fractional temperature in 1/256th
+		degrees Celsius as a unsigned uint8_t.  Typically
+		only the most significant 3 bits hold a value.
