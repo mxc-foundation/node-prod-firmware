@@ -108,12 +108,12 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_irb_l2cap.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/manager/storage.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/manager/storage_flash.o \
-	$(SDKDIR)/sdk/interfaces/ble/src/stack/ip/ble/ll/src/rwble/rwble.o \
-	$(SDKDIR)/sdk/interfaces/ble/src/stack/ip/ble/profiles/prf.o \
-	$(SDKDIR)/sdk/interfaces/ble/src/stack/modules/nvds/src/nvds.o \
-	$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/arch/main/ble/arch_main.o \
-	$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/arch/main/ble/jump_table.o \
-	$(SDKDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/driver/rf/src/rf_ble_functions.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/stack/ip/ble/ll/src/rwble/rwble.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/stack/ip/ble/profiles/prf.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/stack/modules/nvds/src/nvds.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/arch/main/ble/arch_main.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/arch/main/ble/jump_table.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/stack/plf/black_orca/src/driver/rf/src/rf_ble_functions.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/util/list.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/util/queue.o \
 	$(OBJDIR)/sdk/interfaces/ble_services/src/ble_service.o \
