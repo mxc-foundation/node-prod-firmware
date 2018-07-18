@@ -258,7 +258,6 @@ static void aes_sessKeys (u2_t devnonce, xref2cu1_t artnonce, xref2u1_t nwkkey, 
 #define maxFrameLen(dr) ((dr)<=(NB() ? DR_SF9_EU : DR_SF11CR_US) ?      \
     (NB() ? maxFrameLens_NB : LMIC.wb_reg->max_frame_lens)[(dr)] :      \
     0xFF)
-static const u1_t maxFrameLens_EU [] = { 64,64,64,123 };
 static const u1_t maxFrameLens_US [] = { 24,66,142,255,255,255,255,255,  66,142 };
 static const u1_t maxFrameLens_AU [] = { 64,64,64,128,235,235,235,255,  66,142 };
 
@@ -364,22 +363,14 @@ int getSensitivity (rps_t rps) {
 // Times for half symbol per DR
 // Per DR table to minimize rounding errors
 static const ostime_t DR2HSYM_osticks_EU[] = {
-    us2osticksRound(128<<7),  // DR_SF12_EU
-    us2osticksRound(128<<6),  // DR_SF11_EU
-    us2osticksRound(128<<5),  // DR_SF10_EU
-    us2osticksRound(128<<4),  // DR_SF9_EU
-    us2osticksRound(128<<3),  // DR_SF8_EU
-    us2osticksRound(128<<2),  // DR_SF7_EU
+    us2osticksRound(128<<7),  // DR_SF12_{EU,KR}
+    us2osticksRound(128<<6),  // DR_SF11_{EU,KR}
+    us2osticksRound(128<<5),  // DR_SF10_{EU,KR}
+    us2osticksRound(128<<4),  // DR_SF9_{EU,KR}
+    us2osticksRound(128<<3),  // DR_SF8_{EU,KR}
+    us2osticksRound(128<<2),  // DR_SF7_{EU,KR}
     us2osticksRound(128<<1),  // DR_SF7B_EU
     us2osticksRound(80)       // FSK -- not used (time for 1/2 byte)
-};
-static const ostime_t DR2HSYM_osticks_KR[] = {
-    us2osticksRound(128<<7),  // DR_SF12_EU
-    us2osticksRound(128<<6),  // DR_SF11_EU
-    us2osticksRound(128<<5),  // DR_SF10_EU
-    us2osticksRound(128<<4),  // DR_SF9_EU
-    us2osticksRound(128<<3),  // DR_SF8_EU
-    us2osticksRound(128<<2),  // DR_SF7_EU
 };
 static const ostime_t DR2HSYM_osticks_AU[] = {
     us2osticksRound(128<<7),  // DR_SF12_AU
