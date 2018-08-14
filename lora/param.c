@@ -33,6 +33,7 @@ PRIVILEGED_DATA static uint8_t			suota, sensor_period, min_sf;
 /* VES */
 #define PARAM_APP_EUI_OFF	0
 #define PARAM_APP_EUI_LEN	sizeof(appeui)
+
 #define PARAM_DEV_KEY_OFF	(PARAM_APP_EUI_OFF + PARAM_APP_EUI_LEN)
 #define PARAM_DEV_KEY_LEN	sizeof(devkey)
 
