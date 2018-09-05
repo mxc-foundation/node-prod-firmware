@@ -1065,7 +1065,7 @@ static ostime_t nextTx_NB (ostime_t now) {
                     chnl -=  MAX_CHANNELS_EU;
                 if( (LMIC.channelMap[0] & (1<<chnl)) != 0 && // channel enabled
                     (LMIC.channelDrMap[chnl] & (1<<(LMIC.datarate&0xF))) != 0 &&
-                    band == (LMIC.channelFreq[chnl] & 0x3) ) { // in selected band
+                    band == (LMIC.channelFreq[chnl] & 0x7) ) { // in selected band
                     LMIC.txChnl = LMIC.bands[band].lastchnl = chnl;
                     return mintime;
                 }
