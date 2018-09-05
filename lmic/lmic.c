@@ -968,7 +968,9 @@ u1_t channelAvailable(u1_t chnl) {
 
     available = 1;
     freq = LMIC.freq;
-    LMIC.freq = LMIC.channelFreq[chnl] & ~0x07;
+    LMIC.freq = LMIC.channelFreq[chnl];
+    if (NB() && (LMIC.nb_reg->flags & HAS_DUTYCYCLE))
+        LMIC.freq &= ~0x07;
     os_radio(RADIO_RXON);
     start = os_getTime() + ms2osticks(1);
     while ((s4_t)(start - os_getTime()) > 0)
@@ -1127,11 +1129,14 @@ static ostime_t nextTx_WB (ostime_t now) {
 
 static void setBcnRxParams (void) {
     LMIC.dataLen = 0;
-    if (NB())
-        LMIC.freq = LMIC.channelFreq[LMIC.bcnChnl] & ~(u4_t)7;
-    else
+    if (NB()) {
+        LMIC.freq = LMIC.channelFreq[LMIC.bcnChnl];
+        if ((LMIC.nb_reg->flags & HAS_DUTYCYCLE))
+            LMIC.freq &= ~0x07;
+    } else {
         LMIC.freq = LMIC.wb_reg->freq_500kHz_dnfbase +
             LMIC.bcnChnl * LMIC.wb_reg->freq_500kHz_dnfstep;
+    }
     debugf("freq %lu\r\n", LMIC.freq);
     LMIC.rps  = setIh(setNocrc(dndr2rps((dr_t)(NB() ? LMIC.nb_reg->bcn_dr :
                     DR_BCN_US)),1),REG(LEN_BCN));
