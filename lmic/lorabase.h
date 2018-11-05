@@ -35,6 +35,7 @@
 #define REGION_EU       0
 #define REGION_AS1      1
 #define REGION_KR       2
+#define REGION_IN       3
 #define REGION_US       (REGION_WIDEBAND | 0)
 #define REGION_AU       (REGION_WIDEBAND | 1)
 #define REGION_MASK     0x07
@@ -90,6 +91,18 @@ enum _dr_eu868_t {
     DR_SF7B_EU,
     DR_FSK_EU,
     DR_NONE_EU,
+};
+
+enum _dr_in866_t {
+    DR_SF12_IN=0,
+    DR_SF11_IN,
+    DR_SF10_IN,
+    DR_SF9_IN,
+    DR_SF8_IN,
+    DR_SF7_IN,
+    DR_RFU_IN,
+    DR_FSK_IN,
+    DR_NONE_IN,
 };
 
 enum _dr_us915_t {
@@ -151,6 +164,18 @@ enum { EU868_F1 = 868100000,      // g1   SF7-12
 enum { EU868_FREQ_MIN = 863000000,
        EU868_FREQ_MAX = 870000000 };
 
+enum { IN865_F1 = 865062500,
+       IN865_F2 = 865402500,
+       IN865_F3 = 865985000,
+       IN865_F4 = 865600000,
+       IN865_F5 = 865800000,
+       IN865_F6 = 866200000,
+       IN865_F7 = 866400000,
+       IN865_F8 = 866700000,
+};
+enum { IN865_FREQ_MIN = 865000000,
+       IN865_FREQ_MAX = 867000000 };
+
 enum { AS923_F1 = 923200000,
        AS923_F2 = 923400000,
        AS923_F3 = 922200000,
@@ -184,6 +209,16 @@ enum { CHNL_BCN_EU       = 5 };
 enum { FREQ_BCN_EU       = EU868_F6 };
 enum { DR_BCN_EU         = DR_SF9_EU };
 enum { AIRTIME_BCN_EU    = 144384 };  // micros
+
+enum { CHNL_PING_IN      = 5 };
+enum { FREQ_PING_IN      = 866550000 };  // default ping freq
+enum { DR_PING_IN        = SF8 };       // default ping DR
+enum { CHNL_DNW2_IN      = 5 };
+enum { FREQ_DNW2_IN      = 866550000 };
+enum { DR_DNW2_IN        = DR_SF10_IN };
+enum { CHNL_BCN_IN       = 5 };
+enum { FREQ_BCN_IN       = 866550000 };
+enum { DR_BCN_IN         = DR_SF8_IN };
 
 enum { CHNL_PING_AS      = 1 };
 enum { FREQ_PING_AS      = AS923_F2 };  // default ping freq

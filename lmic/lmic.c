@@ -278,6 +278,19 @@ static const u1_t _DR2RPS_CRC_EU[] = {
     ILLEGAL_RPS
 };
 
+static const u1_t _DR2RPS_CRC_IN[] = {
+    ILLEGAL_RPS,
+    (u1_t)MAKERPS(SF12,  BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF11,  BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF10,  BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF9,   BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF8,   BW125, CR_4_5, 0, 0),
+    (u1_t)MAKERPS(SF7,   BW125, CR_4_5, 0, 0),
+    ILLEGAL_RPS,
+    (u1_t)MAKERPS(FSK,   BW125, CR_4_5, 0, 0),
+    ILLEGAL_RPS
+};
+
 static const u1_t _DR2RPS_CRC_KR[] = {
     ILLEGAL_RPS,
     (u1_t)MAKERPS(SF12, BW125, CR_4_5, 0, 0),
@@ -416,6 +429,12 @@ static const u4_t iniChannelFreq_EU[8] = {
 };
 #endif
 
+static const u4_t iniChannelFreq_IN[8] = {
+    // Default operational frequencies
+    IN865_F1, IN865_F2, IN865_F3, IN865_F4,
+    IN865_F5, IN865_F6, IN865_F7, IN865_F8,
+};
+
 static const u4_t iniChannelFreq_AS1[8] = {
     // Default operational frequencies
     AS923_F1, AS923_F2, AS923_F3, AS923_F4,
@@ -499,6 +518,22 @@ static const struct nb_reg {
         .ping_dr        = DR_PING_KR,
         .bcn_dr         = DR_BCN_KR,
         .flags          = HAS_LBT,
+    },
+    [REGION_IN] = {
+        .iniChannelFreq = iniChannelFreq_IN,
+        .dr2rps         = _DR2RPS_CRC_IN,
+        .freq_min       = IN865_FREQ_MIN,
+        .freq_max       = IN865_FREQ_MAX,
+        .dn2_freq       = FREQ_DNW2_IN,
+        .ping_freq      = FREQ_PING_IN,
+        .channels       = ARRAY_SIZE(iniChannelFreq_IN),
+        .dflt_channels  = 3,
+        .dflt_max_eirp  = 30,
+        .bcn_chnl       = CHNL_BCN_IN,
+        .dn2_dr         = DR_DNW2_IN,
+        .ping_dr        = DR_PING_IN,
+        .bcn_dr         = DR_BCN_IN,
+        .flags          = 0,
     },
 };
 
