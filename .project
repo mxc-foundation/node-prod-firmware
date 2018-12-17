@@ -93,7 +93,7 @@
 	<variableList>
 		<variable>
 			<name>SDKROOT</name>
-			<value>file:/C:/DiaSemi/ws_matchx/DA1468x_SDK_BTLE_v_1.0.8.1050.1</value>
+			<value>$%7BWORKSPACE_LOC%7D/DA1468x_SDK_BTLE_v_1.0.8.1050.1</value>
 		</variable>
 	</variableList>
 </projectDescription>
