@@ -92,7 +92,7 @@ Number	Name	Data length	Description
 ------	----	-----------	-----------
 0	Unknown	0		No data.
 1	GPS	1 or 11		Node moved or GPS coordinates.
-2	Temp	1		Temperature.
+2	Temp	1 or 2		Temperature.
 
 GPS data format is as follows:
 
