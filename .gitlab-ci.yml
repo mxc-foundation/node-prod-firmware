@@ -1,0 +1,50 @@
+image: ubuntu:xenial
+stages:
+    - build 
+    - analyse
+    - deploy
+
+build:firmware:
+    stage: build 
+
+    before_script:
+        - dpkg --add-architecture i386
+        - apt-get update -qq
+        - apt-get install -y make gcc-arm-none-eabi git p7zip-full wget libncurses5:i386 libstdc++6:i386 zlib1g:i386
+        - cd ${CI_PROJECT_DIR}/.. && wget https://github.com/git-lfs/git-lfs/releases/download/v2.7.0/git-lfs-linux-amd64-v2.7.0.tar.gz
+        - cd ${CI_PROJECT_DIR}/.. && tar -xvf git-lfs-linux-amd64-v2.7.0.tar.gz && ./install.sh
+        - cd ${CI_PROJECT_DIR}/.. && git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/matchx/dialog-sc-sdk.git -b DA1468x_SDK_BTLE_v_1.0.8.1050.1
+        - cd ${CI_PROJECT_DIR}/.. && 7z x dialog-sc-sdk/DA1468x_SDK_BTLE_v_1.0.8.1050.1.zip 
+
+    script:
+        - cd ${CI_PROJECT_DIR} && make image
+
+    artifacts:
+        paths:
+            - obj/minimal.img
+            - obj/minimal.bin
+            - obj/minimal.elf
+
+analyse:cppcheck:
+    stage: analyse
+
+    before_script:
+        - apt-get update -qq
+        - apt-get install -y cppcheck
+
+    script:
+        - mkdir -p cppcheck
+        - cppcheck --enable=all --inconclusive --xml-version=2 --force --library=windows,posix,gnu . 2> cppcheck/result.xml
+        - cppcheck-htmlreport --source-encoding="iso8859-1" --title="QA Station Node" --source-dir=. --report-dir=cppcheck --file=cppcheck/result.xml
+
+    artifacts:
+        paths:
+            - cppcheck/
+
+pages:
+      stage: deploy
+      script:
+            - mv cppcheck/ public/
+      artifacts:
+          paths:
+              - public
