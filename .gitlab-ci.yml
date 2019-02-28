@@ -30,12 +30,17 @@ analyse:cppcheck:
 
     before_script:
         - apt-get update -qq
-        - apt-get install -y cppcheck
+        - apt-get install -y python python3 wget make gcc g++ python-pygments
+        - cd ${CI_PROJECT_DIR}/.. && wget https://github.com/danmar/cppcheck/archive/1.87.tar.gz
+        - cd ${CI_PROJECT_DIR}/.. && tar -xvf 1.87.tar.gz
+        - cd ${CI_PROJECT_DIR}/../cppcheck-1.87 && make
 
     script:
+        - cd ${CI_PROJECT_DIR}
         - mkdir -p cppcheck
-        - cppcheck --enable=all --inconclusive --xml-version=2 --force --library=windows,posix,gnu . 2> cppcheck/result.xml
-        - cppcheck-htmlreport --source-encoding="iso8859-1" --title="QA Station Node" --source-dir=. --report-dir=cppcheck --file=cppcheck/result.xml
+        - ${CI_PROJECT_DIR}/../cppcheck-1.87/cppcheck . --enable=all --inconclusive --force -idoc -ildscripts -iobj 
+        - ${CI_PROJECT_DIR}/../cppcheck-1.87/cppcheck . --enable=all --inconclusive --xml --force -idoc -ildscripts -iobj 2> cppcheck/result.xml
+        - ${CI_PROJECT_DIR}/../cppcheck-1.87/htmlreport/cppcheck-htmlreport --source-dir=. --report-dir=cppcheck --file=cppcheck/result.xml
 
     artifacts:
         paths:
