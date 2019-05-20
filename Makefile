@@ -197,7 +197,7 @@ CFLAGS+=	-I. -Ilmic \
 		-I$(SDKDIR)/sdk/bsp/free_rtos/include
 CFLAGS+=	-include$(CONFIG_H)
 WARNFLAGS=	-Wextra
-LDFLAGS=	-Os -Xlinker --gc-sections -Xlinker -Map=$(MAPTARGET) \
+LDFLAGS=	-g -Os -Xlinker --gc-sections -Xlinker -Map=$(MAPTARGET) \
 		-fmessage-length=0 -fsigned-char -ffunction-sections \
 		-fdata-sections -Wall \
 		-L$(SDKDIR)/sdk/bsp/misc \

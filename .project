@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>minimal-firmware</name>
+	<name>node-prod-firmware</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -93,7 +93,7 @@
 	<variableList>
 		<variable>
 			<name>SDKROOT</name>
-			<value>$%7BWORKSPACE_LOC%7D/DA1468x_SDK_BTLE_v_1.0.8.1050.1</value>
+			<value>$%7BWORKSPACE_LOC%7D</value>
 		</variable>
 	</variableList>
 </projectDescription>
