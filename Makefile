@@ -1,7 +1,7 @@
 PROJ=		minimal
 OBJDIR?=	obj
-SDKVER?=	1.0.8.1050.1
-SDKDIR?=	../DA1468x_SDK_BTLE_v_$(SDKVER)
+SDKVER?=	1.0.14.1081
+SDKDIR?=	../DA1468x_DA15xxx_SDK_$(SDKVER)
 #PROD_ID?=	DA14681-00
 
 ELFTARGET=	$(OBJDIR)/$(PROJ).elf
@@ -96,16 +96,16 @@ OBJS+=	$(OBJDIR)/sdk/bsp/startup/config.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/ble_l2cap.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/ble_storage.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/ble_uuid.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_irb_helper.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_gtl.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_ad_msg.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_irb_gap.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_irb.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_irb_common.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_irb_gattc.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_irb_gatts.o \
-	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_irb_l2cap.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_cmd.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_common.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_gap.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_gattc.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_gatts.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_gtl.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_helper.o \
+	$(OBJDIR)/sdk/interfaces/ble/src/manager/ble_mgr_l2cap.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/manager/storage.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/manager/storage_flash.o \
 	$(OBJDIR)/sdk/interfaces/ble/src/stack/ip/ble/ll/src/rwble/rwble.o \

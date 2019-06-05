@@ -148,8 +148,8 @@
     #define dg_configMEM_RETENTION_MODE         (0x1F)
     #define dg_configSHUFFLING_MODE             (0x3)
 #else
-    #define dg_configMEM_RETENTION_MODE         (0x14)
-    #define dg_configSHUFFLING_MODE             (0x2)
+    #define dg_configMEM_RETENTION_MODE         (0x1B)
+    #define dg_configSHUFFLING_MODE             (0x0)
 #endif
 
 /* Include bsp default values */
@@ -184,12 +184,13 @@
     #define CODE_SIZE                           (128 * 1024)
     #if (dg_configEXEC_MODE == MODE_IS_CACHED)
 	#define RETRAM_FIRST                    0
-	#define RAM_SIZE                        ( 64 * 1024)
 	#if (proj_configOPTIMAL_RETRAM == 0)
+            #define RAM_SIZE                    ( 64 * 1024)
 	    #define RETRAM_0_SIZE               ( 64 * 1024)
 	    #define RETRAM_1_SIZE               (  0 * 1024)
 	#else
-	    #define RETRAM_0_SIZE               ( 32 * 1024)
+            #define RAM_SIZE                    ( 32 * 1024)
+	    #define RETRAM_0_SIZE               ( 64 * 1024)
 	    #define RETRAM_1_SIZE               ( 32 * 1024)
 	#endif
     #else // MIRRORED
