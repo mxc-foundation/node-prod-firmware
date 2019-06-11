@@ -75,6 +75,11 @@
 			<locationURI>SDKROOT/sdk/bsp/system/sys_man</locationURI>
 		</link>
 		<link>
+			<name>sdk/ldscripts</name>
+			<type>2</type>
+			<locationURI>SDKROOT/sdk/bsp/ldscripts/ble_projects</locationURI>
+		</link>
+		<link>
 			<name>sdk/memory</name>
 			<type>2</type>
 			<locationURI>SDKROOT/sdk/bsp/memory</locationURI>

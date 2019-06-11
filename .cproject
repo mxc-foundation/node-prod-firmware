@@ -505,6 +505,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/sdk/peripherals/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/sdk/memory/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/sdk/adapters/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${projectLoc}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.11023843" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="dg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A"/>
@@ -697,6 +698,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/sdk/peripherals/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/sdk/memory/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/sdk/adapters/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${projectLoc}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.721312202" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="dg_configBLACK_ORCA_IC_REV=BLACK_ORCA_IC_REV_A"/>
