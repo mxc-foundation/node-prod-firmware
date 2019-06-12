@@ -38,6 +38,11 @@
 #define dg_configIMAGE_SETUP                    PRODUCTION_MODE
 //#define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
 
+#if dg_configIMAGE_SETUP == PRODUCTION_MODE
+#define dg_configSKIP_MAGIC_CHECK_AT_START      (1)
+//#define dg_configENABLE_DEBUGGER                (0)
+#endif
+
 #define dg_configEMULATE_OTP_COPY               (0)
 
 #define dg_configIMAGE_FLASH_OFFSET             (0x20000)
