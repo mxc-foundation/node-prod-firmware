@@ -36,12 +36,19 @@
 #define dg_configCODE_LOCATION                  NON_VOLATILE_IS_FLASH
 #define dg_configEXT_CRYSTAL_FREQ               EXT_CRYSTAL_IS_16M
 
-#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
-//#define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
+/*
+ * If the PRODUCTION_MODE is used the debugger is disabled from the firmware.
+ * So once a firmware is flashed with PRODUCTION_MODE the chip will not
+ * respond to JTAG again and "cannot open gdb interface" error will be seen.
+ * To overcome this you need to hold the reset button and release as soon as
+ * JTAG is trying to reach the chip.
+ * */
+//#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
+#define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
 
 #if dg_configIMAGE_SETUP == PRODUCTION_MODE
 #define dg_configSKIP_MAGIC_CHECK_AT_START      (1)
-//#define dg_configENABLE_DEBUGGER                (0)
+#define dg_configENABLE_DEBUGGER                (0)
 #endif
 
 #define dg_configEMULATE_OTP_COPY               (0)

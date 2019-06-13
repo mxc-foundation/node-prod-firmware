@@ -35,12 +35,19 @@
 #define dg_configCODE_LOCATION                  NON_VOLATILE_IS_FLASH
 #define dg_configEXT_CRYSTAL_FREQ               EXT_CRYSTAL_IS_16M
 
-#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
-//#define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
+/*
+ * If the PRODUCTION_MODE is used the debugger is disabled from the firmware.
+ * So once a firmware is flashed with PRODUCTION_MODE the chip will not
+ * respond to JTAG again and "cannot open gdb interface" error will be seen.
+ * To overcome this you need to hold the reset button and release as soon as
+ * JTAG is trying to reach the chip.
+ * */
+//#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
+#define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
 
 #if dg_configIMAGE_SETUP == PRODUCTION_MODE
 #define dg_configSKIP_MAGIC_CHECK_AT_START      (1)
-//#define dg_configENABLE_DEBUGGER                (0)
+#define dg_configENABLE_DEBUGGER                (0)
 #endif
 
 #define dg_configEMULATE_OTP_COPY               (0)
@@ -50,7 +57,7 @@
 
 #define dg_configUSER_CAN_USE_TIMER1            (0)
 
-#define dg_configOPTIMAL_RETRAM                 (1)
+#define dg_configOPTIMAL_RETRAM                 (0)
 
 #if (dg_configOPTIMAL_RETRAM == 1)
         #if (dg_configBLACK_ORCA_IC_REV == BLACK_ORCA_IC_REV_A)
@@ -74,7 +81,7 @@
 #define dg_configBATTERY_TYPE                   (BATTERY_TYPE_CUSTOM)
 #define dg_configBATTERY_CHARGE_VOLTAGE         0xA     // 4.2V
 #define dg_configBATTERY_TYPE_CUSTOM_ADC_VOLTAGE        (3439)
-//#define dg_configBATTERY_LOW_LEVEL              (2457)  // 3V
+#define dg_configBATTERY_LOW_LEVEL              (2457)  // 3V
 #define dg_configPRECHARGING_THRESHOLD          (2462)  // 3.006V
 #define dg_configCHARGING_THRESHOLD             (2498)  // 3.05V
 #define dg_configBATTERY_CHARGE_CURRENT         4       // 60mA
