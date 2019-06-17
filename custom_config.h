@@ -36,8 +36,15 @@
 #define dg_configCODE_LOCATION                  NON_VOLATILE_IS_FLASH
 #define dg_configEXT_CRYSTAL_FREQ               EXT_CRYSTAL_IS_16M
 
-#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
-//#define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
+/*
+ * If the PRODUCTION_MODE is used the debugger is disabled from the firmware.
+ * So once a firmware is flashed with PRODUCTION_MODE the chip will not
+ * respond to JTAG again and "cannot open gdb interface" error will be seen.
+ * To overcome this you need to hold the reset button and release as soon as
+ * JTAG is trying to reach the chip.
+ * */
+//#define dg_configIMAGE_SETUP                    PRODUCTION_MODE
+#define dg_configIMAGE_SETUP                    DEVELOPMENT_MODE
 
 #if dg_configIMAGE_SETUP == PRODUCTION_MODE
 #define dg_configSKIP_MAGIC_CHECK_AT_START      (1)
@@ -92,6 +99,13 @@
 //#define OS_BAREMETAL
 
 /*************************************************************************************************\
+ * Memory specific config
+ */
+#define dg_configQSPI_CACHED_OPTIMAL_RETRAM_0_SIZE_AE   ( 64 * 1024)
+#define dg_configQSPI_CACHED_RAM_SIZE_AE                ( 32 * 1024)
+#define dg_configQSPI_CACHED_RETRAM_0_SIZE_AE           ( 96 * 1024)
+
+/*************************************************************************************************\
  * Peripheral specific config
  */
 #define dg_configUSE_HW_I2C                     (1)
@@ -129,86 +143,25 @@
 #define __HEAP_SIZE                             0x600
 #endif
 
-/*
- * Controls the retRAM size used by the project.
- * 0: all RAM is retained
- * 1: retention memory size is optimal
- */
-#define proj_configOPTIMAL_RETRAM               (1)
+#define dg_configOPTIMAL_RETRAM                 (1)
 
-#if !defined(RELEASE_BUILD) && (proj_configOPTIMAL_RETRAM == 1)
-    #undef proj_configOPTIMAL_RETRAM
-    #define proj_configOPTIMAL_RETRAM           (0)
-#elif dg_configEXEC_MODE != MODE_IS_CACHED
-    #undef proj_configOPTIMAL_RETRAM
-    #define proj_configOPTIMAL_RETRAM           (0)
-#endif
-
-#if (proj_configOPTIMAL_RETRAM == 0)
-    #define dg_configMEM_RETENTION_MODE         (0x1F)
-    #define dg_configSHUFFLING_MODE             (0x3)
-#else
-    #define dg_configMEM_RETENTION_MODE         (0x14)
-    #define dg_configSHUFFLING_MODE             (0x2)
+#if (dg_configOPTIMAL_RETRAM == 1)
+        #if (dg_configBLACK_ORCA_IC_REV == BLACK_ORCA_IC_REV_A)
+                #define dg_configMEM_RETENTION_MODE             (0x1B)
+                #define dg_configSHUFFLING_MODE                 (0x0)
+        #else
+                #define dg_configMEM_RETENTION_MODE             (0x07)
+                #define dg_configSHUFFLING_MODE                 (0x0)
+        #endif
 #endif
 
 /* Include bsp default values */
 #include "bsp_defaults.h"
+/* Include memory layout */
+#include "bsp_memory_layout.h"
 
 /* LMIC */
 #define CFG_sx1276_radio
-
-#if (dg_configCODE_LOCATION == NON_VOLATILE_IS_OTP)
-    // CODE_SIZE cannot be more than 58K
-    #define CODE_SIZE                           ( 58 * 1024)
-    #if (dg_configEXEC_MODE == MODE_IS_CACHED)
-	#define RETRAM_FIRST                    0
-	#define RAM_SIZE                        ( 64 * 1024)
-	#if (proj_configOPTIMAL_RETRAM == 0)
-	    #define RETRAM_0_SIZE               ( 64 * 1024)
-	    #define RETRAM_1_SIZE               (  0 * 1024)
-	#else
-	    #define RETRAM_0_SIZE               ( 32 * 1024)
-	    #define RETRAM_1_SIZE               ( 32 * 1024)
-	#endif
-    #else // MIRRORED
-	#define RETRAM_FIRST                    1
-	#define RAM_SIZE                        ( 16 * 1024)
-	#define RETRAM_0_SIZE                   (128 * 1024 - CODE_SIZE)
-	#define RETRAM_1_SIZE                   (  0 * 1024)
-    #endif
-    #if (CODE_SIZE > (58 * 1024))
-	#error "maximum CODE size when OTP is used is 58K!"
-    #endif
-#elif (dg_configCODE_LOCATION == NON_VOLATILE_IS_FLASH)
-    #define CODE_SIZE                           (128 * 1024)
-    #if (dg_configEXEC_MODE == MODE_IS_CACHED)
-	#define RETRAM_FIRST                    0
-	#define RAM_SIZE                        ( 64 * 1024)
-	#if (proj_configOPTIMAL_RETRAM == 0)
-	    #define RETRAM_0_SIZE               ( 64 * 1024)
-	    #define RETRAM_1_SIZE               (  0 * 1024)
-	#else
-	    #define RETRAM_0_SIZE               ( 32 * 1024)
-	    #define RETRAM_1_SIZE               ( 32 * 1024)
-	#endif
-    #else // MIRRORED
-	#error "QSPI mirrored mode is not supported!"
-    #endif
-#elif (dg_configCODE_LOCATION == NON_VOLATILE_IS_NONE)
-    #define CODE_SIZE                           ( 79 * 1024)
-    #if (dg_configEXEC_MODE == MODE_IS_CACHED)
-	#warning "RAM cached mode is not supported!  Reset to RAM (mirrored) mode!"
-	#undef dg_configEXEC_MODE
-	#define dg_configEXEC_MODE              MODE_IS_RAM
-    #endif
-    #define RETRAM_FIRST                        4
-    #define RAM_SIZE                            ( 16 * 1024)
-    #define RETRAM_0_SIZE                       (128 * 1024 - CODE_SIZE)
-    #define RETRAM_1_SIZE                       (  0 * 1024)
-#else
-    #error "Unknown configuration"
-#endif
 
 #endif /* CUSTOM_CONFIG_QSPI_H_ */
 
