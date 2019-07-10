@@ -80,6 +80,7 @@ sysinit_task_func(void *param)
 	pm_set_wakeup_mode(true);
 	pm_set_sleep_mode(INITIAL_SLEEP_MODE);
 	cm_sys_clk_set(sysclk_XTAL16M);
+	// Create the main loop function and delete the other.
 	OS_TASK_CREATE("LoRa & LMiC", lora_task_func, (void *)0,
 	    2048, OS_TASK_PRIORITY_NORMAL, lmic_handle);
 	OS_TASK_DELETE(OS_GET_CURRENT_TASK());

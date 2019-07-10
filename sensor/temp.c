@@ -12,6 +12,7 @@
 
 #ifdef FEATURE_SENSOR_TEMP_PCT2075
 
+// Size of temperature data
 #define SZ	2
 
 int

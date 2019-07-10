@@ -70,12 +70,16 @@ const struct sensor_callbacks	sensor_cb[] = {
 #endif
 };
 
+/*
+ * Add sensors here if needed as:
+ * sensor_type[n] = SENSOR_TYPE_XXX
+ * Maximum number of sensors are defined
+ * as SENSOR_MAX in sensor.h
+ * */
 static inline void
 detect_sensor(void)
 {
-#if HW_IS_MATCHSTICK
-	sensor_type[0] = SENSOR_TYPE_GPS;
-#elif HW_IS_SOM
+#if HW_IS_SOM
 	sensor_type[0] = SENSOR_TYPE_TEMP;
 #if HW_VERSION == HW_SOM_1_2
 	sensor_type[1] = SENSOR_TYPE_GPS;

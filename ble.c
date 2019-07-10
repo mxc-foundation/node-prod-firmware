@@ -55,16 +55,16 @@ static const uint8_t adv_data[] = {
 	0xF5, 0xFE, // = 0xFEF5 (DIALOG SUOTA UUID)
 };
 
-INITIALISED_PRIVILEGED_DATA static char	device_name[] = "MatchStick 00000";
+INITIALISED_PRIVILEGED_DATA static char	device_name[] = "MatchX 00000";
 INITIALISED_PRIVILEGED_DATA static char	serial_number[] = "00000";
 
 static const dis_device_info_t	dis_info = {
-	.manufacturer	= "MatchX GmbH",
-	.model_number	= "MatchStick",
-	.serial_number	= serial_number,
-	.hw_revision	= "Rev.A",
-	.fw_revision	= "1.0",
-	.sw_revision	= BLACKORCA_SW_VERSION,
+	.manufacturer	  = "MatchX GmbH",
+	.model_number	  = "MX1731",
+	.serial_number  = serial_number,
+	.hw_revision	  = "Rev.A",
+	.fw_revision	  = "1.0",
+	.sw_revision	  = BLACKORCA_SW_VERSION,
 };
 
 bool
@@ -289,10 +289,6 @@ ble_task_func(void *params)
 	    (void *)OS_GET_CURRENT_TASK(), adv_tim_cb);
 	ble_gap_adv_intv_set(BLE_ADV_INTERVAL_FROM_MS(20),
 	    BLE_ADV_INTERVAL_FROM_MS(30));
-#if 0
-	ble_gap_adv_intv_set(BLE_ADV_INTERVAL_FROM_MS(1000),
-	    BLE_ADV_INTERVAL_FROM_MS(1500));
-#endif
 	ble_gap_adv_data_set(sizeof(adv_data), adv_data,
 	    sizeof(device_name) - 1 + 2, scan_rsp);
 	ble_gap_adv_start(GAP_CONN_MODE_UNDIRECTED);

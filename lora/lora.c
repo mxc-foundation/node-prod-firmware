@@ -282,7 +282,7 @@ onEvent(ev_t ev)
 	case EV_LINK_DEAD:
 		status &= ~STATUS_LINK_UP;
 		lora_send();
-		/* FALLTHROUGH */
+		/* NO BREAK FALLTHROUGH */
 	case EV_JOINING:
 		state = STATE_IDLE;
 		led_notify(LED_STATE_JOINING);
@@ -292,7 +292,7 @@ onEvent(ev_t ev)
 #ifdef DEBUG
 		printf("netid = %06lx\r\n", LMIC.netid);
 #endif
-		/* FALLTHROUGH */
+		/* NO BREAK FALLTHROUGH */
 	case EV_LINK_ALIVE:
 		status |= STATUS_JOINED | STATUS_LINK_UP;
 		state = STATE_IDLE;
@@ -357,7 +357,6 @@ lora_task_func(void *param)
 #ifdef HELLO
 	osjob_t	hello_job;
 #endif
-
 	(void)param;
 	param_init();
 	ad_lora_init();
