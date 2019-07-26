@@ -282,7 +282,7 @@ onEvent(ev_t ev)
 	case EV_LINK_DEAD:
 		status &= ~STATUS_LINK_UP;
 		lora_send();
-		/* FALLTHROUGH */
+		/* NO BREAK FALLTHROUGH */
 	case EV_JOINING:
 		state = STATE_IDLE;
 		led_notify(LED_STATE_JOINING);
@@ -292,7 +292,7 @@ onEvent(ev_t ev)
 #ifdef DEBUG
 		printf("netid = %06lx\r\n", LMIC.netid);
 #endif
-		/* FALLTHROUGH */
+		/* NO BREAK FALLTHROUGH */
 	case EV_LINK_ALIVE:
 		status |= STATUS_JOINED | STATUS_LINK_UP;
 		state = STATE_IDLE;
@@ -357,12 +357,12 @@ lora_task_func(void *param)
 #ifdef HELLO
 	osjob_t	hello_job;
 #endif
-
 	(void)param;
 	param_init();
 	ad_lora_init();
 	os_init();
 	led_notify(LED_STATE_BOOTING);
+	// check if the suota upgrade bit was set before reboot.
 	upgrade_init();
 #ifdef BLE_ALWAYS_ON
 	ble_on();
@@ -370,6 +370,9 @@ lora_task_func(void *param)
 #ifdef HELLO
 	os_setCallback(&hello_job, say_hi);
 #endif
+	// initialize lora structures.
 	lora_init();
+	// start main loop of lmic os.
 	os_runloop();
+	// should never reach here.
 }

@@ -72,6 +72,13 @@ upgrade_init()
 
 	if (param_get(PARAM_SUOTA, &flags, sizeof(flags)) == 0 || flags == 0)
 		return;
+	/*
+	 * Device will be ready for upgrade if suota parameter is set.
+	 * Last 3 bits of the parameter define the timeout of reset if
+	 * suota upgrade doesn't start in reboot_timeouts.
+	 * Example: If the suota parameter is 0x81, BLE will be open for
+	 * 5 minutes and then will reboot if suota upgrade doesn't start.
+	 */
 	if (flags & UPGRADE_BIT) {
 		ble_on();
 		schedule_reboot(flags);

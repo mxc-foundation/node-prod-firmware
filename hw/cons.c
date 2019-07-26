@@ -122,17 +122,33 @@ cmd_param(int argc, char **argv)
 }
 
 static void
+sensor_cb(osjob_t *job)
+{
+  char  buf[16];
+  size_t  i,j, len;
+  (void)job;
+
+  // Try to get all sensor data and print if any.
+  for (i = 0; i < SENSOR_MAX; i++) {
+    len = sensor_get_data(i, buf, sizeof(buf));
+    if(len > 0){
+      for (j = 0; j < len; j++){
+        printf("%02x", (uint8_t)buf[j]);
+      }
+      printf("\r\n");
+    }
+  }
+}
+
+static void
 cmd_sense(int argc, char **argv)
 {
-	char	buf[16];
-	size_t	i, len;
-
+	PRIVILEGED_DATA static osjob_t  sensor_job;
 	(void)argc;
 	(void)argv;
-	len = sensor_get_data(0, buf, sizeof(buf));
-	for (i = 0; i < len; i++)
-		printf("%02x", (uint8_t)buf[i]);
-	printf("\r\n");
+
+	sensor_prepare();
+	os_setTimedCallback(&sensor_job, os_getTime() + sec2osticks(2), sensor_cb);
 }
 
 static void
@@ -336,9 +352,9 @@ static const uart_config	uart_cfg = {
 
 static inline void uart_enable_rx_int(void)
 {
-        NVIC_DisableIRQ(UART_IRQn);
-        HW_UART_REG_SETF(HW_UART1, IER_DLH, ERBFI_dlh0, true);
-        NVIC_EnableIRQ(UART_IRQn);
+  NVIC_DisableIRQ(UART_IRQn);
+  HW_UART_REG_SETF(HW_UART1, IER_DLH, ERBFI_dlh0, true);
+  NVIC_EnableIRQ(UART_IRQn);
 }
 
 static void

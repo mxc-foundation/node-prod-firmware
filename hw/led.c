@@ -189,7 +189,7 @@ led_cb(osjob_t *job)
 		switch (led_status & LED_FUNC_MASK) {
 		case LED_BLINK_ALTERNATE:
 			red_inverted = true;
-			/* FALLTHROUGH */
+			/* NO BREAK FALLTHROUGH */
 		case LED_BLINK_NORMAL:
 			delay = NORMAL_BLINK_PERIOD;
 			break;

@@ -13,8 +13,8 @@ build:firmware:
         - apt-get install -y make gcc-arm-none-eabi git p7zip-full wget libncurses5:i386 libstdc++6:i386 zlib1g:i386
         - cd ${CI_PROJECT_DIR}/.. && wget https://github.com/git-lfs/git-lfs/releases/download/v2.7.0/git-lfs-linux-amd64-v2.7.0.tar.gz
         - cd ${CI_PROJECT_DIR}/.. && tar -xvf git-lfs-linux-amd64-v2.7.0.tar.gz && ./install.sh
-        - cd ${CI_PROJECT_DIR}/.. && git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/matchx/dialog-sc-sdk.git -b DA1468x_SDK_BTLE_v_1.0.8.1050.1
-        - cd ${CI_PROJECT_DIR}/.. && 7z x dialog-sc-sdk/DA1468x_SDK_BTLE_v_1.0.8.1050.1.zip 
+        - cd ${CI_PROJECT_DIR}/.. && git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/matchx/dialog-sc-sdk.git --branch DA1468x_DA15xxx_SDK_1.0.14.1081
+        - cd ${CI_PROJECT_DIR}/.. && 7z x dialog-sc-sdk/DA1468x_DA15xxx_SDK_1.0.14.1081.zip 
 
     script:
         - cd ${CI_PROJECT_DIR} && make image

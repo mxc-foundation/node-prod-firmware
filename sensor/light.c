@@ -9,6 +9,11 @@
 
 #ifdef FEATURE_SENSOR_LIGHT
 
+/*
+ * This sensor is the Grove - Digital Light Sensor
+ * which has TSL2561. The communication is with I2C.
+ * */
+
 #define SZ	3
 
 #define REG_CONTROL	0x80
