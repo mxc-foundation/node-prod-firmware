@@ -36,12 +36,18 @@
 #define FEATURE_I2C
 #define FEATURE_LED_RGB
 #define FEATURE_POWER_SUPPLY
+#define FEATURE_USER_BUTTON
 #define FEATURE_SENSOR
 #define FEATURE_SENSOR_TEMP
-#define FEATURE_SENSOR_TEMP_PCT2075
-#define FEATURE_SENSOR_LIGHT
-#define FEATURE_USER_BUTTON
 
+// uncomment one of the temperature sensors below.
+#define FEATURE_SENSOR_TEMP_PCT2075
+//#define FEATURE_SENSOR_TEMP_INTERNAL
+
+// uncomment below define if you want to use grove digital light sensor.
+//#define FEATURE_SENSOR_LIGHT
+
+// define initial sleep mode according to your power needs.
 #define INITIAL_SLEEP_MODE	      pm_mode_extended_sleep
 
 #define HW_PS_EN_PORT	            HW_GPIO_PORT_3

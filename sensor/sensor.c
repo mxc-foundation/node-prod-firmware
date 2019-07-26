@@ -30,9 +30,9 @@ static const ostime_t	sensor_periods[] = {
 #ifdef FEATURE_SENSOR
 
 #define SENSOR_TYPE_UNKNOWN	0
-#define SENSOR_TYPE_GPS		1
-#define SENSOR_TYPE_TEMP	2
-#define SENSOR_TYPE_LIGHT	3
+#define SENSOR_TYPE_GPS		  1
+#define SENSOR_TYPE_TEMP	  2
+#define SENSOR_TYPE_LIGHT	  3
 PRIVILEGED_DATA static uint8_t	sensor_type[SENSOR_MAX];
 
 struct sensor_callbacks {

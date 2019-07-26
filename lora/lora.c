@@ -362,6 +362,7 @@ lora_task_func(void *param)
 	ad_lora_init();
 	os_init();
 	led_notify(LED_STATE_BOOTING);
+	// check if the suota upgrade bit was set before reboot.
 	upgrade_init();
 #ifdef BLE_ALWAYS_ON
 	ble_on();
@@ -369,6 +370,9 @@ lora_task_func(void *param)
 #ifdef HELLO
 	os_setCallback(&hello_job, say_hi);
 #endif
+	// initialize lora structures.
 	lora_init();
+	// start main loop of lmic os.
 	os_runloop();
+	// should never reach here.
 }
